@@ -1,0 +1,98 @@
+================================================================================
+CULVER'S FLAVOR COLOR REFERENCE
+================================================================================
+
+MINT         | Ice Cream: #2ECC71 | Toppings: #3B3B3B
+             Mint (Green with dark chips)
+--------------------------------------------------------------------------------
+CHOCOLATE    | Ice Cream: #6F4E37 | Toppings: #FFE4B5
+             Chocolate (Brown with caramel)
+--------------------------------------------------------------------------------
+VANILLA      | Ice Cream: #F5DEB3 | Toppings: #6F4E37
+             Vanilla (Cream with choc chips)
+--------------------------------------------------------------------------------
+STRAWBERRY   | Ice Cream: #FF6B9D | Toppings: #FF1493
+             Strawberry (Pink with chunks)
+--------------------------------------------------------------------------------
+CARAMEL      | Ice Cream: #C68E17 | Toppings: #FFFFFF
+             Caramel (Gold with white)
+--------------------------------------------------------------------------------
+PEANUT       | Ice Cream: #D4A574 | Toppings: #FFFFFF
+             Peanut (Tan with white)
+--------------------------------------------------------------------------------
+BUTTER       | Ice Cream: #FFFACD | Toppings: #6F4E37
+             Butter Pecan (Light yellow)
+--------------------------------------------------------------------------------
+PEACH        | Ice Cream: #FFE5B4 | Toppings: #FF6B9D
+             Peach (Peach with pink)
+--------------------------------------------------------------------------------
+RASPBERRY    | Ice Cream: #E30B5C | Toppings: #FFFFFF
+             Raspberry (Red-pink)
+--------------------------------------------------------------------------------
+COOKIE       | Ice Cream: #8B7355 | Toppings: #FFE4B5
+             Cookie (Medium brown)
+--------------------------------------------------------------------------------
+OREO         | Ice Cream: #3B3B3B | Toppings: #FFFFFF
+             Oreo (Dark gray with white)
+--------------------------------------------------------------------------------
+COFFEE       | Ice Cream: #6F4E37 | Toppings: #FFE4B5
+             Coffee (Brown with caramel)
+--------------------------------------------------------------------------------
+DEFAULT      | Ice Cream: #FFE4B5 | Toppings: #FFFFFF
+             Default/Other (Moccasin)
+--------------------------------------------------------------------------------
+
+EXAMPLE FLAVOR NAMES AND THEIR DETECTED COLORS:
+================================================================================
+'Andes Mint Avalanche'
+  → Detected as: mint
+  → Ice cream color: #2ECC71 (Mint)
+
+'Dark Chocolate Caramel'
+  → Detected as: chocolate
+  → Ice cream color: #6F4E37 (Chocolate)
+
+'Vanilla'
+  → Detected as: vanilla
+  → Ice cream color: #F5DEB3 (Vanilla)
+
+'Strawberry Cheesecake'
+  → Detected as: strawberry
+  → Ice cream color: #FF6B9D (Strawberry)
+
+'Caramel Sea Salt'
+  → Detected as: caramel
+  → Ice cream color: #C68E17 (Caramel)
+
+'Peanut Butter Cup'
+  → Detected as: peanut
+  → Ice cream color: #D4A574 (Peanut)
+
+'Butter Pecan'
+  → Detected as: butter
+  → Ice cream color: #FFFACD (Butter Pecan)
+
+'Peach Cobbler'
+  → Detected as: peach
+  → Ice cream color: #FFE5B4 (Peach)
+
+'Raspberry Fudge' - same color ice cream but add black dots
+  → Detected as: raspberry
+  → Ice cream color: #E30B5C (Raspberry)
+
+'Cookie Dough'
+  → Detected as: cookie
+  → Ice cream color: #8B7355 (Cookie)
+
+'Oreo Overload'
+  → Detected as: oreo
+  → Ice cream color: #3B3B3B (Oreo)
+
+'Coffee Toffee' - peanut or caramel colored with dark brown or black dots
+  → Detected as: coffee
+  → Ice cream color: #6F4E37 (Coffee)
+
+'Lemon Berry' -0 shoul dbe yellow with raspberry/ strawberry colored dots
+  → Detected as: default
+  → Ice cream color: #FFE4B5 (Default/Other)
+

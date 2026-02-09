@@ -1,0 +1,65 @@
+================================================================================
+TIDBYT 3-DAY VIEW - FLAVOR NAME DISPLAY REFERENCE
+================================================================================
+
+SCREEN CONSTRAINTS:
+--------------------------------------------------------------------------------
+• Display size: 64 x 32 pixels
+• 3-day view layout:
+  - Title bar: 6 pixels (location name)
+  - 3 columns (one per day): ~21 pixels wide each
+  - Each column:
+    - Mini cone: 10 pixels wide x 12 pixels tall
+    - Text area: 2 lines max
+• Font: tom-thumb (5 pixels tall per line)
+• Characters per line: ~10 characters max (depends on width)
+• Total text height: 2 lines = ~12 pixels
+
+ABBREVIATION RULES:
+--------------------------------------------------------------------------------
+• 'Chocolate' → 'Choc'
+• 'Peanut Butter' → 'PB'
+• All other words stay full length
+• Text wraps to 2 lines automatically
+• Line 1: First ~10 characters
+• Line 2: Remaining ~10 characters
+
+FLAVOR NAME DISPLAY EXAMPLES:
+================================================================================
+Original Name                  | Display (Line 1) | Display (Line 2)
+--------------------------------------------------------------------------------
+Andes Mint Avalanche           | Andes Mint      | Avalanche       ✓
+Chocolate Oreo Volcano         | Choc Oreo  |   Volcano              ⚠
+Turtle                         | Turtle          |                 ✓
+Butter Pecan                   | Butter     |       Pecan          ⚠
+Caramel Cashew                 | Caramel   |      Cashew           ⚠
+Mint Explosion                 | Mint   |      Explosion           ⚠
+Cookie Dough                   | Cookie     |    Dough             ⚠
+Raspberry Fudge Flurry         | Rasp Fudge | Flurry          ⚠
+Peanut Butter Cup              | PB Cup          |                 ✓
+Vanilla                        | Vanilla         |                 ✓
+Strawberry Cheesecake          | Strawberry      | Cheesecake      ✓
+Dark Chocolate Caramel         | Dark Choc  |       Caramel          ⚠
+Salted Caramel Pecan           | Salt Caramel  | Pecan           ⚠
+Lemon Berry Layer Cake         | Lemon Berry     | Layer Cake      ⚠
+Cappuccino Cookie Crumble      | Cappuccino      | Cookie Cru      ✓
+Crazy for Cookie Dough         | Crazy4Cookie | Dough           ⚠
+Death by Chocolate             | Death by   |    Chocolate             ⚠
+Midnight Toffee Fudge          |  Toffee | Fudge           ⚠
+Reese's Overload               | Reese's  |     Overload            ⚠
+Brownie Batter Bliss           | Brownie   | Batter           ⚠
+
+LEGEND:
+--------------------------------------------------------------------------------
+✓ = Fits well within constraints
+⚠ = May be truncated or tight fit
+
+RECOMMENDATIONS:
+--------------------------------------------------------------------------------
+1. Consider adding more abbreviations for common words:
+   • 'Caramel' → 'Crml' or keep full
+   • 'Explosion' → 'Expl'
+   • 'Overload' → 'O/L'
+2. Some names might benefit from shorter alternatives
+3. Two-line display works well for most 15-20 character names
+
