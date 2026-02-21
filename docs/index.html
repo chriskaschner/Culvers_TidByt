@@ -51,6 +51,22 @@
     <section id="result" hidden>
       <h2>Your Calendar Subscription</h2>
 
+      <div id="preview-card" class="cal-preview" hidden>
+        <div class="cal-preview-header">
+          <span class="cal-preview-label">Preview — how today's event will look</span>
+          <span id="preview-loading" class="cal-preview-loading" hidden>Loading...</span>
+        </div>
+        <div id="preview-event" class="cal-event">
+          <div class="cal-event-color"></div>
+          <div class="cal-event-body">
+            <div id="preview-title" class="cal-event-title"></div>
+            <div id="preview-date" class="cal-event-date"></div>
+            <div id="preview-location" class="cal-event-location"></div>
+            <div id="preview-desc" class="cal-event-desc"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="url-box">
         <input type="text" id="ics-url" readonly>
         <button id="copy-btn" title="Copy URL">Copy</button>
@@ -84,6 +100,7 @@
     let allStores = [];
     let primarySlug = null;
     let secondarySlugs = new Set();
+    let previewAbort = null; // AbortController for in-flight preview fetches
 
     // DOM elements
     const stateFilter = document.getElementById('state-filter');
@@ -98,6 +115,12 @@
     const copyBtn = document.getElementById('copy-btn');
     const googleBtn = document.getElementById('google-btn');
     const appleBtn = document.getElementById('apple-btn');
+    const previewCard = document.getElementById('preview-card');
+    const previewLoading = document.getElementById('preview-loading');
+    const previewTitle = document.getElementById('preview-title');
+    const previewDate = document.getElementById('preview-date');
+    const previewLocation = document.getElementById('preview-location');
+    const previewDesc = document.getElementById('preview-desc');
 
     // Load store manifest
     async function loadStores() {
@@ -221,6 +244,7 @@
     function updateResult() {
       if (!primarySlug) {
         resultSection.hidden = true;
+        previewCard.hidden = true;
         return;
       }
 
@@ -242,6 +266,185 @@
       // Google Calendar: use webcal URL for subscriptions
       const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
       googleBtn.href = googleUrl;
+
+      // Fetch live preview
+      fetchPreview(url);
+    }
+
+    /**
+     * Parse a raw .ics string and return the first VEVENT as an object.
+     */
+    function parseFirstEvent(icsText) {
+      // Unfold continuation lines (RFC 5545: CRLF followed by space/tab)
+      const unfolded = icsText.replace(/\r\n[ \t]/g, '');
+      const lines = unfolded.split(/\r?\n/);
+
+      let inEvent = false;
+      const props = {};
+
+      for (const line of lines) {
+        if (line === 'BEGIN:VEVENT') { inEvent = true; continue; }
+        if (line === 'END:VEVENT') break;
+        if (!inEvent) continue;
+
+        const colonIdx = line.indexOf(':');
+        if (colonIdx === -1) continue;
+        const key = line.slice(0, colonIdx).split(';')[0]; // strip params like VALUE=DATE
+        const value = line.slice(colonIdx + 1);
+        props[key] = value;
+      }
+
+      return props;
+    }
+
+    /**
+     * Unescape .ics text values.
+     */
+    function unescapeIcs(text) {
+      return text
+        .replace(/\\n/g, '\n')
+        .replace(/\\,/g, ',')
+        .replace(/\\;/g, ';')
+        .replace(/\\\\/g, '\\');
+    }
+
+    /**
+     * Format YYYYMMDD as a readable date string.
+     */
+    function formatDate(dateStr) {
+      // dateStr is YYYYMMDD
+      const y = parseInt(dateStr.slice(0, 4));
+      const m = parseInt(dateStr.slice(4, 6)) - 1;
+      const d = parseInt(dateStr.slice(6, 8));
+      const date = new Date(y, m, d);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
+
+    /**
+     * Render description text into HTML with proper line breaks and linkified URLs.
+     */
+    function renderDescription(raw) {
+      const text = unescapeIcs(raw);
+      const parts = text.split(/\n{2,}/); // split on double newlines into sections
+      let html = '';
+
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (!trimmed) continue;
+
+        if (trimmed === 'Backup Option' || trimmed === 'Backup Options') {
+          html += `<div class="cal-event-backups-header">${trimmed}</div>`;
+        } else if (trimmed.startsWith('\u{1F368}') || trimmed.startsWith('\u{1F366}')) {
+          // Backup line(s) with emoji
+          const backupLines = trimmed.split('\n');
+          for (const bl of backupLines) {
+            html += `<div class="cal-event-backup-line">${escapeHtml(bl)}</div>`;
+          }
+        } else {
+          // Regular text — linkify URLs
+          const linked = escapeHtml(trimmed).replace(
+            /(https?:\/\/[^\s]+)/g,
+            '<a href="$1" target="_blank" rel="noopener">$1</a>'
+          );
+          html += `<div class="cal-event-text">${linked.replace(/\n/g, '<br>')}</div>`;
+        }
+      }
+
+      return html;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /**
+     * Fetch the .ics and render a preview of today's event.
+     */
+    async function fetchPreview(url) {
+      // Cancel any in-flight fetch
+      if (previewAbort) previewAbort.abort();
+      previewAbort = new AbortController();
+
+      previewCard.hidden = false;
+      previewLoading.hidden = false;
+      previewTitle.textContent = '';
+      previewDate.textContent = '';
+      previewLocation.textContent = '';
+      previewDesc.innerHTML = '';
+
+      try {
+        const resp = await fetch(url, { signal: previewAbort.signal });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const icsText = await resp.text();
+
+        // Find today's event (or the nearest future one)
+        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const event = findEventForDate(icsText, todayStr);
+
+        if (!event.SUMMARY) {
+          previewDesc.innerHTML = '<div class="cal-event-text" style="color:#888">No events found.</div>';
+          previewLoading.hidden = true;
+          return;
+        }
+
+        previewTitle.textContent = unescapeIcs(event.SUMMARY);
+        previewDate.textContent = formatDate(event.DTSTART || todayStr);
+        if (event.LOCATION) {
+          previewLocation.textContent = '\u{1F4CD} ' + unescapeIcs(event.LOCATION);
+        }
+        if (event.DESCRIPTION) {
+          previewDesc.innerHTML = renderDescription(event.DESCRIPTION);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return; // superseded by newer fetch
+        previewDesc.innerHTML = '<div class="cal-event-text" style="color:#c00">Failed to load preview.</div>';
+      } finally {
+        previewLoading.hidden = true;
+      }
+    }
+
+    /**
+     * Find the VEVENT for a given date (YYYYMMDD), or the nearest future one.
+     */
+    function findEventForDate(icsText, targetDate) {
+      const unfolded = icsText.replace(/\r\n[ \t]/g, '');
+      const lines = unfolded.split(/\r?\n/);
+
+      let inEvent = false;
+      let props = {};
+      let bestEvent = {};
+      let bestDate = null;
+
+      for (const line of lines) {
+        if (line === 'BEGIN:VEVENT') {
+          inEvent = true;
+          props = {};
+          continue;
+        }
+        if (line === 'END:VEVENT') {
+          inEvent = false;
+          const evDate = props.DTSTART || '';
+          // Exact match for today
+          if (evDate === targetDate) return props;
+          // Track nearest future event
+          if (evDate >= targetDate && (bestDate === null || evDate < bestDate)) {
+            bestDate = evDate;
+            bestEvent = props;
+          }
+          continue;
+        }
+        if (!inEvent) continue;
+
+        const colonIdx = line.indexOf(':');
+        if (colonIdx === -1) continue;
+        const key = line.slice(0, colonIdx).split(';')[0];
+        const value = line.slice(colonIdx + 1);
+        props[key] = value;
+      }
+
+      return bestEvent;
     }
 
     // Event handlers
