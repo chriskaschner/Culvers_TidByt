@@ -106,9 +106,9 @@ describe('generateIcs', () => {
     }));
 
     const unfolded = ics.replace(/\r\n[ \t]/g, '');
-    // Check all three backup stores appear for the Feb 20 event
+    // Check all three backup stores appear with alternating emoji
     expect(unfolded).toContain('🍨: Chocolate Volcano - Madison Todd Dr');
-    expect(unfolded).toContain('🍨: Andes Mint Avalanche - Middleton');
+    expect(unfolded).toContain('🍦: Andes Mint Avalanche - Middleton');
     expect(unfolded).toContain('🍨: Turtle - Verona');
   });
 

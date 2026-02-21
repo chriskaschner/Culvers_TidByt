@@ -13,13 +13,6 @@ ACCESS_TOKEN = ""
 ALLOWED_ORIGIN = ""
 
 # KV namespace for caching flavor data (24h TTL)
-# For production: npx wrangler kv namespace create FLAVOR_CACHE
-# Then uncomment and paste the id below:
-# [[kv_namespaces]]
-# binding = "FLAVOR_CACHE"
-# id = "YOUR_KV_NAMESPACE_ID"
-
-# Local dev uses a local KV emulator automatically with this binding:
 [[kv_namespaces]]
 binding = "FLAVOR_CACHE"
-id = "local-dev-flavor-cache"
+id = "1642a7da91e144cb9b233b940430250c"

@@ -137,14 +137,23 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
     }
     addLine(`TRANSP:TRANSPARENT`);
 
-    // Build description: flavor description + backup options
+    // Build description: flavor description + restaurant link + backup options
     let desc = flavor.description || '';
+    desc += `\nMore info: https://www.culvers.com/restaurants/${primary.slug}`;
 
+    const backupLines = [];
+    let backupIndex = 0;
     for (const { store, byDate } of secondaryLookups) {
       const secondaryFlavor = byDate[flavor.date];
       if (secondaryFlavor) {
-        desc += `\\n\\nBackup Option\\n🍨: ${secondaryFlavor.title} - ${store.name}`;
+        const emoji = backupIndex % 2 === 0 ? '🍨' : '🍦';
+        backupLines.push(`${emoji}: ${secondaryFlavor.title} - ${store.name}`);
+        backupIndex++;
       }
+    }
+    if (backupLines.length > 0) {
+      const header = backupLines.length === 1 ? 'Backup Option' : 'Backup Options';
+      desc += `\n\n\n${header}\n${backupLines.join('\n')}`;
     }
 
     if (desc) {
