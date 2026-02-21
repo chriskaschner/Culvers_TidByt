@@ -11,11 +11,13 @@ culvers:
   calendar_days: 30  # Try full month, fallback to 5
 
 google_calendar:
-  calendar_id: "0c93f983ca74ed119558da506781f224122a81d9f4f162d361152c00850da088@group.calendar.google.com"  # Single calendar for all locations
+  calendar_id: "YOUR_CALENDAR_ID@group.calendar.google.com"  # Single calendar for all locations
   timezone: "America/Chicago"
 
 tidbyt:
-  api_endpoint: "http://localhost:5000/api/flavors"  # Optional local API
+  device_id: "your-tidbyt-device-id"
+  installation_id: "culvers"
+  view_mode: "three_day"  # "single" or "three_day"
 
 scheduling:
   cron_schedule: "0 6 * * *"  # Daily at 6 AM

@@ -1,0 +1,4032 @@
+{
+  "pageProps": {
+    "sitemapNode": {
+      "title": "Local Restaurant Page",
+      "name": "restaurant-details",
+      "pageID": 78,
+      "menuText": "Flavor Of The Day",
+      "visible": {
+        "menu": true,
+        "sitemap": true
+      },
+      "path": "/restaurants/restaurant-details",
+      "redirect": null,
+      "isFolder": false
+    },
+    "page": {
+      "pageID": 78,
+      "name": "restaurant-details",
+      "path": null,
+      "title": "Local Restaurant Page",
+      "menuText": "Flavor Of The Day",
+      "pageType": "static",
+      "templateName": "Default Template",
+      "redirectUrl": "",
+      "securePage": false,
+      "excludeFromOutputCache": false,
+      "visible": {
+        "menu": true,
+        "sitemap": true
+      },
+      "seo": {
+        "metaDescription": "Learn what's being served up each day at your hometown Culver's.",
+        "metaKeywords": "",
+        "metaHTML": "",
+        "menuVisible": null,
+        "sitemapVisible": null,
+        "ogTitle": "Local Restaurant Page"
+      },
+      "scripts": {
+        "excludedFromGlobal": false,
+        "top": "",
+        "bottom": ""
+      },
+      "properties": {
+        "state": 2,
+        "modified": "2022-09-23T08:53:12.817",
+        "versionID": 37488
+      },
+      "zones": {
+        "Content": [
+          {
+            "module": "RestaurantDetails",
+            "item": {
+              "contentID": 8871,
+              "properties": {
+                "state": 2,
+                "modified": "2025-07-24T12:53:58.763",
+                "versionID": 127476,
+                "referenceName": "localrestaurantpage_pagerest977aa4",
+                "definitionName": "RestaurantDetails",
+                "itemOrder": 0
+              },
+              "fields": {
+                "joinTheClubImage": {
+                  "label": null,
+                  "url": "https://cdn.culvers.com/local-restaurant-pages/homepage-myculvers-iphone.png",
+                  "target": null,
+                  "filesize": 158848,
+                  "pixelHeight": "2103",
+                  "pixelWidth": "1194",
+                  "height": 2103,
+                  "width": 1194
+                },
+                "joinTheClubHeading": "What flavor is next at your restaurant?",
+                "joinTheClubCallout": "<p>Sign up for a Culver's account to get Flavor of the Day notifications, delicious offers, and other updates from this Culver's.</p>",
+                "joinTheClubButton": "Sign Up Now",
+                "joinTheClubUrl": {
+                  "href": "/account",
+                  "target": "_self",
+                  "text": ""
+                },
+                "joinTheClubSecondary": "<p>Already a member? <a href=\"/account\">Sign in</a></p>"
+              }
+            },
+            "customData": null
+          },
+          {
+            "module": "ContentHorizontalRule",
+            "item": {
+              "contentID": 8873,
+              "properties": {
+                "state": 2,
+                "modified": "2022-09-23T08:53:14.623",
+                "versionID": 108488,
+                "referenceName": "restaurantdetails_contenthor8c507b",
+                "definitionName": "ContentHorizontalRule",
+                "itemOrder": 0
+              },
+              "fields": {}
+            },
+            "customData": null
+          },
+          {
+            "module": "ContentPromoSharedSocialBanner",
+            "item": {
+              "contentID": 10162,
+              "properties": {
+                "state": 2,
+                "modified": "2022-09-23T08:53:14.977",
+                "versionID": 108489,
+                "referenceName": "restaurantdetails_contentpro3b9834",
+                "definitionName": "ContentPromoSharedSocialBanner",
+                "itemOrder": 0
+              },
+              "fields": {
+                "sharedPromoBanner": null
+              }
+            },
+            "customData": null
+          }
+        ]
+      },
+      "customData": {
+        "flavorDetails": {},
+        "restaurantDetails": {
+          "country": "US",
+          "name": "Culver's of Mt. Horeb, WI - Springdale St",
+          "olorestaurantid": 126215,
+          "restaurantId": "243",
+          "restaurantNumber": "0243",
+          "onlineOrderUrl": "https://orderonline.culvers.com/menu/mt-horeb",
+          "ownerMessage": "Stop in at Culver's of Mount Horeb for a delicious ButterBurger or savory Fresh Frozen Custard today. Our True Blue Crew will ensure you have a delightful experience!",
+          "ownerFriendlyName": "Dave Romine",
+          "jobsApplyUrl": "https://j.wrkstrm.us/97a379d2/culvers/mt-horeb-89361",
+          "telephone": "(608) 437-2858",
+          "streetAddress": "1700 Springdale St",
+          "city": "Mt. Horeb",
+          "state": "WI",
+          "zip": "53572",
+          "latitude": 43.0106201171875,
+          "longitude": -89.71780395507812,
+          "guestFacingLine1": "Springdale St",
+          "guestFacingLine2": "Mt. Horeb, WI",
+          "labels": [
+            {
+              "key": "CURDSIDE_INSTRUCTIONS",
+              "value": "We're preparing your CurdSide order fresh! Click \"I'm on the Way\" to let us know when you're coming. When you arrive, park in a designated spot and click \"I'm Here\" so we can bring your order out as soon as it's ready!"
+            },
+            {
+              "key": "CARRYOUT_INSTRUCTIONS",
+              "value": "We can't wait to see you! When you arrive click the \"I'm Here\" button, then stop by the carryout area at the counter and our True Blue Crew will assist you."
+            },
+            {
+              "key": "DRIVETHRU_INSTRUCTIONS",
+              "value": "Drive thru to delicious! When you arrive, proceed to the drive thru and let our True Blue Crew know you've arrived."
+            }
+          ],
+          "customerFacingMessage": "",
+          "urlSlug": "mt-horeb",
+          "timeZoneOffset": -6,
+          "isTemporaryClosed": false,
+          "openDate": "2/23/2004",
+          "openTime": "2026-02-20T10:00:00Z",
+          "closeTime": "2026-02-20T22:00:00Z",
+          "isOpenNow": true,
+          "upcomingEvents": [],
+          "handoffOptions": [
+            "Pickup",
+            "Curbside"
+          ],
+          "flavors": [
+            {
+              "flavorId": 315,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with a ribbon of peanut butter and crunchy Butterfinger pieces.",
+              "menuItemId": 1355,
+              "calendarDate": "2026-02-20T00:00:00",
+              "name": "Dark Chocolate PB Crunch",
+              "urlSlug": "dark-chocolate-pb-crunch",
+              "image": {
+                "useWhiteBackground": true,
+                "imagePath": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-PB-Crunch12.png"
+              }
+            },
+            {
+              "flavorId": 86,
+              "description": "Chocolate and Vanilla Fresh Frozen Custard swirled together with ribbons of old fashioned salted caramel and chopped Dove\u00ae Chocolate pieces.",
+              "menuItemId": 733,
+              "calendarDate": "2026-02-21T00:00:00",
+              "name": "Chocolate Caramel Twist",
+              "urlSlug": "chocolate-caramel-twist",
+              "image": {
+                "useWhiteBackground": true,
+                "imagePath": "https://cdn.culvers.com/menu-item-detail/img-Chocolate-Caramel-Twist2.png"
+              }
+            }
+          ],
+          "currentTimes": {
+            "dineInTimes": [
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "SUNDAY",
+                "day": "Sunday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "MONDAY",
+                "day": "Monday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "TUESDAY",
+                "day": "Tuesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "WEDNESDAY",
+                "day": "Wednesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "THURSDAY",
+                "day": "Thursday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "FRIDAY",
+                "day": "Friday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "SATURDAY",
+                "day": "Saturday"
+              }
+            ],
+            "driveThruTimes": [
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "SUNDAY",
+                "day": "Sunday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "MONDAY",
+                "day": "Monday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "TUESDAY",
+                "day": "Tuesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "WEDNESDAY",
+                "day": "Wednesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "THURSDAY",
+                "day": "Thursday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "FRIDAY",
+                "day": "Friday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "10:00 PM",
+                "dayOfWeek": "SATURDAY",
+                "day": "Saturday"
+              }
+            ],
+            "curdSideTimes": [
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "SUNDAY",
+                "day": "Sunday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "MONDAY",
+                "day": "Monday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "TUESDAY",
+                "day": "Tuesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "WEDNESDAY",
+                "day": "Wednesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "THURSDAY",
+                "day": "Thursday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "FRIDAY",
+                "day": "Friday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "SATURDAY",
+                "day": "Saturday"
+              }
+            ],
+            "deliveryTimes": [
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "SUNDAY",
+                "day": "Sunday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "MONDAY",
+                "day": "Monday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "TUESDAY",
+                "day": "Tuesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "WEDNESDAY",
+                "day": "Wednesday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "THURSDAY",
+                "day": "Thursday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "FRIDAY",
+                "day": "Friday"
+              },
+              {
+                "opens": "10:00 AM",
+                "closes": "09:45 PM",
+                "dayOfWeek": "SATURDAY",
+                "day": "Saturday"
+              }
+            ],
+            "lateNightDriveThruTimes": null
+          },
+          "hoursTimeBlocks": {
+            "dineInTimes": [
+              {
+                "days": "Mon - Sun",
+                "times": "10:00 AM - 10:00 PM"
+              }
+            ],
+            "driveThruTimes": [
+              {
+                "days": "Mon - Sun",
+                "times": "10:00 AM - 10:00 PM"
+              }
+            ],
+            "curdSideTimes": [
+              {
+                "days": "Mon - Sun",
+                "times": "10:00 AM - 09:45 PM"
+              }
+            ],
+            "lateNightDriveThruTimes": null,
+            "deliveryTimes": [
+              {
+                "days": "Mon - Sun",
+                "times": "10:00 AM - 09:45 PM"
+              }
+            ]
+          },
+          "temporalClosures": [],
+          "onlineOrderStatus": "1",
+          "isDiningRoomClosed": false,
+          "isLobbyClosed": false,
+          "isDriveThruClosed": false,
+          "isCurdsideUnavailable": false,
+          "groupedHours": {
+            "hoursByDestination": [
+              {
+                "destination": "Lobby & Dine-in, Drive Thru",
+                "hoursTimeBlocks": [
+                  {
+                    "days": "Daily",
+                    "times": "10:00 AM - 10:00 PM"
+                  }
+                ]
+              },
+              {
+                "destination": "Curdside",
+                "hoursTimeBlocks": [
+                  {
+                    "days": "Daily",
+                    "times": "10:00 AM - 9:45 PM"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "restaurantCalendar": {
+          "restaurant": {
+            "id": 243,
+            "title": "Culver's of Mt. Horeb, WI - Springdale St",
+            "slug": "mt-horeb"
+          },
+          "flavors": [
+            {
+              "flavorId": 315,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with a ribbon of peanut butter and crunchy Butterfinger pieces.",
+              "menuItemId": 1355,
+              "onDate": "2026-02-01T00:00:00",
+              "title": "Dark Chocolate PB Crunch",
+              "urlSlug": "dark-chocolate-pb-crunch",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-PB-Crunch12.png"
+              }
+            },
+            {
+              "flavorId": 58,
+              "description": "Culver\u2019s Classic! Our creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel and loaded with lightly salted cashew pieces.",
+              "menuItemId": 726,
+              "onDate": "2026-02-02T00:00:00",
+              "title": "Caramel Cashew",
+              "urlSlug": "caramel-cashew",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Cashew.png"
+              }
+            },
+            {
+              "flavorId": 264,
+              "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of peanut butter and old fashioned salted caramel and loaded with novelty chocolate.",
+              "menuItemId": 729,
+              "onDate": "2026-02-03T00:00:00",
+              "title": "Caramel Peanut Buttercup",
+              "urlSlug": "caramel-peanut-buttercup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/caramel-peanut-buttercup.png"
+              }
+            },
+            {
+              "flavorId": 246,
+              "description": "Our creamy Vanilla and Chocolate Fresh Frozen Custard swirled together and mixed with thick fudge, ribbons of old fashioned salted caramel and cookie dough pieces.",
+              "menuItemId": 781,
+              "onDate": "2026-02-04T00:00:00",
+              "title": "Crazy for Cookie Dough",
+              "urlSlug": "crazy-for-cookie-dough",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Crazy-for-Cookie-Dough.Waffle-Cone1.png"
+              }
+            },
+            {
+              "flavorId": 126,
+              "description": "Creamy Cheesecake Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, chopped Dove\u00ae Chocolate pieces, toasted pecan pieces and rich cheesecake pieces.",
+              "menuItemId": 755,
+              "onDate": "2026-02-05T00:00:00",
+              "title": "Turtle Cheesecake",
+              "urlSlug": "turtle-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Turtle-Cheesecake.Cake-Cone2.png"
+              }
+            },
+            {
+              "flavorId": 298,
+              "description": "Premium blend of cocoas for the ultimate chocolate experience.",
+              "menuItemId": 1127,
+              "onDate": "2026-02-06T00:00:00",
+              "title": "Dark Chocolate Decadence",
+              "urlSlug": "dark-chocolate-decadence",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-Decadence1.png"
+              }
+            },
+            {
+              "flavorId": 31,
+              "description": "Delicious Chocolate Fresh Frozen Custard enhanced with ribbons of old fashioned salted caramel, toasted pecan pieces and chopped Dove\u00ae Chocolate pieces.",
+              "menuItemId": 727,
+              "onDate": "2026-02-07T00:00:00",
+              "title": "Caramel Chocolate Pecan",
+              "urlSlug": "caramel-chocolate-pecan",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Chocolate-Pecan3.png"
+              }
+            },
+            {
+              "flavorId": 267,
+              "description": "Andes Candies and novelty chocolate with our specially blended Mint Fresh Frozen Custard.",
+              "menuItemId": 723,
+              "onDate": "2026-02-08T00:00:00",
+              "title": "Andes Mint Avalanche",
+              "urlSlug": "andes-mint-avalanche",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/andes-mint-avalanche.png"
+              }
+            },
+            {
+              "flavorId": 62,
+              "description": "Ribbons of old fashioned salted caramel swirled with our creamy Vanilla Fresh Frozen Custard and toasted pecan pieces. Taste why it's one of out most popular treats!",
+              "menuItemId": 730,
+              "onDate": "2026-02-09T00:00:00",
+              "title": "Caramel Pecan",
+              "urlSlug": "caramel-pecan",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Pecan.png"
+              }
+            },
+            {
+              "flavorId": 76,
+              "description": "Our delicious Chocolate Fresh Frozen Custard explodes with OREO\u00ae Cookie pieces, chopped Dove\u00ae Chocolate pieces, mini M&Ms and streams of chocolate syrup.",
+              "menuItemId": 739,
+              "onDate": "2026-02-10T00:00:00",
+              "title": "Chocolate Volcano",
+              "urlSlug": "chocolate-volcano",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Chocolate-Volcano2.png"
+              }
+            },
+            {
+              "flavorId": 242,
+              "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO\u00ae Cookie pieces swirled in.",
+              "menuItemId": 798,
+              "onDate": "2026-02-11T00:00:00",
+              "title": "OREO\u00ae Cookie Cheesecake",
+              "urlSlug": "oreo-cookie-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Oreo-Cheesecake.Waffle-Cone1.png"
+              }
+            },
+            {
+              "flavorId": 82,
+              "description": "Our delicious Chocolate Fresh Frozen Custard with crunchy bits of Heath Bar. Kind of crunchy, kind of smooth, kind of incredible.",
+              "menuItemId": 737,
+              "onDate": "2026-02-12T00:00:00",
+              "title": "Chocolate Heath Crunch",
+              "urlSlug": "chocolate-heath-crunch",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Choc-Heath-Crunch.Cake-Cone.png"
+              }
+            },
+            {
+              "flavorId": 36,
+              "description": "Our specially blended Mint Fresh Frozen Custard with OREO\u00ae Cookies for a refreshing treat.",
+              "menuItemId": 745,
+              "onDate": "2026-02-13T00:00:00",
+              "title": "Mint Cookie",
+              "urlSlug": "mint-cookie",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Mint-Oreo-updated.png"
+              }
+            },
+            {
+              "flavorId": 69,
+              "description": "Our creamy Vanilla Fresh Frozen Custard complemented with plump strawberries and novelty chocolate.",
+              "menuItemId": 735,
+              "onDate": "2026-02-14T00:00:00",
+              "title": "Chocolate Covered Strawberry",
+              "urlSlug": "chocolate-covered-strawberry",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Chocolate-Covered-Strawberry1.png"
+              }
+            },
+            {
+              "flavorId": 303,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with chocolate cake and novelty chocolate.",
+              "menuItemId": 1214,
+              "onDate": "2026-02-15T00:00:00",
+              "title": "Devil's Food Cake",
+              "urlSlug": "devils-food-cake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Devils-Food-Cake.png"
+              }
+            },
+            {
+              "flavorId": 125,
+              "description": "A Culver's Classic! We begin with creamy Vanilla Fresh Frozen Custard and swirl in ribbons of old fashioned salted caramel, novelty chocolate, and toasted pecan pieces.",
+              "menuItemId": 754,
+              "onDate": "2026-02-16T00:00:00",
+              "title": "Turtle",
+              "urlSlug": "turtle",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Turtle.png"
+              }
+            },
+            {
+              "flavorId": 117,
+              "description": "Chocolate and Vanilla Fresh Frozen Custard swirled together with chewy pieces of Snickers.",
+              "menuItemId": 752,
+              "onDate": "2026-02-17T00:00:00",
+              "title": "Snickers Swirl",
+              "urlSlug": "snickers-swirl",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Snicker-Swirl.png"
+              }
+            },
+            {
+              "flavorId": 137,
+              "description": "Our specially blended Peach Fresh Frozen Custard swirled with sweet peaches for a light, refreshing treat.",
+              "menuItemId": 785,
+              "onDate": "2026-02-18T00:00:00",
+              "title": "Georgia Peach",
+              "urlSlug": "georgia-peach",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Georgia-Peach1.png"
+              }
+            },
+            {
+              "flavorId": 109,
+              "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and sweet raspberries for an indulgent treat.",
+              "menuItemId": 748,
+              "onDate": "2026-02-19T00:00:00",
+              "title": "Raspberry Cheesecake",
+              "urlSlug": "raspberry-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Raspberry-Cheesecake.Waffle-Cone.png"
+              }
+            },
+            {
+              "flavorId": 315,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with a ribbon of peanut butter and crunchy Butterfinger pieces.",
+              "menuItemId": 1355,
+              "onDate": "2026-02-20T00:00:00",
+              "title": "Dark Chocolate PB Crunch",
+              "urlSlug": "dark-chocolate-pb-crunch",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-PB-Crunch12.png"
+              }
+            },
+            {
+              "flavorId": 86,
+              "description": "Chocolate and Vanilla Fresh Frozen Custard swirled together with ribbons of old fashioned salted caramel and chopped Dove\u00ae Chocolate pieces.",
+              "menuItemId": 733,
+              "onDate": "2026-02-21T00:00:00",
+              "title": "Chocolate Caramel Twist",
+              "urlSlug": "chocolate-caramel-twist",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Chocolate-Caramel-Twist2.png"
+              }
+            },
+            {
+              "flavorId": 97,
+              "description": "Our specially blended Mint Fresh Frozen Custard exploding with OREO\u00ae Cookie pieces, Andes\u00ae candies and novelty chocolate.",
+              "menuItemId": 794,
+              "onDate": "2026-02-22T00:00:00",
+              "title": "Mint Explosion",
+              "urlSlug": "mint-explosion",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Mint-Explosion.Cake-Cone-updated.png"
+              }
+            },
+            {
+              "flavorId": 32,
+              "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, marshmallow creme, toasted pecan pieces and chopped Dove\u00ae Chocolate pieces.",
+              "menuItemId": 756,
+              "onDate": "2026-02-23T00:00:00",
+              "title": "Turtle Dove",
+              "urlSlug": "turtle-dove",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/turtle-dove.png"
+              }
+            },
+            {
+              "flavorId": 84,
+              "description": "Our specially blended Strawberry Fresh Frozen Custard swirled with plump strawberries.",
+              "menuItemId": 742,
+              "onDate": "2026-02-24T00:00:00",
+              "title": "Double Strawberry",
+              "urlSlug": "double-strawberry",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Double-Strawberry.Waffle-Cone.png"
+              }
+            },
+            {
+              "flavorId": 126,
+              "description": "Creamy Cheesecake Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, chopped Dove\u00ae Chocolate pieces, toasted pecan pieces and rich cheesecake pieces.",
+              "menuItemId": 755,
+              "onDate": "2026-02-25T00:00:00",
+              "title": "Turtle Cheesecake",
+              "urlSlug": "turtle-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Turtle-Cheesecake.Cake-Cone2.png"
+              }
+            },
+            {
+              "flavorId": 265,
+              "description": "Double up on deliciousness with Caramel Fresh Frozen Custard swirled with toasted pecan pieces and novelty chocolate.",
+              "menuItemId": 731,
+              "onDate": "2026-02-26T00:00:00",
+              "title": "Caramel Turtle",
+              "urlSlug": "caramel-turtle",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Turtle.Waffle-Cone.png"
+              }
+            },
+            {
+              "flavorId": 267,
+              "description": "Andes Candies and novelty chocolate with our specially blended Mint Fresh Frozen Custard.",
+              "menuItemId": 723,
+              "onDate": "2026-02-27T00:00:00",
+              "title": "Andes Mint Avalanche",
+              "urlSlug": "andes-mint-avalanche",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/andes-mint-avalanche.png"
+              }
+            },
+            {
+              "flavorId": 242,
+              "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO\u00ae Cookie pieces swirled in.",
+              "menuItemId": 798,
+              "onDate": "2026-02-28T00:00:00",
+              "title": "OREO\u00ae Cookie Cheesecake",
+              "urlSlug": "oreo-cookie-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Oreo-Cheesecake.Waffle-Cone1.png"
+              }
+            },
+            {
+              "flavorId": 303,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with chocolate cake and novelty chocolate.",
+              "menuItemId": 1214,
+              "onDate": "2026-03-01T00:00:00",
+              "title": "Devil's Food Cake",
+              "urlSlug": "devils-food-cake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Devils-Food-Cake.png"
+              }
+            },
+            {
+              "flavorId": 58,
+              "description": "Culver\u2019s Classic! Our creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel and loaded with lightly salted cashew pieces.",
+              "menuItemId": 726,
+              "onDate": "2026-03-02T00:00:00",
+              "title": "Caramel Cashew",
+              "urlSlug": "caramel-cashew",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Cashew.png"
+              }
+            },
+            {
+              "flavorId": 51,
+              "description": "Culver's Classic! This one still knocks our socks off. Specially blended Butter Pecan Fresh Frozen Custard with toasted pecan pieces.",
+              "menuItemId": 725,
+              "onDate": "2026-03-03T00:00:00",
+              "title": "Butter Pecan",
+              "urlSlug": "butter-pecan",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Butter-Pecan-New.png"
+              }
+            },
+            {
+              "flavorId": 31,
+              "description": "Delicious Chocolate Fresh Frozen Custard enhanced with ribbons of old fashioned salted caramel, toasted pecan pieces and chopped Dove\u00ae Chocolate pieces.",
+              "menuItemId": 727,
+              "onDate": "2026-03-04T00:00:00",
+              "title": "Caramel Chocolate Pecan",
+              "urlSlug": "caramel-chocolate-pecan",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Chocolate-Pecan3.png"
+              }
+            },
+            {
+              "flavorId": 242,
+              "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO\u00ae Cookie pieces swirled in.",
+              "menuItemId": 798,
+              "onDate": "2026-03-05T00:00:00",
+              "title": "OREO\u00ae Cookie Cheesecake",
+              "urlSlug": "oreo-cookie-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Oreo-Cheesecake.Waffle-Cone1.png"
+              }
+            },
+            {
+              "flavorId": 298,
+              "description": "Premium blend of cocoas for the ultimate chocolate experience.",
+              "menuItemId": 1127,
+              "onDate": "2026-03-06T00:00:00",
+              "title": "Dark Chocolate Decadence",
+              "urlSlug": "dark-chocolate-decadence",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-Decadence1.png"
+              }
+            },
+            {
+              "flavorId": 243,
+              "description": "A rich, indulgent cookie dough treat with ribbons of old fashioned salted caramel and thick fudge swirled in creamy Vanilla Fresh Frozen Custard.",
+              "menuItemId": 728,
+              "onDate": "2026-03-07T00:00:00",
+              "title": "Caramel Fudge Cookie Dough",
+              "urlSlug": "caramel-fudge-cookie-dough",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Fudge-CookieDough.png"
+              }
+            },
+            {
+              "flavorId": 36,
+              "description": "Our specially blended Mint Fresh Frozen Custard with OREO\u00ae Cookies for a refreshing treat.",
+              "menuItemId": 745,
+              "onDate": "2026-03-08T00:00:00",
+              "title": "Mint Cookie",
+              "urlSlug": "mint-cookie",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Mint-Oreo-updated.png"
+              }
+            },
+            {
+              "flavorId": 62,
+              "description": "Ribbons of old fashioned salted caramel swirled with our creamy Vanilla Fresh Frozen Custard and toasted pecan pieces. Taste why it's one of out most popular treats!",
+              "menuItemId": 730,
+              "onDate": "2026-03-09T00:00:00",
+              "title": "Caramel Pecan",
+              "urlSlug": "caramel-pecan",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Pecan.png"
+              }
+            },
+            {
+              "flavorId": 34,
+              "description": "Reese\u2019s Peanut Butter Cups become a special treat when stirred in our delicious Chocolate Fresh Frozen Custard.",
+              "menuItemId": 749,
+              "onDate": "2026-03-10T00:00:00",
+              "title": "Really Reese's",
+              "urlSlug": "really-reeses",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Really-Reeses.Cake-Cone.png"
+              }
+            },
+            {
+              "flavorId": 109,
+              "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and sweet raspberries for an indulgent treat.",
+              "menuItemId": 748,
+              "onDate": "2026-03-11T00:00:00",
+              "title": "Raspberry Cheesecake",
+              "urlSlug": "raspberry-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Raspberry-Cheesecake.Waffle-Cone.png"
+              }
+            },
+            {
+              "flavorId": 69,
+              "description": "Our creamy Vanilla Fresh Frozen Custard complemented with plump strawberries and novelty chocolate.",
+              "menuItemId": 735,
+              "onDate": "2026-03-12T00:00:00",
+              "title": "Chocolate Covered Strawberry",
+              "urlSlug": "chocolate-covered-strawberry",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Chocolate-Covered-Strawberry1.png"
+              }
+            },
+            {
+              "flavorId": 97,
+              "description": "Our specially blended Mint Fresh Frozen Custard exploding with OREO\u00ae Cookie pieces, Andes\u00ae candies and novelty chocolate.",
+              "menuItemId": 794,
+              "onDate": "2026-03-13T00:00:00",
+              "title": "Mint Explosion",
+              "urlSlug": "mint-explosion",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Mint-Explosion.Cake-Cone-updated.png"
+              }
+            },
+            {
+              "flavorId": 264,
+              "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of peanut butter and old fashioned salted caramel and loaded with novelty chocolate.",
+              "menuItemId": 729,
+              "onDate": "2026-03-14T00:00:00",
+              "title": "Caramel Peanut Buttercup",
+              "urlSlug": "caramel-peanut-buttercup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/caramel-peanut-buttercup.png"
+              }
+            },
+            {
+              "flavorId": 315,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with a ribbon of peanut butter and crunchy Butterfinger pieces.",
+              "menuItemId": 1355,
+              "onDate": "2026-03-15T00:00:00",
+              "title": "Dark Chocolate PB Crunch",
+              "urlSlug": "dark-chocolate-pb-crunch",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-PB-Crunch12.png"
+              }
+            },
+            {
+              "flavorId": 125,
+              "description": "A Culver's Classic! We begin with creamy Vanilla Fresh Frozen Custard and swirl in ribbons of old fashioned salted caramel, novelty chocolate, and toasted pecan pieces.",
+              "menuItemId": 754,
+              "onDate": "2026-03-16T00:00:00",
+              "title": "Turtle",
+              "urlSlug": "turtle",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Turtle.png"
+              }
+            },
+            {
+              "flavorId": 36,
+              "description": "Our specially blended Mint Fresh Frozen Custard with OREO\u00ae Cookies for a refreshing treat.",
+              "menuItemId": 745,
+              "onDate": "2026-03-17T00:00:00",
+              "title": "Mint Cookie",
+              "urlSlug": "mint-cookie",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Mint-Oreo-updated.png"
+              }
+            },
+            {
+              "flavorId": 137,
+              "description": "Our specially blended Peach Fresh Frozen Custard swirled with sweet peaches for a light, refreshing treat.",
+              "menuItemId": 785,
+              "onDate": "2026-03-18T00:00:00",
+              "title": "Georgia Peach",
+              "urlSlug": "georgia-peach",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Georgia-Peach1.png"
+              }
+            },
+            {
+              "flavorId": 126,
+              "description": "Creamy Cheesecake Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, chopped Dove\u00ae Chocolate pieces, toasted pecan pieces and rich cheesecake pieces.",
+              "menuItemId": 755,
+              "onDate": "2026-03-19T00:00:00",
+              "title": "Turtle Cheesecake",
+              "urlSlug": "turtle-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Turtle-Cheesecake.Cake-Cone2.png"
+              }
+            },
+            {
+              "flavorId": 303,
+              "description": "Dark Chocolate Fresh Frozen Custard swirled with chocolate cake and novelty chocolate.",
+              "menuItemId": 1214,
+              "onDate": "2026-03-20T00:00:00",
+              "title": "Devil's Food Cake",
+              "urlSlug": "devils-food-cake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Devils-Food-Cake.png"
+              }
+            },
+            {
+              "flavorId": 280,
+              "description": "Ribbons of old fashioned salted caramel swirled into Caramel Fresh Frozen Custard and mixed with toasted pecan pieces.",
+              "menuItemId": 751,
+              "onDate": "2026-03-21T00:00:00",
+              "title": "Salted Double Caramel Pecan",
+              "urlSlug": "salted-double-caramel-pecan",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Salted-Double-Caramel-Pecan.Cake-Cone.png"
+              }
+            },
+            {
+              "flavorId": 267,
+              "description": "Andes Candies and novelty chocolate with our specially blended Mint Fresh Frozen Custard.",
+              "menuItemId": 723,
+              "onDate": "2026-03-22T00:00:00",
+              "title": "Andes Mint Avalanche",
+              "urlSlug": "andes-mint-avalanche",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/andes-mint-avalanche.png"
+              }
+            },
+            {
+              "flavorId": 32,
+              "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, marshmallow creme, toasted pecan pieces and chopped Dove\u00ae Chocolate pieces.",
+              "menuItemId": 756,
+              "onDate": "2026-03-23T00:00:00",
+              "title": "Turtle Dove",
+              "urlSlug": "turtle-dove",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/turtle-dove.png"
+              }
+            },
+            {
+              "flavorId": 117,
+              "description": "Chocolate and Vanilla Fresh Frozen Custard swirled together with chewy pieces of Snickers.",
+              "menuItemId": 752,
+              "onDate": "2026-03-24T00:00:00",
+              "title": "Snickers Swirl",
+              "urlSlug": "snickers-swirl",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Snicker-Swirl.png"
+              }
+            },
+            {
+              "flavorId": 242,
+              "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO\u00ae Cookie pieces swirled in.",
+              "menuItemId": 798,
+              "onDate": "2026-03-25T00:00:00",
+              "title": "OREO\u00ae Cookie Cheesecake",
+              "urlSlug": "oreo-cookie-cheesecake",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Oreo-Cheesecake.Waffle-Cone1.png"
+              }
+            },
+            {
+              "flavorId": 76,
+              "description": "Our delicious Chocolate Fresh Frozen Custard explodes with OREO\u00ae Cookie pieces, chopped Dove\u00ae Chocolate pieces, mini M&Ms and streams of chocolate syrup.",
+              "menuItemId": 739,
+              "onDate": "2026-03-26T00:00:00",
+              "title": "Chocolate Volcano",
+              "urlSlug": "chocolate-volcano",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Chocolate-Volcano2.png"
+              }
+            },
+            {
+              "flavorId": 36,
+              "description": "Our specially blended Mint Fresh Frozen Custard with OREO\u00ae Cookies for a refreshing treat.",
+              "menuItemId": 745,
+              "onDate": "2026-03-27T00:00:00",
+              "title": "Mint Cookie",
+              "urlSlug": "mint-cookie",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Mint-Oreo-updated.png"
+              }
+            },
+            {
+              "flavorId": 84,
+              "description": "Our specially blended Strawberry Fresh Frozen Custard swirled with plump strawberries.",
+              "menuItemId": 742,
+              "onDate": "2026-03-28T00:00:00",
+              "title": "Double Strawberry",
+              "urlSlug": "double-strawberry",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Double-Strawberry.Waffle-Cone.png"
+              }
+            },
+            {
+              "flavorId": 298,
+              "description": "Premium blend of cocoas for the ultimate chocolate experience.",
+              "menuItemId": 1127,
+              "onDate": "2026-03-29T00:00:00",
+              "title": "Dark Chocolate Decadence",
+              "urlSlug": "dark-chocolate-decadence",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-Decadence1.png"
+              }
+            },
+            {
+              "flavorId": 58,
+              "description": "Culver\u2019s Classic! Our creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel and loaded with lightly salted cashew pieces.",
+              "menuItemId": 726,
+              "onDate": "2026-03-30T00:00:00",
+              "title": "Caramel Cashew",
+              "urlSlug": "caramel-cashew",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Caramel-Cashew.png"
+              }
+            },
+            {
+              "flavorId": 246,
+              "description": "Our creamy Vanilla and Chocolate Fresh Frozen Custard swirled together and mixed with thick fudge, ribbons of old fashioned salted caramel and cookie dough pieces.",
+              "menuItemId": 781,
+              "onDate": "2026-03-31T00:00:00",
+              "title": "Crazy for Cookie Dough",
+              "urlSlug": "crazy-for-cookie-dough",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/img-Crazy-for-Cookie-Dough.Waffle-Cone1.png"
+              }
+            }
+          ],
+          "soups": [
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-01T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A thick, creamy soup with brown and wild rice, carrots, and chicken in a rich broth.",
+              "menuItemId": 179,
+              "onDate": "2026-02-01T00:00:00",
+              "title": "Wild and Brown Rice with Chicken Soup",
+              "urlSlug": "wild-and-brown-rice-with-chicken-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-01T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-01T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-02T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A thick, creamy soup with brown and wild rice, carrots, and chicken in a rich broth.",
+              "menuItemId": 179,
+              "onDate": "2026-02-02T00:00:00",
+              "title": "Wild and Brown Rice with Chicken Soup",
+              "urlSlug": "wild-and-brown-rice-with-chicken-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-02T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-02T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-03T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-03T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-03T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-04T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-04T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-04T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-04T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-05T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty cream based soup with cuts of potatoes, carrots, celery and bacon bits.",
+              "menuItemId": 174,
+              "onDate": "2026-02-05T00:00:00",
+              "title": "Potato with Bacon Soup",
+              "urlSlug": "potato-with-bacon-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-05T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-05T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-05T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty cream based soup with cuts of potatoes, carrots, celery and bacon bits.",
+              "menuItemId": 174,
+              "onDate": "2026-02-06T00:00:00",
+              "title": "Potato with Bacon Soup",
+              "urlSlug": "potato-with-bacon-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A colorful blend of vegetables, grains and sliced beef in a hearty beef broth",
+              "menuItemId": 178,
+              "onDate": "2026-02-06T00:00:00",
+              "title": "Vegetable Beef Soup",
+              "urlSlug": "vegetable-beef-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-06T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-06T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A colorful blend of vegetables, grains and sliced beef in a hearty beef broth",
+              "menuItemId": 178,
+              "onDate": "2026-02-07T00:00:00",
+              "title": "Vegetable Beef Soup",
+              "urlSlug": "vegetable-beef-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-07T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-07T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Tomato based soup with green peppers, ground beef, tomatoes, and white rice.",
+              "menuItemId": 304,
+              "onDate": "2026-02-07T00:00:00",
+              "title": "Stuffed Green Pepper Soup",
+              "urlSlug": "stuffed-green-pepper-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-08T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-08T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Tomato based soup with green peppers, ground beef, tomatoes, and white rice.",
+              "menuItemId": 304,
+              "onDate": "2026-02-08T00:00:00",
+              "title": "Stuffed Green Pepper Soup",
+              "urlSlug": "stuffed-green-pepper-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-09T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A thick, creamy soup with brown and wild rice, carrots, and chicken in a rich broth.",
+              "menuItemId": 179,
+              "onDate": "2026-02-09T00:00:00",
+              "title": "Wild and Brown Rice with Chicken Soup",
+              "urlSlug": "wild-and-brown-rice-with-chicken-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-09T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-09T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-10T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-10T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-10T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-10T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-11T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-11T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-11T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-11T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-12T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty cream based soup with cuts of potatoes, carrots, celery and bacon bits.",
+              "menuItemId": 174,
+              "onDate": "2026-02-12T00:00:00",
+              "title": "Potato with Bacon Soup",
+              "urlSlug": "potato-with-bacon-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-12T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-12T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A rich cream based soup with a blend of clams, potatoes, whitefish and vegetables.",
+              "menuItemId": 169,
+              "onDate": "2026-02-13T00:00:00",
+              "title": "Boston Clam Chowder Soup",
+              "urlSlug": "boston-clam-chowder-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-13T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-13T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-13T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-14T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-14T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Tomato based soup with green peppers, ground beef, tomatoes, and white rice.",
+              "menuItemId": 304,
+              "onDate": "2026-02-14T00:00:00",
+              "title": "Stuffed Green Pepper Soup",
+              "urlSlug": "stuffed-green-pepper-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A colorful blend of vegetables, grains and sliced beef in a hearty beef broth",
+              "menuItemId": 178,
+              "onDate": "2026-02-15T00:00:00",
+              "title": "Vegetable Beef Soup",
+              "urlSlug": "vegetable-beef-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-15T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-15T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-16T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-16T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-16T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-17T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-17T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-17T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-17T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-18T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A thick, creamy soup with brown and wild rice, carrots, and chicken in a rich broth.",
+              "menuItemId": 179,
+              "onDate": "2026-02-18T00:00:00",
+              "title": "Wild and Brown Rice with Chicken Soup",
+              "urlSlug": "wild-and-brown-rice-with-chicken-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-18T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-18T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-19T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-19T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A rich cream based soup with a blend of clams, potatoes, whitefish and vegetables.",
+              "menuItemId": 169,
+              "onDate": "2026-02-20T00:00:00",
+              "title": "Boston Clam Chowder Soup",
+              "urlSlug": "boston-clam-chowder-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-20T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-20T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Tomato based soup with green peppers, ground beef, tomatoes, and white rice.",
+              "menuItemId": 304,
+              "onDate": "2026-02-20T00:00:00",
+              "title": "Stuffed Green Pepper Soup",
+              "urlSlug": "stuffed-green-pepper-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A rich cream based soup with a blend of clams, potatoes, whitefish and vegetables.",
+              "menuItemId": 169,
+              "onDate": "2026-02-21T00:00:00",
+              "title": "Boston Clam Chowder Soup",
+              "urlSlug": "boston-clam-chowder-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty cream based soup with cuts of potatoes, carrots, celery and bacon bits.",
+              "menuItemId": 174,
+              "onDate": "2026-02-21T00:00:00",
+              "title": "Potato with Bacon Soup",
+              "urlSlug": "potato-with-bacon-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-21T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-21T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-22T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty cream based soup with cuts of potatoes, carrots, celery and bacon bits.",
+              "menuItemId": 174,
+              "onDate": "2026-02-22T00:00:00",
+              "title": "Potato with Bacon Soup",
+              "urlSlug": "potato-with-bacon-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-22T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-22T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-23T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A colorful blend of vegetables, grains and sliced beef in a hearty beef broth",
+              "menuItemId": 178,
+              "onDate": "2026-02-23T00:00:00",
+              "title": "Vegetable Beef Soup",
+              "urlSlug": "vegetable-beef-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-23T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-23T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-24T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A colorful blend of vegetables, grains and sliced beef in a hearty beef broth",
+              "menuItemId": 178,
+              "onDate": "2026-02-24T00:00:00",
+              "title": "Vegetable Beef Soup",
+              "urlSlug": "vegetable-beef-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-24T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-24T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A cream based soup with a flavorful blend of cheddar cheese and tender broccoli florets.",
+              "menuItemId": 159,
+              "onDate": "2026-02-25T00:00:00",
+              "title": "Broccoli Cheese Soup",
+              "urlSlug": "broccoli-cheese-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-25T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-25T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-25T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Vegetarian soup with small shell pasta, zucchini, carrots, celery, spinach and herbs simmered in a sweet tomato broth   ",
+              "menuItemId": 177,
+              "onDate": "2026-02-26T00:00:00",
+              "title": "Tomato Florentine Soup",
+              "urlSlug": "tomato-florentine-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A thick, creamy soup with brown and wild rice, carrots, and chicken in a rich broth.",
+              "menuItemId": 179,
+              "onDate": "2026-02-26T00:00:00",
+              "title": "Wild and Brown Rice with Chicken Soup",
+              "urlSlug": "wild-and-brown-rice-with-chicken-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-26T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-26T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A rich cream based soup with a blend of clams, potatoes, whitefish and vegetables.",
+              "menuItemId": 169,
+              "onDate": "2026-02-27T00:00:00",
+              "title": "Boston Clam Chowder Soup",
+              "urlSlug": "boston-clam-chowder-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A thick, creamy soup with brown and wild rice, carrots, and chicken in a rich broth.",
+              "menuItemId": 179,
+              "onDate": "2026-02-27T00:00:00",
+              "title": "Wild and Brown Rice with Chicken Soup",
+              "urlSlug": "wild-and-brown-rice-with-chicken-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-27T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-27T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "A rich cream based soup with a blend of clams, potatoes, whitefish and vegetables.",
+              "menuItemId": 169,
+              "onDate": "2026-02-28T00:00:00",
+              "title": "Boston Clam Chowder Soup",
+              "urlSlug": "boston-clam-chowder-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Hearty chicken broth combined with tender pieces of chicken, noodles and vegetables.",
+              "menuItemId": 171,
+              "onDate": "2026-02-28T00:00:00",
+              "title": "Chicken Noodle Soup",
+              "urlSlug": "chicken-noodle-soup",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-02-28T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-02-28T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-01T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-01T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-02T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-02T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-03T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-03T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-04T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-04T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-05T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-05T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-06T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-06T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-07T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-07T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-08T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-08T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-09T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-09T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-10T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-10T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-11T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-11T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-12T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-12T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-13T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-13T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-14T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-14T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-15T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-15T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-16T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-16T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-17T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-17T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-18T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-18T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-19T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-19T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-20T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-20T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-21T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-21T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-22T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-22T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-23T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-23T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-24T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-24T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-25T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-25T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-26T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-26T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-27T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-27T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-28T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-28T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-29T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-29T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-30T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-30T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices. ",
+              "menuItemId": 182,
+              "onDate": "2026-03-31T00:00:00",
+              "title": "George's\u00ae Chili",
+              "urlSlug": "georges-chili",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            },
+            {
+              "description": "Many a cold winter day, Craig\u2019s dad spent perfecting his now-signature creation\u2014a hearty, medium-spicy chili con carne, made with simmered homestyle beef, diced tomatoes, dark red kidney beans, peppers, onion and celery, along with a secret blend of peppery spices, topped with sour cream, cheese, and onions. ",
+              "menuItemId": 291,
+              "onDate": "2026-03-31T00:00:00",
+              "title": "George's\u00ae Chili Supreme",
+              "urlSlug": "georges-chili-supreme",
+              "image": {
+                "useWhiteBackground": true,
+                "src": "https://cdn.culvers.com/menu-item-detail/"
+              }
+            }
+          ]
+        },
+        "curdIsTheWordBlog": {},
+        "reasonsWhyWisconsin": {},
+        "superfans": {},
+        "yearsOfDelicious": {},
+        "menuItemDetails": {
+          "categoryId": null,
+          "categoryUrl": null,
+          "spotlights": null,
+          "spotlightOverride": null
+        },
+        "familyBurgerNight": {}
+      }
+    },
+    "dynamicPageItem": null,
+    "pageTemplateName": "DefaultTemplate",
+    "globalData": {
+      "layout": {
+        "header": {
+          "contentID": 18988,
+          "properties": {
+            "state": 2,
+            "modified": "2026-02-04T09:20:08.277",
+            "versionID": 132635,
+            "referenceName": "sharedheader",
+            "definitionName": "SharedHeader",
+            "itemOrder": 0
+          },
+          "fields": {
+            "globalOpenGraphShareImage": {
+              "label": null,
+              "url": "https://cdn.culvers.com/share-food_1200x630_20250820.jpg",
+              "target": null,
+              "filesize": 192423,
+              "pixelHeight": "630",
+              "pixelWidth": "1200",
+              "height": 630,
+              "width": 1200
+            },
+            "logo": {
+              "label": null,
+              "url": "https://cdn.culvers.com/Attachments/NewItems/culvers-logo_20230517162556_0.svg",
+              "target": null,
+              "filesize": 2879,
+              "pixelHeight": "0",
+              "pixelWidth": "0"
+            },
+            "navigation": [
+              {
+                "contentID": 18996,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-04T09:19:40.96",
+                  "versionID": 132630,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 0
+                },
+                "fields": {
+                  "title": "Our Menu ",
+                  "url": {
+                    "href": "/menu",
+                    "target": "_self",
+                    "text": "Our Menu"
+                  },
+                  "renderAsOnlineOrderingMenu": "true",
+                  "childLinks": [
+                    {
+                      "contentID": 19007,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:11.62",
+                        "versionID": 121803,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 0
+                      },
+                      "fields": {
+                        "title": "Value Baskets",
+                        "url": {
+                          "href": "/menu/value-baskets",
+                          "target": "_self",
+                          "text": "Value Baskets"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19008,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:11.817",
+                        "versionID": 121804,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 1
+                      },
+                      "fields": {
+                        "title": "ButterBurgers",
+                        "url": {
+                          "href": "/menu/butterburgers",
+                          "target": "_self",
+                          "text": "ButterBurgers"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19013,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:12.727",
+                        "versionID": 121809,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 6
+                      },
+                      "fields": {
+                        "title": "Fresh Frozen Custard",
+                        "url": {
+                          "href": "/menu/fresh-frozen-custard",
+                          "target": "_self",
+                          "text": "Fresh Frozen Custard"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19912,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-24T06:34:43.973",
+                        "versionID": 122169,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 12
+                      },
+                      "fields": {
+                        "title": "Chicken",
+                        "url": {
+                          "href": "/menu/chicken",
+                          "target": "_self",
+                          "text": "Chicken"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19914,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-24T06:34:34.24",
+                        "versionID": 122168,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 14
+                      },
+                      "fields": {
+                        "title": "Seafood",
+                        "url": {
+                          "href": "/menu/seafood",
+                          "target": "_self",
+                          "text": "Seafood"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19011,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:12.437",
+                        "versionID": 121807,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 4
+                      },
+                      "fields": {
+                        "title": "Sides",
+                        "url": {
+                          "href": "/menu/sides",
+                          "target": "_self",
+                          "text": "Sides"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19012,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:12.577",
+                        "versionID": 121808,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 5
+                      },
+                      "fields": {
+                        "title": "Drinks",
+                        "url": {
+                          "href": "/menu/drinks",
+                          "target": "_self",
+                          "text": "Drinks"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19015,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:12.89",
+                        "versionID": 121810,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 8
+                      },
+                      "fields": {
+                        "title": "Kids\u2019 Meals",
+                        "url": {
+                          "href": "/menu/kids-meals",
+                          "target": "_self",
+                          "text": "Kids\u2019 Meals"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19915,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-24T06:34:27.533",
+                        "versionID": 122167,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 15
+                      },
+                      "fields": {
+                        "title": "Salads",
+                        "url": {
+                          "href": "/menu/salads",
+                          "target": "_self",
+                          "text": "Salads"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19913,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-24T06:34:22.537",
+                        "versionID": 122166,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 13
+                      },
+                      "fields": {
+                        "title": "Sandwiches",
+                        "url": {
+                          "href": "/menu/sandwiches",
+                          "target": "_self",
+                          "text": "Sandwiches"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19119,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2025-02-10T11:25:13.053",
+                        "versionID": 121811,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 11
+                      },
+                      "fields": {
+                        "title": "Sauces & Dressings",
+                        "url": {
+                          "href": "/menu/sauces-and-dressings",
+                          "target": "_self",
+                          "text": "Sauces & Dressings"
+                        },
+                        "childLinks": null
+                      },
+                      "seo": null
+                    },
+                    {
+                      "contentID": 19016,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2026-02-04T09:22:57.653",
+                        "versionID": 132637,
+                        "referenceName": "navigationheadernew_navigati92179b",
+                        "definitionName": "Navigation",
+                        "itemOrder": 9
+                      },
+                      "fields": {
+                        "title": "Nutrition & Allergen Guide",
+                        "url": {
+                          "href": "/nutrition-and-allergen-guide",
+                          "target": "_self",
+                          "text": "Nutrition & Allergen Guide"
+                        },
+                        "hide": "true",
+                        "hideonMobile": "true",
+                        "childLinks": null,
+                        "footerLinks": null
+                      },
+                      "seo": null
+                    }
+                  ],
+                  "childLinks_SortIdField": "19007,19008,19013,19009,19912,19010,19914,19011,19012,20068,19014,19015,19915,19913,19119,19016",
+                  "footerLinks": [
+                    {
+                      "contentID": 20616,
+                      "properties": {
+                        "state": 2,
+                        "modified": "2026-02-04T09:18:57.617",
+                        "versionID": 132624,
+                        "referenceName": "navigationheadernew_navigatic3adfd",
+                        "definitionName": "Navigation",
+                        "itemOrder": 0
+                      },
+                      "fields": {
+                        "title": "Nutrition & Allergen Guide",
+                        "url": {
+                          "href": "/nutrition-and-allergen-guide",
+                          "target": "",
+                          "text": "Nutrition & Allergen Guide"
+                        },
+                        "hide": "false",
+                        "hideonMobile": "false",
+                        "hideonDesktop": "false",
+                        "renderButton": "false",
+                        "renderAsOnlineOrderingMenu": "false",
+                        "childLinks": null,
+                        "footerLinks": null
+                      },
+                      "seo": null
+                    }
+                  ]
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18997,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:57.217",
+                  "versionID": 112542,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 1
+                },
+                "fields": {
+                  "title": "Flavor of the Day",
+                  "url": {
+                    "href": "/flavor-of-the-day",
+                    "target": "_self",
+                    "text": "Flavor of the Day"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 19001,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:57.697",
+                  "versionID": 112543,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 2
+                },
+                "fields": {
+                  "title": "Locations",
+                  "url": {
+                    "href": "/locator",
+                    "target": "_self",
+                    "text": "Locations"
+                  },
+                  "hideonDesktop": "true",
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18998,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-04T09:19:41.14",
+                  "versionID": 132631,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 3
+                },
+                "fields": {
+                  "title": "About",
+                  "url": {
+                    "href": "/about-culvers",
+                    "target": "_self",
+                    "text": "About"
+                  },
+                  "hideonMobile": "true",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18999,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-04T09:19:41.283",
+                  "versionID": 132632,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 4
+                },
+                "fields": {
+                  "title": "Gift Cards",
+                  "url": {
+                    "href": "/gift-cards",
+                    "target": "_self",
+                    "text": "Gift Cards"
+                  },
+                  "hideonMobile": "true",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 19000,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-09T10:02:25.203",
+                  "versionID": 132797,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 5
+                },
+                "fields": {
+                  "title": "Careers",
+                  "url": {
+                    "href": "/careers",
+                    "target": "_self",
+                    "text": "Careers"
+                  },
+                  "hide": "false",
+                  "hideonMobile": "true",
+                  "hideonApp": "false",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 20089,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-01-12T11:25:39.04",
+                  "versionID": 130242,
+                  "referenceName": "navigationheadernew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 6
+                },
+                "fields": {
+                  "title": "Rewards",
+                  "url": {
+                    "href": "/rewards",
+                    "target": "",
+                    "text": "Rewards"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              }
+            ],
+            "myCulversLink": {
+              "href": "/my-culvers",
+              "target": "_self",
+              "text": "MyCulver\u2019s"
+            },
+            "myCulversSignInLink": {
+              "href": "/account",
+              "target": "_self",
+              "text": "Sign In"
+            },
+            "myCulversSignUpLink": {
+              "href": "/account",
+              "target": "_self",
+              "text": "Sign Up"
+            },
+            "myCulversAccountLink": {
+              "href": "/account",
+              "target": "_self",
+              "text": "Account"
+            },
+            "myCulversInfo": "<p><span>Save your favorites and quickly reorder</span></p>",
+            "orderNowButtonText": "Order Now",
+            "orderNowButtonLink": {
+              "href": "/locator",
+              "target": "_self",
+              "text": "Order Now"
+            },
+            "secondaryNavigation": [
+              {
+                "contentID": 19002,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-04T09:17:50.32",
+                  "versionID": 132618,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 0
+                },
+                "fields": {
+                  "title": "Careers",
+                  "url": {
+                    "href": "/careers",
+                    "target": "_self",
+                    "text": "Careers"
+                  },
+                  "hide": "true",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 19003,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-04T09:17:50.473",
+                  "versionID": 132619,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 1
+                },
+                "fields": {
+                  "title": "Own a Culver's",
+                  "url": {
+                    "href": "/franchise",
+                    "target": "_self",
+                    "text": "Own a Culver's"
+                  },
+                  "hide": "true",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 20639,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-05T09:10:41.793",
+                  "versionID": 132621,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 3
+                },
+                "fields": {
+                  "title": "About",
+                  "url": {
+                    "href": "/about-culvers",
+                    "target": "",
+                    "text": "About"
+                  },
+                  "hide": "false",
+                  "hideonMobile": "false",
+                  "hideonApp": "false",
+                  "hideonDesktop": "false",
+                  "renderButton": "false",
+                  "renderAsOnlineOrderingMenu": "false",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 19005,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-05T09:10:41.797",
+                  "versionID": 132620,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 4
+                },
+                "fields": {
+                  "title": "Stories",
+                  "url": {
+                    "href": "/stories",
+                    "target": "_self",
+                    "text": "Stories"
+                  },
+                  "hide": "true",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 20640,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-04T09:17:50.82",
+                  "versionID": 132622,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 5
+                },
+                "fields": {
+                  "title": "Gift Cards",
+                  "url": {
+                    "href": "/gift-cards",
+                    "target": "",
+                    "text": "Gift Cards"
+                  },
+                  "hide": "false",
+                  "hideonMobile": "false",
+                  "hideonApp": "false",
+                  "hideonDesktop": "false",
+                  "renderButton": "false",
+                  "renderAsOnlineOrderingMenu": "false",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 20644,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-09T15:33:11.84",
+                  "versionID": 132806,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 6
+                },
+                "fields": {
+                  "title": "Rewards FAQs",
+                  "url": {
+                    "href": "/delicious-rewards/frequently-asked-questions",
+                    "target": "",
+                    "text": "Rewards FAQs"
+                  },
+                  "hide": "false",
+                  "hideonMobile": "false",
+                  "hideonApp": "false",
+                  "hideonDesktop": "false",
+                  "renderButton": "false",
+                  "renderAsOnlineOrderingMenu": "false",
+                  "childLinks": null,
+                  "footerLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 19006,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-02-09T15:33:11.843",
+                  "versionID": 112551,
+                  "referenceName": "navigationsecondarynew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 7
+                },
+                "fields": {
+                  "title": "Contact Us",
+                  "url": {
+                    "href": "https://www.contactculvers.com/",
+                    "target": "_blank",
+                    "text": "Contact Us"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              }
+            ],
+            "appLegalText": "v[VERSION_NUMBER]\r\n\u00a9 [YEAR] Culver Franchising System, LLC. All Rights Reserved.",
+            "appLegalLink": {
+              "href": "/legal",
+              "target": "",
+              "text": "Legal"
+            },
+            "locationButtonText": "Find A Location",
+            "locationButtonLink": {
+              "href": "/locator",
+              "target": "_self",
+              "text": "Find A Location"
+            },
+            "viewAllLocationsText": "All Locations",
+            "viewAllLocationsLink": {
+              "href": "/locator",
+              "target": "_self",
+              "text": "All Locations"
+            }
+          },
+          "seo": null
+        },
+        "footer": {
+          "contentID": 18981,
+          "properties": {
+            "state": 2,
+            "modified": "2026-01-27T11:55:25.78",
+            "versionID": 132564,
+            "referenceName": "sharedfooter",
+            "definitionName": "SharedFooter",
+            "itemOrder": 0
+          },
+          "fields": {
+            "navigation": [
+              {
+                "contentID": 18982,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:19.033",
+                  "versionID": 112525,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 0
+                },
+                "fields": {
+                  "title": "Nutrition & Allergen Guide",
+                  "url": {
+                    "href": "/menu-and-nutrition/nutrition-and-allergen-guide",
+                    "target": "_self",
+                    "text": "Nutrition & Allergen Guide"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18983,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:19.33",
+                  "versionID": 112526,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 1
+                },
+                "fields": {
+                  "title": "Our Story",
+                  "url": {
+                    "href": "/about-culvers/our-story",
+                    "target": "_self",
+                    "text": "Our Story"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18984,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:19.587",
+                  "versionID": 112527,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 2
+                },
+                "fields": {
+                  "title": "Gift Cards",
+                  "url": {
+                    "href": "/gift-cards",
+                    "target": "_self",
+                    "text": "Gift Cards"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18985,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:19.87",
+                  "versionID": 112528,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 3
+                },
+                "fields": {
+                  "title": "Careers",
+                  "url": {
+                    "href": "/careers",
+                    "target": "_self",
+                    "text": "Careers"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18986,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:20.13",
+                  "versionID": 112529,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 4
+                },
+                "fields": {
+                  "title": "Own a Culver's",
+                  "url": {
+                    "href": "/franchise",
+                    "target": "_self",
+                    "text": "Own a Culver's"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18987,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:26:20.44",
+                  "versionID": 112530,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 5
+                },
+                "fields": {
+                  "title": "Stories",
+                  "url": {
+                    "href": "/stories",
+                    "target": "_self",
+                    "text": "Stories"
+                  },
+                  "childLinks": null
+                },
+                "seo": null
+              },
+              {
+                "contentID": 20580,
+                "properties": {
+                  "state": 2,
+                  "modified": "2025-12-19T12:01:16.653",
+                  "versionID": 131626,
+                  "referenceName": "navigationfooternew",
+                  "definitionName": "Navigation",
+                  "itemOrder": 6
+                },
+                "fields": {
+                  "title": "Rewards FAQs",
+                  "url": {
+                    "href": "/delicious-rewards/frequently-asked-questions",
+                    "target": "",
+                    "text": "Rewards FAQs"
+                  },
+                  "hide": "false",
+                  "hideonMobile": "false",
+                  "hideonDesktop": "false",
+                  "renderButton": "false",
+                  "renderAsOnlineOrderingMenu": "false",
+                  "childLinks": null
+                },
+                "seo": null
+              }
+            ],
+            "contactUsCopy": "<h2>Contact Us</h2>\r\n<p><a href=\"https://www.contactculvers.com\" target=\"_blank\" rel=\"noopener\">Send Restaurant Feedback</a></p>\r\n<p>Or call Guest Relations at <a href=\"tel:608-644-2176\" target=\"_self\">608-644-2176</a></p>",
+            "socialLinks": [
+              {
+                "contentID": 18990,
+                "properties": {
+                  "state": 2,
+                  "modified": "2026-01-27T11:49:44.037",
+                  "versionID": 132563,
+                  "referenceName": "sharedfooter_imagelinks",
+                  "definitionName": "ImageLinks",
+                  "itemOrder": 0
+                },
+                "fields": {
+                  "image": {
+                    "label": null,
+                    "url": "https://cdn.culvers.com/Attachments/NewItems/facebook-logo_20230517193921_0.svg",
+                    "target": null,
+                    "filesize": 311,
+                    "pixelHeight": "0",
+                    "pixelWidth": "0"
+                  },
+                  "link": {
+                    "href": "https://www.facebook.com/culvers",
+                    "target": "_blank",
+                    "text": "Culver\u2019s on Facebook"
+                  }
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18991,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-08-25T14:33:36.633",
+                  "versionID": 114109,
+                  "referenceName": "sharedfooter_imagelinks",
+                  "definitionName": "ImageLinks",
+                  "itemOrder": 1
+                },
+                "fields": {
+                  "image": {
+                    "label": null,
+                    "url": "https://cdn.culvers.com/Attachments/NewItems/x-logo-circle_20230825183252_0.svg",
+                    "target": null,
+                    "filesize": 352,
+                    "pixelHeight": "0",
+                    "pixelWidth": "0"
+                  },
+                  "link": {
+                    "href": "https://twitter.com/culvers",
+                    "target": "",
+                    "text": "Culver\u2019s on Twitter"
+                  }
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18992,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:27:37.823",
+                  "versionID": 112554,
+                  "referenceName": "sharedfooter_imagelinks",
+                  "definitionName": "ImageLinks",
+                  "itemOrder": 2
+                },
+                "fields": {
+                  "image": {
+                    "label": null,
+                    "url": "https://cdn.culvers.com/Attachments/NewItems/instagram-logo_20230517194754_0.svg",
+                    "target": null,
+                    "filesize": 1443,
+                    "pixelHeight": "0",
+                    "pixelWidth": "0"
+                  },
+                  "link": {
+                    "href": "https://instagram.com/culvers",
+                    "target": "",
+                    "text": "Culver\u2019s on Instagram"
+                  }
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18993,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:27:38.11",
+                  "versionID": 112555,
+                  "referenceName": "sharedfooter_imagelinks",
+                  "definitionName": "ImageLinks",
+                  "itemOrder": 3
+                },
+                "fields": {
+                  "image": {
+                    "label": null,
+                    "url": "https://cdn.culvers.com/Attachments/NewItems/youtube-logo_20230517194923_0.svg",
+                    "target": null,
+                    "filesize": 516,
+                    "pixelHeight": "0",
+                    "pixelWidth": "0"
+                  },
+                  "link": {
+                    "href": "https://www.youtube.com/user/CulversRestaurants",
+                    "target": "",
+                    "text": "Culver\u2019s on YouTube"
+                  }
+                },
+                "seo": null
+              },
+              {
+                "contentID": 18994,
+                "properties": {
+                  "state": 2,
+                  "modified": "2023-05-31T16:27:38.363",
+                  "versionID": 112556,
+                  "referenceName": "sharedfooter_imagelinks",
+                  "definitionName": "ImageLinks",
+                  "itemOrder": 4
+                },
+                "fields": {
+                  "image": {
+                    "label": null,
+                    "url": "https://cdn.culvers.com/Attachments/NewItems/tiktok-logo_20230517195046_0.svg",
+                    "target": null,
+                    "filesize": 525,
+                    "pixelHeight": "0",
+                    "pixelWidth": "0"
+                  },
+                  "link": {
+                    "href": "https://www.tiktok.com/@culversrestaurants",
+                    "target": "",
+                    "text": "Culver\u2019s on TikTok"
+                  }
+                },
+                "seo": null
+              }
+            ],
+            "legal": "<p>&copy; [YEAR] Culver Franchising System, LLC. All Rights Reserved.</p>\r\n<ul>\r\n<li><a href=\"/sitemap\">Site Map</a> |&nbsp;</li>\r\n<li><a href=\"~/legal\" target=\"\">Legal</a> |&nbsp;</li>\r\n<li><a href=\"~/accessibility\" target=\"_self\">Accessibility</a> |&nbsp;</li>\r\n<li><a href=\"~/media\" target=\"_self\">Media</a> |&nbsp;</li>\r\n<li><a href=\"javascript:void(0);\" class=\"ot-sdk-show-settings\" onclick=\"Optanon.ToggleInfoDisplay()\">Your Privacy Choices</a> <img src=\"https://cdn.culvers.com/social/privacyoptions.svg\" alt=\"Your Privacy Choices\" width=\"27\" height=\"12\"></li>\r\n</ul>"
+          },
+          "seo": null
+        }
+      },
+      "roadblock": null,
+      "announcement": null
+    },
+    "languageCode": "en-us",
+    "channelName": "website",
+    "isPreview": false,
+    "isDevelopmentMode": false,
+    "notFound": false
+  },
+  "__N_SSP": true
+}

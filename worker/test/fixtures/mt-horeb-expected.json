@@ -1,0 +1,248 @@
+{
+  "name": "Mt Horeb",
+  "city": "Mt. Horeb",
+  "state": "WI",
+  "address": "1700 Springdale St",
+  "flavors": [
+    {
+      "date": "2026-02-20",
+      "name": "Dark Chocolate PB Crunch",
+      "description": "Dark Chocolate Fresh Frozen Custard swirled with a ribbon of peanut butter and crunchy Butterfinger pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/dark-chocolate-pb-crunch"
+    },
+    {
+      "date": "2026-02-21",
+      "name": "Chocolate Caramel Twist",
+      "description": "Chocolate and Vanilla Fresh Frozen Custard swirled together with ribbons of old fashioned salted caramel and chopped Dove Chocolate pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/chocolate-caramel-twist"
+    },
+    {
+      "date": "2026-02-22",
+      "name": "Mint Explosion",
+      "description": "Our specially blended Mint Fresh Frozen Custard exploding with OREO Cookie pieces, Andes candies and novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/mint-explosion"
+    },
+    {
+      "date": "2026-02-23",
+      "name": "Turtle Dove",
+      "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, marshmallow creme, toasted pecan pieces and chopped Dove Chocolate pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/turtle-dove"
+    },
+    {
+      "date": "2026-02-24",
+      "name": "Double Strawberry",
+      "description": "Our specially blended Strawberry Fresh Frozen Custard swirled with plump strawberries.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/double-strawberry"
+    },
+    {
+      "date": "2026-02-25",
+      "name": "Turtle Cheesecake",
+      "description": "Creamy Cheesecake Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, chopped Dove Chocolate pieces, toasted pecan pieces and rich cheesecake pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/turtle-cheesecake"
+    },
+    {
+      "date": "2026-02-26",
+      "name": "Caramel Turtle",
+      "description": "Double up on deliciousness with Caramel Fresh Frozen Custard swirled with toasted pecan pieces and novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-turtle"
+    },
+    {
+      "date": "2026-02-27",
+      "name": "Andes Mint Avalanche",
+      "description": "Andes Candies and novelty chocolate with our specially blended Mint Fresh Frozen Custard.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/andes-mint-avalanche"
+    },
+    {
+      "date": "2026-02-28",
+      "name": "OREO Cookie Cheesecake",
+      "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO Cookie pieces swirled in.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/oreo-cookie-cheesecake"
+    },
+    {
+      "date": "2026-03-01",
+      "name": "Devil's Food Cake",
+      "description": "Dark Chocolate Fresh Frozen Custard swirled with chocolate cake and novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/devils-food-cake"
+    },
+    {
+      "date": "2026-03-02",
+      "name": "Caramel Cashew",
+      "description": "Culver\u2019s Classic! Our creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel and loaded with lightly salted cashew pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-cashew"
+    },
+    {
+      "date": "2026-03-03",
+      "name": "Butter Pecan",
+      "description": "Culver's Classic! This one still knocks our socks off. Specially blended Butter Pecan Fresh Frozen Custard with toasted pecan pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/butter-pecan"
+    },
+    {
+      "date": "2026-03-04",
+      "name": "Caramel Chocolate Pecan",
+      "description": "Delicious Chocolate Fresh Frozen Custard enhanced with ribbons of old fashioned salted caramel, toasted pecan pieces and chopped Dove Chocolate pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-chocolate-pecan"
+    },
+    {
+      "date": "2026-03-05",
+      "name": "OREO Cookie Cheesecake",
+      "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO Cookie pieces swirled in.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/oreo-cookie-cheesecake"
+    },
+    {
+      "date": "2026-03-06",
+      "name": "Dark Chocolate Decadence",
+      "description": "Premium blend of cocoas for the ultimate chocolate experience.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/dark-chocolate-decadence"
+    },
+    {
+      "date": "2026-03-07",
+      "name": "Caramel Fudge Cookie Dough",
+      "description": "A rich, indulgent cookie dough treat with ribbons of old fashioned salted caramel and thick fudge swirled in creamy Vanilla Fresh Frozen Custard.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-fudge-cookie-dough"
+    },
+    {
+      "date": "2026-03-08",
+      "name": "Mint Cookie",
+      "description": "Our specially blended Mint Fresh Frozen Custard with OREO Cookies for a refreshing treat.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/mint-cookie"
+    },
+    {
+      "date": "2026-03-09",
+      "name": "Caramel Pecan",
+      "description": "Ribbons of old fashioned salted caramel swirled with our creamy Vanilla Fresh Frozen Custard and toasted pecan pieces. Taste why it's one of out most popular treats!",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-pecan"
+    },
+    {
+      "date": "2026-03-10",
+      "name": "Really Reese's",
+      "description": "Reese\u2019s Peanut Butter Cups become a special treat when stirred in our delicious Chocolate Fresh Frozen Custard.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/really-reeses"
+    },
+    {
+      "date": "2026-03-11",
+      "name": "Raspberry Cheesecake",
+      "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and sweet raspberries for an indulgent treat.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/raspberry-cheesecake"
+    },
+    {
+      "date": "2026-03-12",
+      "name": "Chocolate Covered Strawberry",
+      "description": "Our creamy Vanilla Fresh Frozen Custard complemented with plump strawberries and novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/chocolate-covered-strawberry"
+    },
+    {
+      "date": "2026-03-13",
+      "name": "Mint Explosion",
+      "description": "Our specially blended Mint Fresh Frozen Custard exploding with OREO Cookie pieces, Andes candies and novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/mint-explosion"
+    },
+    {
+      "date": "2026-03-14",
+      "name": "Caramel Peanut Buttercup",
+      "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of peanut butter and old fashioned salted caramel and loaded with novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-peanut-buttercup"
+    },
+    {
+      "date": "2026-03-15",
+      "name": "Dark Chocolate PB Crunch",
+      "description": "Dark Chocolate Fresh Frozen Custard swirled with a ribbon of peanut butter and crunchy Butterfinger pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/dark-chocolate-pb-crunch"
+    },
+    {
+      "date": "2026-03-16",
+      "name": "Turtle",
+      "description": "A Culver's Classic! We begin with creamy Vanilla Fresh Frozen Custard and swirl in ribbons of old fashioned salted caramel, novelty chocolate, and toasted pecan pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/turtle"
+    },
+    {
+      "date": "2026-03-17",
+      "name": "Mint Cookie",
+      "description": "Our specially blended Mint Fresh Frozen Custard with OREO Cookies for a refreshing treat.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/mint-cookie"
+    },
+    {
+      "date": "2026-03-18",
+      "name": "Georgia Peach",
+      "description": "Our specially blended Peach Fresh Frozen Custard swirled with sweet peaches for a light, refreshing treat.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/georgia-peach"
+    },
+    {
+      "date": "2026-03-19",
+      "name": "Turtle Cheesecake",
+      "description": "Creamy Cheesecake Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, chopped Dove Chocolate pieces, toasted pecan pieces and rich cheesecake pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/turtle-cheesecake"
+    },
+    {
+      "date": "2026-03-20",
+      "name": "Devil's Food Cake",
+      "description": "Dark Chocolate Fresh Frozen Custard swirled with chocolate cake and novelty chocolate.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/devils-food-cake"
+    },
+    {
+      "date": "2026-03-21",
+      "name": "Salted Double Caramel Pecan",
+      "description": "Ribbons of old fashioned salted caramel swirled into Caramel Fresh Frozen Custard and mixed with toasted pecan pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/salted-double-caramel-pecan"
+    },
+    {
+      "date": "2026-03-22",
+      "name": "Andes Mint Avalanche",
+      "description": "Andes Candies and novelty chocolate with our specially blended Mint Fresh Frozen Custard.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/andes-mint-avalanche"
+    },
+    {
+      "date": "2026-03-23",
+      "name": "Turtle Dove",
+      "description": "Creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel, marshmallow creme, toasted pecan pieces and chopped Dove Chocolate pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/turtle-dove"
+    },
+    {
+      "date": "2026-03-24",
+      "name": "Snickers Swirl",
+      "description": "Chocolate and Vanilla Fresh Frozen Custard swirled together with chewy pieces of Snickers.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/snickers-swirl"
+    },
+    {
+      "date": "2026-03-25",
+      "name": "OREO Cookie Cheesecake",
+      "description": "Creamy Cheesecake Fresh Frozen Custard with rich cheesecake pieces and OREO Cookie pieces swirled in.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/oreo-cookie-cheesecake"
+    },
+    {
+      "date": "2026-03-26",
+      "name": "Chocolate Volcano",
+      "description": "Our delicious Chocolate Fresh Frozen Custard explodes with OREO Cookie pieces, chopped Dove Chocolate pieces, mini M&Ms and streams of chocolate syrup.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/chocolate-volcano"
+    },
+    {
+      "date": "2026-03-27",
+      "name": "Mint Cookie",
+      "description": "Our specially blended Mint Fresh Frozen Custard with OREO Cookies for a refreshing treat.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/mint-cookie"
+    },
+    {
+      "date": "2026-03-28",
+      "name": "Double Strawberry",
+      "description": "Our specially blended Strawberry Fresh Frozen Custard swirled with plump strawberries.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/double-strawberry"
+    },
+    {
+      "date": "2026-03-29",
+      "name": "Dark Chocolate Decadence",
+      "description": "Premium blend of cocoas for the ultimate chocolate experience.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/dark-chocolate-decadence"
+    },
+    {
+      "date": "2026-03-30",
+      "name": "Caramel Cashew",
+      "description": "Culver\u2019s Classic! Our creamy Vanilla Fresh Frozen Custard swirled with ribbons of old fashioned salted caramel and loaded with lightly salted cashew pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/caramel-cashew"
+    },
+    {
+      "date": "2026-03-31",
+      "name": "Crazy for Cookie Dough",
+      "description": "Our creamy Vanilla and Chocolate Fresh Frozen Custard swirled together and mixed with thick fudge, ribbons of old fashioned salted caramel and cookie dough pieces.",
+      "detail_url": "https://www.culvers.com/flavor-of-the-day/crazy-for-cookie-dough"
+    }
+  ]
+}

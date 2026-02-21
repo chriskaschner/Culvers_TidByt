@@ -1,7 +1,8 @@
 """
-Google Calendar Integration for Culver's Flavor of the Day
+Google Calendar Sync for Culver's Flavor of the Day
 
 Manages authentication and syncing of flavor events to Google Calendar.
+Consumes data from flavor_cache.json via sync_from_cache().
 """
 
 import os
@@ -353,6 +354,39 @@ def delete_past_events(
     except HttpError as e:
         logger.error(f"Error deleting past events: {e}")
         return 0
+
+
+def sync_from_cache(service, cache_data: Dict, calendar_id: str) -> Dict[str, int]:
+    """
+    Sync calendar events from cached flavor data.
+
+    Extracts primary and backup locations from the cache, then calls sync_calendar().
+
+    Args:
+        service: Google Calendar service object
+        cache_data: Loaded cache dict from flavor_service.load_cache()
+        calendar_id: Google Calendar ID
+
+    Returns:
+        Dict with sync statistics (created, updated, errors)
+    """
+    from src.flavor_service import get_primary_location, get_backup_location
+
+    primary = get_primary_location(cache_data)
+    if not primary:
+        raise ValueError("No primary location found in cache")
+
+    backup = get_backup_location(cache_data)
+
+    return sync_calendar(
+        service,
+        primary['flavors'],
+        calendar_id=calendar_id,
+        restaurant_url=primary.get('url', ''),
+        restaurant_location=primary.get('restaurant_info', {}).get('full_address', ''),
+        backup_flavors=backup['flavors'] if backup else None,
+        backup_location_name=backup.get('name', '') if backup else ''
+    )
 
 
 if __name__ == "__main__":

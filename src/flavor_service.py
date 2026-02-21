@@ -1,19 +1,26 @@
 """
-Culver's Flavor of the Day Scraper
+Culver's Flavor of the Day - Flavor Service
 
-Scrapes Culver's restaurant pages for flavor information using embedded JSON data.
+Fetches flavor data from Culver's restaurant pages and manages a local cache.
+Both the Calendar Sync and Tidbyt Render consumers read from this cache.
 """
 
+import os
 import requests
 from bs4 import BeautifulSoup
 import json
 import re
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Cache configuration
+DEFAULT_CACHE_PATH = Path(__file__).parent.parent / 'flavor_cache.json'
+CACHE_VERSION = 1
 
 
 def clean_text(text: str) -> str:
@@ -321,34 +328,153 @@ def get_flavor_calendar(restaurant_url: str, days: int = 5) -> List[Dict[str, st
         raise
 
 
+def _location_slug(name: str) -> str:
+    """Convert location name to slug key, e.g. 'Mt. Horeb' -> 'mt-horeb'."""
+    return name.lower().replace('.', '').replace(' ', '-')
+
+
+def fetch_and_cache(config: Dict, cache_path: str = None) -> Dict:
+    """
+    Fetch flavor data for all enabled locations and write to cache.
+
+    Args:
+        config: Parsed config.yaml dict
+        cache_path: Override path for flavor_cache.json
+
+    Returns:
+        The cache dict that was written
+    """
+    if cache_path is None:
+        cache_path = str(DEFAULT_CACHE_PATH)
+
+    locations = config.get('culvers', {}).get('locations', [])
+    calendar_days = config.get('culvers', {}).get('calendar_days', 30)
+
+    cache_data = {
+        'version': CACHE_VERSION,
+        'timestamp': datetime.now().isoformat(),
+        'locations': {}
+    }
+
+    for location in locations:
+        if not location.get('enabled', False):
+            logger.info(f"Skipping disabled location: {location.get('name')}")
+            continue
+
+        name = location.get('name', 'Unknown')
+        url = location.get('url')
+        slug = _location_slug(name)
+
+        if not url:
+            logger.error(f"No URL for location: {name}")
+            continue
+
+        try:
+            restaurant_info = get_restaurant_info(url)
+            flavors = get_flavor_calendar(url, days=calendar_days)
+
+            cache_data['locations'][slug] = {
+                'name': name,
+                'url': url,
+                'role': location.get('role', ''),
+                'restaurant_info': restaurant_info,
+                'flavors': flavors
+            }
+
+            logger.info(f"Cached {len(flavors)} flavors for {name}")
+
+        except Exception as e:
+            logger.error(f"Error fetching {name}: {e}")
+
+    with open(cache_path, 'w') as f:
+        json.dump(cache_data, f, indent=2)
+
+    logger.info(f"Cache written to {cache_path}")
+    return cache_data
+
+
+def load_cache(cache_path: str = None) -> Dict:
+    """
+    Load flavor data from cache file.
+
+    Args:
+        cache_path: Override path for flavor_cache.json
+
+    Returns:
+        Parsed cache dict
+
+    Raises:
+        FileNotFoundError: If cache file does not exist
+    """
+    if cache_path is None:
+        cache_path = str(DEFAULT_CACHE_PATH)
+
+    if not os.path.exists(cache_path):
+        raise FileNotFoundError(
+            f"Cache file not found: {cache_path}. "
+            f"Run with --fetch-only first."
+        )
+
+    with open(cache_path, 'r') as f:
+        return json.load(f)
+
+
+def get_primary_location(cache_data: Dict) -> Optional[Dict]:
+    """Get the primary location data from cache."""
+    for slug, loc in cache_data.get('locations', {}).items():
+        if loc.get('role') == 'primary':
+            return loc
+    return None
+
+
+def get_backup_location(cache_data: Dict) -> Optional[Dict]:
+    """Get the backup location data from cache."""
+    for slug, loc in cache_data.get('locations', {}).items():
+        if loc.get('role') == 'backup':
+            return loc
+    return None
+
+
 if __name__ == "__main__":
-    # Test the scraper functions
-    test_url = "https://www.culvers.com/restaurants/mt-horeb"
-    
-    print("Testing Culver's Scraper...")
+    import yaml
+
+    print("Testing Flavor Service...")
     print("-" * 50)
-    
+
     try:
-        # Test current flavor
+        # Test direct scraper functions
+        test_url = "https://www.culvers.com/restaurants/mt-horeb"
+
         current = get_current_flavor(test_url)
         print(f"\nCurrent Flavor: {current['name']}")
         print(f"Date: {current['date']}")
-        print(f"Detail URL: {current['detail_url']}")
-        
-        # Test flavor details
-        description = get_flavor_details(current['detail_url'])
-        print(f"\nDescription: {description}")
-        
-        # Test calendar
+
         calendar = get_flavor_calendar(test_url, days=5)
         print(f"\nUpcoming Flavors ({len(calendar)} days):")
         for flavor in calendar:
             print(f"  {flavor['date']}: {flavor['name']}")
-            print(f"    {flavor['description'][:60]}...")
-            
-        print("\n✅ All scraper tests passed!")
-        
+
+        # Test fetch_and_cache with config
+        config_path = Path(__file__).parent.parent / 'config.yaml'
+        if config_path.exists():
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+
+            print(f"\nTesting fetch_and_cache...")
+            cache_data = fetch_and_cache(config)
+            print(f"Cached {len(cache_data['locations'])} locations")
+
+            # Test load_cache
+            loaded = load_cache()
+            print(f"Loaded cache with {len(loaded['locations'])} locations")
+
+            primary = get_primary_location(loaded)
+            if primary:
+                print(f"Primary: {primary['name']} ({len(primary['flavors'])} flavors)")
+
+        print("\nAll flavor service tests passed!")
+
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()

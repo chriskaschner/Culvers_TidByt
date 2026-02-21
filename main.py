@@ -2,28 +2,32 @@
 """
 Culver's Flavor of the Day Tracker - Main Orchestration Script
 
-Fetches flavor calendars from configured locations and syncs to Google Calendar
-with backup options included in event descriptions.
+Three-step pipeline:
+1. Fetch flavor data from Culver's website and write to cache
+2. Sync cached flavors to Google Calendar
+3. Render Tidbyt app with cached data and push to device
 """
 
 import sys
+import os
+import argparse
+import subprocess
 import yaml
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict
+from pathlib import Path
 
-from src.culvers_scraper import get_restaurant_info, get_flavor_calendar
-from src.calendar_updater import authenticate, sync_calendar
+from src.flavor_service import fetch_and_cache, load_cache, get_primary_location
+from src.calendar_sync import authenticate, sync_from_cache
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
 )
 logger = logging.getLogger(__name__)
+
+STAR_FILE = Path(__file__).parent / 'tidbyt' / 'culvers_fotd.star'
 
 
 def load_config(config_path: str = 'config.yaml') -> Dict:
@@ -37,162 +41,193 @@ def load_config(config_path: str = 'config.yaml') -> Dict:
         logger.error(f"Configuration file not found: {config_path}")
         sys.exit(1)
     except yaml.YAMLError as e:
-        logger.error(f"Error parsing configuration file: {e}")
+        logger.error(f"Error parsing configuration: {e}")
         sys.exit(1)
 
 
-def get_locations_by_role(config: Dict) -> Dict[str, Optional[Dict]]:
-    """
-    Extract primary and backup locations from config.
+def step_fetch(config: Dict) -> Dict:
+    """Step 1: Fetch flavor data and write cache."""
+    logger.info("Step 1: Fetching flavor data...")
+    cache_data = fetch_and_cache(config)
 
-    Returns:
-        Dict with 'primary' and 'backup' keys containing location configs
-    """
-    locations = config.get('culvers', {}).get('locations', [])
+    location_count = len(cache_data.get('locations', {}))
+    total_flavors = sum(
+        len(loc.get('flavors', []))
+        for loc in cache_data.get('locations', {}).values()
+    )
+    logger.info(f"  Cached {total_flavors} flavors across {location_count} locations")
+    return cache_data
 
-    primary = None
-    backup = None
 
-    for location in locations:
-        if not location.get('enabled', False):
-            logger.info(f"Skipping disabled location: {location.get('name')}")
-            continue
+def step_calendar_sync(cache_data: Dict, calendar_id: str) -> Dict:
+    """Step 2: Sync cached flavors to Google Calendar."""
+    logger.info("Step 2: Syncing to Google Calendar...")
 
-        role = location.get('role', '').lower()
-        if role == 'primary':
-            primary = location
-        elif role == 'backup':
-            backup = location
+    service = authenticate()
+    stats = sync_from_cache(service, cache_data, calendar_id)
 
+    logger.info(
+        f"  Calendar sync: {stats['created']} created, "
+        f"{stats['updated']} updated, {stats['errors']} errors"
+    )
+    return stats
+
+
+def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
+    """Step 3: Render Tidbyt app with cache data and push to device."""
+    logger.info("Step 3: Rendering and pushing to Tidbyt...")
+
+    tidbyt_config = config.get('tidbyt', {})
+    device_id = tidbyt_config.get('device_id', '')
+    installation_id = tidbyt_config.get('installation_id', 'culvers')
+    view_mode = tidbyt_config.get('view_mode', 'three_day')
+    api_token = os.environ.get('TIDBYT_API_TOKEN', '')
+
+    if not device_id:
+        logger.error("  No tidbyt.device_id configured in config.yaml")
+        return False
+
+    if not api_token:
+        logger.error("  TIDBYT_API_TOKEN not found in environment. Source .env first.")
+        return False
+
+    primary = get_primary_location(cache_data)
     if not primary:
-        logger.warning("No primary location found in config")
+        logger.error("  No primary location in cache")
+        return False
 
-    return {'primary': primary, 'backup': backup}
+    location_name = primary['name']
+    flavors = primary['flavors']
 
+    # Filter to today and future
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    future_flavors = [f for f in flavors if f['date'] >= today_str]
 
-def fetch_location_data(location: Dict, calendar_days: int) -> tuple:
-    """
-    Fetch restaurant info and flavor calendar for a location.
+    if not future_flavors:
+        logger.warning("  No current/future flavors in cache")
+        return False
 
-    Returns:
-        Tuple of (restaurant_info, flavors)
-    """
-    location_name = location.get('name', 'Unknown')
-    location_url = location.get('url')
+    # Build pixlet render command with flattened params
+    output_file = '/tmp/culvers_tidbyt.webp'
+    cmd = [
+        'pixlet', 'render', str(STAR_FILE),
+        f'view_mode={view_mode}',
+        f'location_name={location_name}',
+    ]
 
-    if not location_url:
-        logger.error(f"No URL configured for location: {location_name}")
-        return None, None
+    num_flavors = 3 if view_mode == 'three_day' else 1
+    for i, flavor in enumerate(future_flavors[:num_flavors]):
+        cmd.append(f'flavor_{i}={flavor["name"]}')
+        cmd.append(f'flavor_date_{i}={flavor["date"]}')
+
+    cmd.extend(['-o', output_file])
+
+    logger.info(f"  Rendering {num_flavors} flavor(s) for {location_name}...")
 
     try:
-        logger.info(f"Fetching data for {location_name}...")
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"  Pixlet render failed: {e.stderr}")
+        return False
+    except FileNotFoundError:
+        logger.error("  pixlet not found. Install: brew install tidbyt/tidbyt/pixlet")
+        return False
 
-        # Get restaurant info
-        restaurant_info = get_restaurant_info(location_url)
-        logger.info(f"  Address: {restaurant_info['full_address']}")
+    # Push to device
+    push_cmd = [
+        'pixlet', 'push',
+        '-t', api_token,
+        '-i', installation_id,
+        device_id,
+        output_file,
+    ]
 
-        # Get flavor calendar
-        flavors = get_flavor_calendar(location_url, days=calendar_days)
-        logger.info(f"  Flavors: {len(flavors)}")
+    logger.info(f"  Pushing to device {device_id}...")
 
-        return restaurant_info, flavors
+    try:
+        subprocess.run(push_cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"  Pixlet push failed: {e.stderr}")
+        return False
 
-    except Exception as e:
-        logger.error(f"Error fetching data for {location_name}: {e}")
-        return None, None
+    logger.info("  Tidbyt updated successfully")
+    return True
 
 
 def main():
     """Main orchestration function."""
+    parser = argparse.ArgumentParser(description="Culver's Flavor of the Day Tracker")
+    parser.add_argument('--fetch-only', action='store_true',
+                        help='Only fetch and cache, skip calendar and tidbyt')
+    parser.add_argument('--calendar-only', action='store_true',
+                        help='Only sync calendar from existing cache')
+    parser.add_argument('--tidbyt-only', action='store_true',
+                        help='Only render and push to Tidbyt from existing cache')
+    parser.add_argument('--skip-calendar', action='store_true',
+                        help='Skip calendar sync')
+    parser.add_argument('--skip-tidbyt', action='store_true',
+                        help='Skip Tidbyt render/push')
+    parser.add_argument('--config', default='config.yaml',
+                        help='Config file path (default: config.yaml)')
+    args = parser.parse_args()
+
     logger.info("=" * 60)
-    logger.info("Culver's Flavor of the Day Tracker - Starting")
+    logger.info("Culver's Flavor of the Day Tracker")
     logger.info("=" * 60)
 
-    # Load configuration
-    config = load_config()
-    calendar_days = config.get('culvers', {}).get('calendar_days', 30)
+    config = load_config(args.config)
     calendar_id = config.get('google_calendar', {}).get('calendar_id')
 
-    if not calendar_id:
-        logger.error("No calendar_id configured in google_calendar section")
-        sys.exit(1)
+    # Determine which steps to run
+    run_fetch = True
+    run_calendar = True
+    run_tidbyt = True
 
-    # Get primary and backup locations
-    locations = get_locations_by_role(config)
-    primary = locations['primary']
-    backup = locations['backup']
+    if args.fetch_only:
+        run_calendar = False
+        run_tidbyt = False
+    elif args.calendar_only:
+        run_fetch = False
+        run_tidbyt = False
+    elif args.tidbyt_only:
+        run_fetch = False
+        run_calendar = False
 
-    if not primary:
-        logger.error("No primary location configured - cannot proceed")
-        sys.exit(1)
+    if args.skip_calendar:
+        run_calendar = False
+    if args.skip_tidbyt:
+        run_tidbyt = False
 
-    # Fetch primary location data
-    primary_info, primary_flavors = fetch_location_data(primary, calendar_days)
+    # Step 1: Fetch and cache
+    cache_data = None
+    if run_fetch:
+        cache_data = step_fetch(config)
 
-    if not primary_flavors:
-        logger.error("Failed to fetch primary location flavors - cannot proceed")
-        sys.exit(1)
+    # Load from cache if we skipped fetching
+    if cache_data is None:
+        cache_data = load_cache()
 
-    # Fetch backup location data (optional)
-    backup_flavors = None
-    backup_name = None
-
-    if backup:
-        backup_info, backup_flavors = fetch_location_data(backup, calendar_days)
-        if backup_flavors:
-            backup_name = backup.get('name')
-            logger.info(f"Will include backup options from {backup_name}")
+    # Step 2: Calendar sync
+    if run_calendar:
+        if not calendar_id:
+            logger.error("No calendar_id in config -- skipping calendar sync")
         else:
-            logger.warning("Failed to fetch backup location - proceeding without backup options")
-    else:
-        logger.info("No backup location configured")
+            step_calendar_sync(cache_data, calendar_id)
 
-    # Authenticate with Google Calendar
-    logger.info("\nAuthenticating with Google Calendar...")
-    try:
-        service = authenticate()
-    except Exception as e:
-        logger.error(f"Authentication failed: {e}")
-        sys.exit(1)
+    # Step 3: Tidbyt render + push
+    if run_tidbyt:
+        step_tidbyt_render_push(cache_data, config)
 
-    # Sync to calendar
-    logger.info(f"\nSyncing to calendar: {calendar_id}")
-    logger.info(f"Primary location: {primary.get('name')}")
-
-    try:
-        stats = sync_calendar(
-            service,
-            primary_flavors,
-            calendar_id=calendar_id,
-            restaurant_url=primary.get('url'),
-            restaurant_location=primary_info['full_address'] if primary_info else '',
-            backup_flavors=backup_flavors,
-            backup_location_name=backup_name
-        )
-
-        logger.info("\n" + "=" * 60)
-        logger.info("✅ Sync Complete!")
-        logger.info(f"   Created: {stats['created']}")
-        logger.info(f"   Updated: {stats['updated']}")
-        logger.info(f"   Errors: {stats['errors']}")
-        logger.info("=" * 60)
-
-        if stats['errors'] > 0:
-            logger.warning(f"Completed with {stats['errors']} errors - check logs above")
-            sys.exit(1)
-
-    except Exception as e:
-        logger.error(f"Sync failed: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    logger.info("=" * 60)
+    logger.info("Done!")
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.info("\n\nInterrupted by user")
+        logger.info("\nInterrupted by user")
         sys.exit(0)
     except Exception as e:
         logger.error(f"Unexpected error: {e}")

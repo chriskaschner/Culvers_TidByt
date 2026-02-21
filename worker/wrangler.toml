@@ -1,0 +1,25 @@
+name = "culvers-fotd-calendar"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+ENVIRONMENT = "production"
+# Access token for limiting access during testing.
+# Remove or leave empty for open access.
+# For better security, use: npx wrangler secret put ACCESS_TOKEN
+ACCESS_TOKEN = ""
+# CORS origin restriction. Set to your GitHub Pages URL in production.
+# Leave empty for open access (default).
+ALLOWED_ORIGIN = ""
+
+# KV namespace for caching flavor data (24h TTL)
+# For production: npx wrangler kv namespace create FLAVOR_CACHE
+# Then uncomment and paste the id below:
+# [[kv_namespaces]]
+# binding = "FLAVOR_CACHE"
+# id = "YOUR_KV_NAMESPACE_ID"
+
+# Local dev uses a local KV emulator automatically with this binding:
+[[kv_namespaces]]
+binding = "FLAVOR_CACHE"
+id = "local-dev-flavor-cache"

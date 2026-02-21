@@ -20,11 +20,15 @@ ENV/
 *.swo
 *~
 
+# Claude Code
+CLAUDE.md
+
 # Credentials and secrets
 credentials/
 token.json
 *.json.secret
 .env
+config.yaml
 
 # Logs
 logs/*.log
@@ -34,9 +38,16 @@ logs/*.log
 .DS_Store
 Thumbs.db
 
-# Tidbyt
+# Tidbyt renders and screenshots
 *.webp
+*.png
 
 # Status and cache
 status.json
 __cache__/
+flavor_cache.json
+tools/osm_cache.json
+
+# Cloudflare Worker
+worker/node_modules/
+worker/.wrangler/

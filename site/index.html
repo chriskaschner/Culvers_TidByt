@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Culver's Flavor of the Day Calendar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Culver's Flavor of the Day Calendar</h1>
+    <p>Subscribe to a calendar showing daily Flavor of the Day for your favorite Culver's locations.</p>
+  </header>
+
+  <main>
+    <section id="store-selector">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="state-filter">State</label>
+          <select id="state-filter">
+            <option value="">All States</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="city-search">Search</label>
+          <input type="text" id="city-search" placeholder="City or store name...">
+        </div>
+      </div>
+
+      <div class="selection-panels">
+        <div class="panel">
+          <h2>Primary Store</h2>
+          <p class="hint">Your main location — its flavor appears in the event title.</p>
+          <div id="primary-selected" class="selected-badge" hidden></div>
+          <select id="primary-select" size="8">
+            <option value="" disabled selected>Loading stores...</option>
+          </select>
+        </div>
+
+        <div class="panel">
+          <h2>Backup Stores <span id="secondary-count">(0/3)</span></h2>
+          <p class="hint">Up to 3 alternatives — click to add, use badges to remove.</p>
+          <div id="secondary-selected" class="selected-badges"></div>
+          <select id="secondary-select" size="8">
+            <option value="" disabled>Select primary store first</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" hidden>
+      <h2>Your Calendar Subscription</h2>
+
+      <div class="url-box">
+        <input type="text" id="ics-url" readonly>
+        <button id="copy-btn" title="Copy URL">Copy</button>
+      </div>
+
+      <div class="subscribe-buttons">
+        <a id="apple-btn" href="#" class="btn btn-apple">Add to Apple Calendar</a>
+        <a id="google-btn" href="#" target="_blank" rel="noopener" class="btn btn-google">Add to Google Calendar</a>
+      </div>
+
+      <details>
+        <summary>Setup instructions</summary>
+        <ol>
+          <li><strong>Apple Calendar:</strong> Click "Add to Apple Calendar" — it opens directly in Calendar.app.</li>
+          <li><strong>Google Calendar:</strong> Copy the URL above, then in Google Calendar go to Settings &gt; Add calendar &gt; From URL, and paste it.</li>
+          <li>The calendar will appear in your sidebar. Right-click it to change the color.</li>
+          <li>Events update automatically every 12-24 hours.</li>
+          <li>Each event shows your primary store's flavor in the title, with backup options in the description.</li>
+        </ol>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not affiliated with Culver's. Flavor data sourced from <a href="https://www.culvers.com" target="_blank" rel="noopener">culvers.com</a>.</p>
+  </footer>
+
+  <script>
+    const WORKER_BASE = 'http://localhost:8787'; // TODO: update to production Workers URL after deploy
+    const ACCESS_TOKEN = ''; // Set to match Worker's ACCESS_TOKEN, or leave empty for open access
+    let allStores = [];
+    let primarySlug = null;
+    let secondarySlugs = new Set();
+
+    // DOM elements
+    const stateFilter = document.getElementById('state-filter');
+    const citySearch = document.getElementById('city-search');
+    const primarySelect = document.getElementById('primary-select');
+    const secondarySelect = document.getElementById('secondary-select');
+    const primarySelected = document.getElementById('primary-selected');
+    const secondarySelected = document.getElementById('secondary-selected');
+    const secondaryCount = document.getElementById('secondary-count');
+    const resultSection = document.getElementById('result');
+    const icsUrl = document.getElementById('ics-url');
+    const copyBtn = document.getElementById('copy-btn');
+    const googleBtn = document.getElementById('google-btn');
+    const appleBtn = document.getElementById('apple-btn');
+
+    // Load store manifest
+    async function loadStores() {
+      try {
+        const resp = await fetch('stores.json');
+        const data = await resp.json();
+        allStores = data.stores || [];
+        populateStateFilter();
+        renderStoreList();
+      } catch (err) {
+        primarySelect.innerHTML = '<option disabled>Failed to load stores</option>';
+        console.error('Failed to load stores:', err);
+      }
+    }
+
+    function populateStateFilter() {
+      const states = [...new Set(allStores.map(s => s.state))].sort();
+      for (const state of states) {
+        const opt = document.createElement('option');
+        opt.value = state;
+        opt.textContent = state;
+        stateFilter.appendChild(opt);
+      }
+    }
+
+    function getFilteredStores() {
+      const state = stateFilter.value;
+      const query = citySearch.value.toLowerCase().trim();
+      return allStores.filter(s => {
+        if (state && s.state !== state) return false;
+        if (query) {
+          const searchable = `${s.name} ${s.city} ${s.address} ${s.slug}`.toLowerCase();
+          return searchable.includes(query);
+        }
+        return true;
+      });
+    }
+
+    function storeLabel(store) {
+      return `${store.city}, ${store.state} \u2014 ${store.address}`;
+    }
+
+    function renderStoreList() {
+      const filtered = getFilteredStores();
+
+      // Primary dropdown
+      primarySelect.innerHTML = '';
+      if (filtered.length === 0) {
+        primarySelect.innerHTML = '<option disabled>No stores match your search</option>';
+      } else {
+        for (const store of filtered) {
+          const opt = document.createElement('option');
+          opt.value = store.slug;
+          opt.textContent = storeLabel(store);
+          if (store.slug === primarySlug) opt.selected = true;
+          primarySelect.appendChild(opt);
+        }
+      }
+
+      // Secondary dropdown: single-select, click to add
+      // Exclude primary and already-selected secondaries
+      secondarySelect.innerHTML = '';
+      const availableForSecondary = filtered.filter(
+        s => s.slug !== primarySlug && !secondarySlugs.has(s.slug)
+      );
+      if (!primarySlug) {
+        secondarySelect.innerHTML = '<option disabled>Select primary store first</option>';
+      } else if (secondarySlugs.size >= 3) {
+        secondarySelect.innerHTML = '<option disabled>Maximum 3 backups selected</option>';
+      } else if (availableForSecondary.length === 0) {
+        secondarySelect.innerHTML = '<option disabled>No other stores match</option>';
+      } else {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        placeholder.textContent = 'Click a store to add as backup...';
+        secondarySelect.appendChild(placeholder);
+        for (const store of availableForSecondary) {
+          const opt = document.createElement('option');
+          opt.value = store.slug;
+          opt.textContent = storeLabel(store);
+          secondarySelect.appendChild(opt);
+        }
+      }
+    }
+
+    function updateSelectedBadges() {
+      // Primary badge
+      if (primarySlug) {
+        const store = allStores.find(s => s.slug === primarySlug);
+        primarySelected.textContent = store ? storeLabel(store) : primarySlug;
+        primarySelected.hidden = false;
+      } else {
+        primarySelected.hidden = true;
+      }
+
+      // Secondary badges — these persist regardless of filter
+      secondarySelected.innerHTML = '';
+      for (const slug of secondarySlugs) {
+        const store = allStores.find(s => s.slug === slug);
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = store ? `${store.city}, ${store.state} \u2014 ${store.address}` : slug;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '\u00d7';
+        removeBtn.title = 'Remove';
+        removeBtn.onclick = () => {
+          secondarySlugs.delete(slug);
+          updateSelectedBadges();
+          renderStoreList();
+          updateResult();
+        };
+        badge.appendChild(removeBtn);
+        secondarySelected.appendChild(badge);
+      }
+
+      secondaryCount.textContent = `(${secondarySlugs.size}/3)`;
+    }
+
+    function updateResult() {
+      if (!primarySlug) {
+        resultSection.hidden = true;
+        return;
+      }
+
+      let url = `${WORKER_BASE}/calendar.ics?primary=${primarySlug}`;
+      if (secondarySlugs.size > 0) {
+        url += `&secondary=${[...secondarySlugs].join(',')}`;
+      }
+      if (ACCESS_TOKEN) {
+        url += `&token=${ACCESS_TOKEN}`;
+      }
+
+      icsUrl.value = url;
+      resultSection.hidden = false;
+
+      // Apple Calendar uses webcal:// protocol directly
+      const webcalUrl = url.replace('http://', 'webcal://').replace('https://', 'webcal://');
+      appleBtn.href = webcalUrl;
+
+      // Google Calendar: use webcal URL for subscriptions
+      const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
+      googleBtn.href = googleUrl;
+    }
+
+    // Event handlers
+    stateFilter.addEventListener('change', renderStoreList);
+    citySearch.addEventListener('input', renderStoreList);
+
+    primarySelect.addEventListener('change', () => {
+      primarySlug = primarySelect.value;
+      // Remove primary from secondaries if it was there
+      secondarySlugs.delete(primarySlug);
+      updateSelectedBadges();
+      renderStoreList();
+      updateResult();
+    });
+
+    // Single-click adds to secondaries (no multi-select needed)
+    secondarySelect.addEventListener('change', () => {
+      const slug = secondarySelect.value;
+      if (!slug || secondarySlugs.size >= 3) return;
+      secondarySlugs.add(slug);
+      updateSelectedBadges();
+      renderStoreList(); // re-render to remove from dropdown
+      updateResult();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(icsUrl.value);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+      } catch {
+        icsUrl.select();
+        document.execCommand('copy');
+      }
+    });
+
+    // Initialize
+    loadStores();
+  </script>
+</body>
+</html>
