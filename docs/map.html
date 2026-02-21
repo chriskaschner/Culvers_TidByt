@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Custard Map — Find a Flavor Near You</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -225,12 +226,35 @@
         return;
       }
 
-      // Suggestions
+      // Suggestions with rotating fun intros
       if (hasFlavorFilter && data.matches.length === 0 && data.suggestions.length > 0) {
-        const links = data.suggestions.map(s =>
-          `<button class="suggestion-link" data-flavor="${escapeAttr(s.flavor)}">${escapeHtml(s.flavor)} (${s.count} store${s.count > 1 ? 's' : ''})</button>`
-        ).join(' ');
-        suggestionsContent.innerHTML = `<strong>No "${escapeHtml(data.query.flavor)}" nearby.</strong> Try: ${links}`;
+        const intros = [
+          'You could broaden your horizons and try',
+          'How about something a little different?',
+          'What about something out of left field?',
+          'Might I interest you in',
+          'Live a little — go for',
+          'Plot twist:',
+          'Hear me out —',
+          'The universe is telling you to try',
+          'Your taste buds called, they want',
+          'Bold move incoming:',
+          'Cone-sider trying',
+          'Don\'t have a meltdown — try',
+          'Sundae funday alternative:',
+          'This one\'s the real scoop:',
+          'Spoon-worthy option:',
+          'Worth the brain freeze:',
+        ];
+        // Shuffle and pick one intro per suggestion
+        const shuffled = intros.sort(() => Math.random() - 0.5);
+        const lines = data.suggestions.map((s, i) => {
+          const intro = shuffled[i % shuffled.length];
+          const link = `<button class="suggestion-link" data-flavor="${escapeAttr(s.flavor)}">${escapeHtml(s.flavor)}</button>`;
+          const count = `(${s.count} store${s.count > 1 ? 's' : ''})`;
+          return `${intro} ${link} ${count}`;
+        });
+        suggestionsContent.innerHTML = `<strong>No ${escapeHtml(data.query.flavor)} today.</strong><br>${lines.join('<br>')}`;
         suggestionsPanel.hidden = false;
 
         // Bind suggestion clicks
@@ -283,7 +307,24 @@
       }
 
       if (data.nearby.length > 0) {
-        const nearbyLabel = hasFlavorFilter ? 'Other nearby stores' : `Nearby stores (${data.nearby.length})`;
+        let nearbyLabel;
+        if (!hasFlavorFilter) {
+          nearbyLabel = `Nearby stores (${data.nearby.length})`;
+        } else if (data.matches.length > 0) {
+          nearbyLabel = 'Meanwhile, nearby';
+        } else {
+          const nearbyIntros = [
+            `No ${escapeHtml(data.query.flavor)} nearby — here's what's scooping instead`,
+            `${escapeHtml(data.query.flavor)}? Not today. But check out what is`,
+            `Fresh out of ${escapeHtml(data.query.flavor)} — but never fresh out of options`,
+            `The custard must flow — just not ${escapeHtml(data.query.flavor)} right now`,
+            `${escapeHtml(data.query.flavor)} is playing hard to get. These aren't`,
+            `No ${escapeHtml(data.query.flavor)}? That's the way the cookie crumbles. Here's what's left`,
+            `We all scream for ${escapeHtml(data.query.flavor)} but today we settle`,
+            `Life gave you no ${escapeHtml(data.query.flavor)}. Make custard-ade`,
+          ];
+          nearbyLabel = nearbyIntros[Math.floor(Math.random() * nearbyIntros.length)];
+        }
         html += `<div class="results-group"><h3 class="results-group-title">${nearbyLabel}</h3>`;
         for (const store of data.nearby) {
           html += storeCard(store, false);
