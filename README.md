@@ -119,7 +119,7 @@ Culvers_TidByt/
 │   ├── scripts/
 │   │   └── generate-valid-slugs.js
 │   └── wrangler.toml
-├── site/                       # GitHub Pages store selector
+├── docs/                       # GitHub Pages store selector
 │   ├── index.html
 │   ├── style.css
 │   └── stores.json             # Store manifest

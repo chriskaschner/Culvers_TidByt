@@ -1,4 +1,4 @@
-// Auto-generated from site/stores.json — do not edit manually.
+// Auto-generated from docs/stores.json — do not edit manually.
 // Regenerate with: node worker/scripts/generate-valid-slugs.js
 // 1071 stores as of 2026-02-21
 export const VALID_SLUGS = new Set([
