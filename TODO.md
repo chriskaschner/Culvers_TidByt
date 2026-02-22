@@ -9,11 +9,13 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [ ] **Alexa skill** — custom Alexa skill using `/api/v1/today` endpoint (requires Amazon developer account + certification)
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" — multiple people vote/rank flavors, system suggests store by combined preferences + proximity
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
+- [ ] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose
 ### Docs
 (none)
 
 ## Completed
 
+- [x] Flavor intelligence analytics pipeline — 6-phase ML system: data loader, basic metrics (frequency/recency/entropy/surprise), pattern detection (DOW bias, Markov transitions, seasonality), collaborative filtering (NMF store clustering), prediction models (frequency+recency, Markov+recency), LLM integration (embeddings, forecast writer), batch forecast generation, Worker `/api/v1/forecast/{slug}` endpoint. 79 Python tests + 5 Worker tests. (2026-02-22)
 - [x] README with SaaS positioning — enterprise-voice README with API v1 docs, brand registry, D1 schema, full project structure (2026-02-22)
 - [x] Social shareables — dynamic SVG OG cards at `/v1/og/{slug}/{date}.svg` + static OG images for all 3 HTML pages (2026-02-22)
 - [x] Metrics HTTP integration tests — 9 tests covering all 3 metrics endpoints (2026-02-22)

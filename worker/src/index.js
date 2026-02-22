@@ -17,6 +17,7 @@ import { recordSnapshots } from './snapshot-writer.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
 import { handleMetricsRoute } from './metrics.js';
+import { handleForecast } from './forecast.js';
 import { handleSocialCard } from './social-card.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 
@@ -316,6 +317,9 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = await handleApiGeolocate(request, corsHeaders);
   } else if (canonical === '/api/nearby-flavors') {
     response = await handleApiNearbyFlavors(url, env, corsHeaders);
+  } else if (canonical.match(/^\/api\/forecast\/[a-z0-9][a-z0-9_-]+$/)) {
+    const forecastSlug = canonical.replace('/api/forecast/', '');
+    response = await handleForecast(forecastSlug, env, corsHeaders);
   } else if (canonical.startsWith('/api/metrics/')) {
     const metricsResponse = await handleMetricsRoute(canonical, env, corsHeaders);
     if (metricsResponse) {
@@ -341,7 +345,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/forecast/{slug}, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
