@@ -16,7 +16,10 @@ import { normalize, matchesFlavor, findSimilarFlavors } from './flavor-matcher.j
 import { recordSnapshots } from './snapshot-writer.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
-import { checkAlerts } from './alert-checker.js';
+import { handleMetricsRoute } from './metrics.js';
+import { handleForecast } from './forecast.js';
+import { handleSocialCard } from './social-card.js';
+import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
 import { fetchGillesFlavors } from './gilles-fetcher.js';
@@ -27,7 +30,8 @@ import { fetchOscarsFlavors } from './oscars-fetcher.js';
 const KV_TTL_SECONDS = 86400; // 24 hours
 const CACHE_MAX_AGE = 3600;   // 1 hour (browser + edge cache)
 const MAX_SECONDARY = 3;
-const MAX_DAILY_FETCHES = 50;
+const MAX_DAILY_FETCHES_GLOBAL = 200;  // Global circuit breaker (safety net)
+const MAX_DAILY_FETCHES_PER_SLUG = 3;  // Per-slug budget (cache miss + retry + edge case)
 
 // Reject slugs with invalid characters before checking allowlist (defense-in-depth)
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]{1,59}$/;
@@ -89,11 +93,59 @@ function makeFallbackFlavors(slug, dates) {
  * Check access token if one is configured.
  * Set ACCESS_TOKEN in wrangler.toml [vars] or as a secret to enable.
  * When not set, all requests are allowed (open access).
+ *
+ * Accepts:
+ *   - Authorization: Bearer <token> header (preferred)
+ *   - ?token=<token> query param (legacy fallback)
  */
-function checkAccess(url, env) {
+function checkAccess(request, url, env) {
   const requiredToken = env.ACCESS_TOKEN;
   if (!requiredToken) return true; // no token configured = open access
+
+  // Check Authorization header first
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader) {
+    const match = authHeader.match(/^Bearer\s+(\S+)$/i);
+    if (match && match[1] === requiredToken) return true;
+  }
+
+  // Fall back to query param
   return url.searchParams.get('token') === requiredToken;
+}
+
+/**
+ * Normalize a request path, mapping versioned API paths to their canonical form.
+ * Returns { canonical, isVersioned }.
+ *
+ * Versioned paths:
+ *   /api/v1/flavors       → /api/flavors       (isVersioned: true)
+ *   /v1/calendar.ics      → /calendar.ics       (isVersioned: true)
+ * Legacy paths pass through unchanged:
+ *   /api/flavors           → /api/flavors       (isVersioned: false)
+ *   /calendar.ics          → /calendar.ics       (isVersioned: false)
+ */
+export function normalizePath(pathname) {
+  if (pathname.startsWith('/api/v1/')) {
+    return { canonical: '/api/' + pathname.slice('/api/v1/'.length), isVersioned: true };
+  }
+  if (pathname.startsWith('/v1/')) {
+    return { canonical: '/' + pathname.slice('/v1/'.length), isVersioned: true };
+  }
+  return { canonical: pathname, isVersioned: false };
+}
+
+/**
+ * Add standard versioned API headers to a response.
+ */
+function addVersionHeaders(response, isVersioned) {
+  if (!isVersioned) return response;
+  const headers = new Headers(response.headers);
+  headers.set('API-Version', '1');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 /**
@@ -116,20 +168,45 @@ export function isValidSlug(slug, validSlugs) {
 }
 
 /**
- * Increment and check the daily upstream fetch counter.
- * Uses KV key `meta:fetch-count` with 24h TTL.
+ * Check if a slug is within its daily fetch budget.
+ * Two-tier system: per-slug limit prevents any single store from hogging
+ * the budget, global circuit breaker prevents runaway total fetches.
+ * @param {Object} kv - KV namespace
+ * @param {string} slug - Store slug
  * @returns {Promise<boolean>} true if under budget, false if exhausted
  */
-async function checkFetchBudget(kv) {
-  const raw = await kv.get('meta:fetch-count');
-  const count = raw ? parseInt(raw, 10) : 0;
-  return count < MAX_DAILY_FETCHES;
+async function checkFetchBudget(kv, slug) {
+  // Check per-slug budget first
+  const slugRaw = await kv.get(`meta:fetch-count:${slug}`);
+  const slugCount = slugRaw ? parseInt(slugRaw, 10) : 0;
+  if (slugCount >= MAX_DAILY_FETCHES_PER_SLUG) return false;
+
+  // Check global circuit breaker
+  const globalRaw = await kv.get('meta:fetch-count');
+  const globalCount = globalRaw ? parseInt(globalRaw, 10) : 0;
+  if (globalCount >= MAX_DAILY_FETCHES_GLOBAL) return false;
+
+  return true;
 }
 
-async function incrementFetchCount(kv) {
-  const raw = await kv.get('meta:fetch-count');
-  const count = raw ? parseInt(raw, 10) : 0;
-  await kv.put('meta:fetch-count', String(count + 1), {
+/**
+ * Increment both per-slug and global fetch counters after a successful fetch.
+ * @param {Object} kv - KV namespace
+ * @param {string} slug - Store slug
+ */
+async function incrementFetchCount(kv, slug) {
+  // Increment per-slug counter
+  const slugKey = `meta:fetch-count:${slug}`;
+  const slugRaw = await kv.get(slugKey);
+  const slugCount = slugRaw ? parseInt(slugRaw, 10) : 0;
+  await kv.put(slugKey, String(slugCount + 1), {
+    expirationTtl: KV_TTL_SECONDS,
+  });
+
+  // Increment global counter
+  const globalRaw = await kv.get('meta:fetch-count');
+  const globalCount = globalRaw ? parseInt(globalRaw, 10) : 0;
+  await kv.put('meta:fetch-count', String(globalCount + 1), {
     expirationTtl: KV_TTL_SECONDS,
   });
 }
@@ -142,9 +219,10 @@ async function incrementFetchCount(kv) {
  * @param {Object} kv - KV namespace binding
  * @param {Function} fetchFlavorsFn - override fetcher (when provided, overrides brand fetchers too)
  * @param {boolean} isOverride - true when fetchFlavorsFn should override brand routing
+ * @param {Object} [env] - Full env for D1 access (optional)
  * @returns {Promise<{name: string, flavors: Array}>}
  */
-export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false) {
+export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false, env = {}) {
   const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
   const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
   // When isOverride is true, use the provided fetcher for all brands (testing)
@@ -157,7 +235,7 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   }
 
   // Check daily fetch budget before making upstream request
-  const withinBudget = await checkFetchBudget(kv);
+  const withinBudget = await checkFetchBudget(kv, slug);
   if (!withinBudget) {
     throw new Error('Daily upstream fetch limit reached. Try again later.');
   }
@@ -170,11 +248,11 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
     expirationTtl: KV_TTL_SECONDS,
   });
 
-  // Persist flavor observations for historical analysis
-  await recordSnapshots(kv, slug, data);
+  // Persist flavor observations for historical analysis (KV + D1)
+  await recordSnapshots(kv, slug, data, { db: env.DB || null, brand: brandInfo.brand });
 
   // Increment fetch counter after successful fetch
-  await incrementFetchCount(kv);
+  await incrementFetchCount(kv, slug);
 
   return data;
 }
@@ -194,7 +272,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   const corsHeaders = {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
   // Handle CORS preflight
@@ -202,60 +280,72 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  // Access control
-  if (!checkAccess(url, env)) {
+  // Normalize versioned paths: /api/v1/X → /api/X, /v1/X → /X
+  const { canonical, isVersioned } = normalizePath(url.pathname);
+
+  // Access control (supports both Bearer header and ?token= query param)
+  if (!checkAccess(request, url, env)) {
     return Response.json(
       { error: 'Invalid or missing access token' },
       { status: 403, headers: corsHeaders }
     );
   }
 
-  // Health check
-  if (url.pathname === '/health') {
+  // Health check (unversioned — always public)
+  if (canonical === '/health') {
     return Response.json(
       { status: 'ok', timestamp: new Date().toISOString() },
       { headers: corsHeaders }
     );
   }
 
-  // Calendar endpoint
-  if (url.pathname === '/calendar.ics') {
-    return handleCalendar(url, env, corsHeaders, fetchFlavorsFn);
+  // Route on canonical path, then tag with API-Version if versioned
+  let response;
+
+  if (canonical === '/calendar.ics') {
+    response = await handleCalendar(url, env, corsHeaders, fetchFlavorsFn);
+  } else if (canonical === '/api/flavors/catalog') {
+    // Must match before /api/flavors to avoid prefix collision
+    response = await handleFlavorCatalog(env, corsHeaders);
+  } else if (canonical === '/api/today') {
+    response = await handleApiToday(url, env, corsHeaders, fetchFlavorsFn);
+  } else if (canonical === '/api/flavors') {
+    response = await handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn);
+  } else if (canonical === '/api/stores') {
+    response = await handleApiStores(url, env, corsHeaders);
+  } else if (canonical === '/api/geolocate') {
+    response = await handleApiGeolocate(request, corsHeaders);
+  } else if (canonical === '/api/nearby-flavors') {
+    response = await handleApiNearbyFlavors(url, env, corsHeaders);
+  } else if (canonical.match(/^\/api\/forecast\/[a-z0-9][a-z0-9_-]+$/)) {
+    const forecastSlug = canonical.replace('/api/forecast/', '');
+    response = await handleForecast(forecastSlug, env, corsHeaders);
+  } else if (canonical.startsWith('/api/metrics/')) {
+    const metricsResponse = await handleMetricsRoute(canonical, env, corsHeaders);
+    if (metricsResponse) {
+      response = metricsResponse;
+    }
+  } else if (canonical.startsWith('/og/')) {
+    const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
+    if (cardResponse) {
+      response = cardResponse;
+    }
+  } else if (canonical.startsWith('/api/alerts/')) {
+    // Rewrite url.pathname for alert-routes matching
+    const alertUrl = isVersioned ? new URL(url) : url;
+    if (isVersioned) alertUrl.pathname = canonical;
+    const alertResponse = await handleAlertRoute(alertUrl, request, env, corsHeaders);
+    if (alertResponse) {
+      response = alertResponse;
+    }
   }
 
-  // Flavor data JSON endpoint
-  if (url.pathname === '/api/flavors') {
-    return handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn);
-  }
-
-  // Store search JSON endpoint
-  if (url.pathname === '/api/stores') {
-    return handleApiStores(url, env, corsHeaders);
-  }
-
-  // IP-based geolocation endpoint (uses Cloudflare's request.cf)
-  if (url.pathname === '/api/geolocate') {
-    return handleApiGeolocate(request, corsHeaders);
-  }
-
-  // Nearby flavors endpoint (proxies Culver's locator API)
-  if (url.pathname === '/api/nearby-flavors') {
-    return handleApiNearbyFlavors(url, env, corsHeaders);
-  }
-
-  // Flavor catalog endpoint
-  if (url.pathname === '/api/flavors/catalog') {
-    return handleFlavorCatalog(env, corsHeaders);
-  }
-
-  // Alert subscription endpoints
-  if (url.pathname.startsWith('/api/alerts/')) {
-    const alertResponse = await handleAlertRoute(url, request, env, corsHeaders);
-    if (alertResponse) return alertResponse;
+  if (response) {
+    return addVersionHeaders(response, isVersioned);
   }
 
   return Response.json(
-    { error: 'Not found. Use /calendar.ics, /api/flavors, /api/stores, /api/geolocate, /api/nearby-flavors, /api/flavors/catalog, /api/alerts/*, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/forecast/{slug}, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -315,7 +405,7 @@ async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
 
   // Fetch primary — use fallback on failure
   try {
-    const primaryData = await getFlavorsCached(primarySlug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride);
+    const primaryData = await getFlavorsCached(primarySlug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
     const brandUrl = getFetcherForSlug(primarySlug, fetchFlavorsFn).url;
     stores.push({ slug: primarySlug, name: primaryData.name, address: primaryData.address || '', url: brandUrl, role: 'primary' });
     flavorsBySlug[primarySlug] = primaryData.flavors;
@@ -331,7 +421,7 @@ async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
   // Fetch secondaries — use fallback on failure
   for (const slug of secondarySlugs) {
     try {
-      const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride);
+      const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
       const brandUrl = getFetcherForSlug(slug, fetchFlavorsFn).url;
       stores.push({ slug, name: data.name, address: data.address || '', url: brandUrl, role: 'secondary' });
       flavorsBySlug[slug] = data.flavors;
@@ -384,12 +474,81 @@ async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
   }
 
   try {
-    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride);
+    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
     return Response.json(data, {
       headers: {
         ...corsHeaders,
         'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`,
       },
+    });
+  } catch (err) {
+    return Response.json(
+      { error: `Failed to fetch flavor data: ${err.message}` },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+}
+
+/**
+ * Handle /api/today?slug=<slug> requests.
+ * Returns today's single flavor for a store, with a pre-composed spoken sentence
+ * for voice assistants (Siri Shortcuts, Alexa, etc.).
+ */
+async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
+  const isOverride = fetchFlavorsFn !== defaultFetchFlavors;
+  const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
+
+  const slug = url.searchParams.get('slug');
+  if (!slug) {
+    return Response.json(
+      { error: 'Missing required "slug" parameter. Usage: /api/today?slug=<store-slug>' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const check = isValidSlug(slug, validSlugs);
+  if (!check.valid) {
+    return Response.json(
+      { error: `Invalid store: ${check.reason}` },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  try {
+    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
+    const brand = getBrandForSlug(slug);
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Find today's flavor (or fall back to the first available)
+    const todayFlavor = data.flavors.find(f => f.date === today) || data.flavors[0] || null;
+
+    if (!todayFlavor) {
+      return Response.json({
+        store: data.name,
+        slug,
+        brand,
+        date: today,
+        flavor: null,
+        description: null,
+        spoken: `I couldn't find today's flavor of the day at ${data.name}. Check back later.`,
+      }, {
+        headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
+      });
+    }
+
+    const flavorName = todayFlavor.title;
+    const spoken = `Today's flavor of the day at ${data.name} ${brand} is ${flavorName}.`;
+
+    return Response.json({
+      store: data.name,
+      slug,
+      brand,
+      date: todayFlavor.date,
+      flavor: flavorName,
+      description: todayFlavor.description || null,
+      spoken,
+    }, {
+      headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
     });
   } catch (err) {
     return Response.json(
@@ -600,9 +759,10 @@ function transformLocatorData(data) {
 // Cloudflare Worker default export
 export default {
   async fetch(request, env, ctx) {
-    // Only cache GET requests to /calendar.ics
+    // Only cache GET requests to /calendar.ics (or /v1/calendar.ics)
     const url = new URL(request.url);
-    if (request.method === 'GET' && url.pathname === '/calendar.ics') {
+    const { canonical } = normalizePath(url.pathname);
+    if (request.method === 'GET' && canonical === '/calendar.ics') {
       const cache = caches.default;
       const cacheKey = request;
 
@@ -627,8 +787,14 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    // Cron trigger: check subscriptions and send flavor alert emails
     const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors);
-    ctx.waitUntil(checkAlerts(env, fetchFn));
+
+    // Sunday 2 PM UTC cron → weekly digest for weekly subscribers
+    if (event.cron === '0 14 * * 0') {
+      ctx.waitUntil(checkWeeklyDigests(env, fetchFn));
+    } else {
+      // Daily cron → check daily subscribers and send flavor alert emails
+      ctx.waitUntil(checkAlerts(env, fetchFn));
+    }
   },
 };
