@@ -174,14 +174,22 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
     bySlug.get(sub.slug).push(sub);
   }
 
-  // Fetch flavors per slug
+  // Fetch flavors and forecasts per slug
   const flavorsBySlug = new Map();
+  const forecastBySlug = new Map();
   for (const slug of bySlug.keys()) {
     try {
       const data = await getFlavorsCachedFn(slug, kv);
       flavorsBySlug.set(slug, data);
     } catch (err) {
       console.error(`Weekly digest: failed to fetch flavors for ${slug}: ${err.message}`);
+    }
+    // Pull pre-computed forecast (best-effort, non-blocking)
+    try {
+      const raw = await kv.get(`forecast:${slug}`);
+      if (raw) forecastBySlug.set(slug, JSON.parse(raw));
+    } catch {
+      // Forecast data is optional -- degrade gracefully
     }
   }
 
@@ -221,6 +229,7 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
     const unsubscribeUrl = `${baseUrl}/api/alerts/unsubscribe?token=${sub.unsubToken}`;
 
     // Send weekly digest (even if no matches — the full week forecast is the value)
+    const forecast = forecastBySlug.get(sub.slug) || null;
     try {
       const result = await sendWeeklyDigestEmail(
         {
@@ -231,6 +240,8 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
           allFlavors: weekFlavors.map(f => ({ title: f.title, date: f.date })),
           statusUrl,
           unsubscribeUrl,
+          narrative: forecast ? forecast.prose : null,
+          forecast,
         },
         apiKey,
         fromAddress,

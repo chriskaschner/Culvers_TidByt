@@ -1,0 +1,55 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "summary": "Get today's frozen custard flavor of the day at 1000+ stores across the US.",
+          "examplePhrases": [
+            "Alexa, open custard forecast",
+            "Alexa, ask custard forecast what's the flavor at Mt. Horeb",
+            "Alexa, ask custard forecast for today's flavor at Madison"
+          ],
+          "keywords": [
+            "culvers",
+            "custard",
+            "frozen custard",
+            "flavor of the day",
+            "ice cream",
+            "dessert",
+            "restaurant"
+          ],
+          "name": "Custard Forecast",
+          "description": "Custard Forecast tells you today's frozen custard flavor of the day at over 1,000 stores nationwide. Just ask for a store by city name and get the daily flavor read back to you. Covers Culver's locations across the US, plus select Milwaukee-area brands like Kopp's, Gille's, Oscar's, and more."
+        }
+      },
+      "isAvailableWorldwide": false,
+      "testingInstructions": "Say 'Alexa, open custard forecast' then ask 'what's the flavor at Mt. Horeb'. The skill queries a live API that returns today's flavor of the day. You can also try city names like 'Madison' or 'Milwaukee'.",
+      "category": "FOOD_AND_DRINK",
+      "distributionCountries": [
+        "US"
+      ]
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "sourceDir": "lambda/",
+          "uri": "ask-custom-custard-forecast-default"
+        },
+        "interfaces": []
+      }
+    },
+    "manifestVersion": "1.0",
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "locales": {
+        "en-US": {
+          "privacyPolicyUrl": "https://custard.chriskaschner.com/privacy"
+        }
+      }
+    }
+  }
+}

@@ -60,17 +60,25 @@ export function parseNextData(html) {
   ].filter(Boolean).join(', ');
 
   // Parse each flavor entry — include all dates Culver's provides
+  // Validate upstream data before persisting (X1: data poisoning defense)
+  const TITLE_MAX = 100;
+  const DESC_MAX = 500;
+  const SAFE_TEXT = /^[\w\s\-'.,!&()\/\u2019\u2014]+$/;
+
   const flavors = rawFlavors
     .map(f => {
       // onDate format: "2026-02-20T00:00:00" or "2026-02-20T00:00:00Z"
       const date = (f.onDate || '').split('T')[0];
-      return {
-        date,
-        title: cleanText(f.title || ''),
-        description: cleanText(f.description || ''),
-      };
+      let title = cleanText(f.title || '');
+      let description = cleanText(f.description || '');
+
+      // Length limits
+      title = title.slice(0, TITLE_MAX);
+      description = description.slice(0, DESC_MAX);
+
+      return { date, title, description };
     })
-    .filter(f => f.date && f.title);
+    .filter(f => f.date && f.title && SAFE_TEXT.test(f.title));
 
   return { name, address, flavors };
 }

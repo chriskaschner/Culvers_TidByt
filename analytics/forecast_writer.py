@@ -141,13 +141,16 @@ Recent history:
 
 Write the forecast:"""
 
-    message = client.messages.create(
-        model=model,
-        max_tokens=200,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    return message.content[0].text
+    try:
+        message = client.messages.create(
+            model=model,
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return message.content[0].text
+    except Exception:
+        # LLM is optional -- fall back to deterministic template
+        return format_forecast_template(context)
 
 
 def generate_forecast_json(

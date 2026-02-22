@@ -6,7 +6,6 @@ Consumes data from flavor_cache.json via sync_from_cache().
 """
 
 import os
-import pickle
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import logging
