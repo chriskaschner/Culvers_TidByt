@@ -309,28 +309,20 @@
         }
       }
 
-      // Render brand results
+      // Render brand results — flat list, brand color on cards distinguishes them
       if (brandResults.length > 0) {
-        // Group by brand
-        const byBrand = {};
         for (const store of brandResults) {
-          const b = store.brand;
-          if (!byBrand[b]) byBrand[b] = [];
-          byBrand[b].push(store);
-        }
-        for (const [brand, stores] of Object.entries(byBrand)) {
-          const color = BRAND_COLORS[brand] || '#003366';
-          for (const store of stores) {
-            if (!store.lat && !store.lng) continue;
+          if (store.lat && store.lng) {
+            const color = BRAND_COLORS[store.brand] || '#003366';
             const marker = L.circleMarker([store.lat, store.lng], {
               radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
             }).bindPopup(storePopup(store, false));
             markers.addLayer(marker);
           }
-          html += `<div class="results-group"><h3 class="results-group-title">${escapeHtml(BRAND_DISPLAY[brand] || brand)} (${stores.length})</h3>`;
-          for (const store of stores) html += storeCard(store, false);
-          html += '</div>';
         }
+        html += `<div class="results-group"><h3 class="results-group-title">MKE Custard Shops (${brandResults.length})</h3>`;
+        for (const store of brandResults) html += storeCard(store, false);
+        html += '</div>';
       }
 
       // fitBounds: only on explicit searches (not map moves), and only to Culver's results
