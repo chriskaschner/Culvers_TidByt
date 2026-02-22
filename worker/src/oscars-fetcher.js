@@ -117,7 +117,11 @@ export function parseOscarsHtml(html) {
 export async function fetchOscarsFlavors(slug, fetchFn = globalThis.fetch) {
   const url = 'https://www.oscarscustard.com/wp-json/wp/v2/pages?slug=flavors&_fields=content';
   const response = await fetchFn(url, {
-    headers: { 'User-Agent': 'CustardCalendar/1.0 (+https://github.com/chriskaschner/custard-calendar)' },
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; CustardCalendar/1.0)',
+      'Accept': 'application/json',
+      'Referer': 'https://www.oscarscustard.com/',
+    },
   });
 
   if (!response.ok) {
