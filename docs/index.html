@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Custard Calendar — Flavor of the Day</title>
-  <meta name="description" content="Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, and more frozen custard shops.">
-  <meta property="og:title" content="Custard Calendar — Flavor of the Day">
-  <meta property="og:description" content="Subscribe to a calendar showing daily Flavor of the Day for frozen custard shops near you.">
+  <title>Custard Forecast — Today's Flavor of the Day</title>
+  <meta name="description" content="Today's Flavor of the Day forecast for frozen custard shops. See confirmed flavors and predictions for the week ahead.">
+  <meta property="og:title" content="Custard Forecast — Today's Flavor of the Day">
+  <meta property="og:description" content="Today's Flavor of the Day forecast for frozen custard shops near you.">
   <meta property="og:url" content="https://custard.chriskaschner.com/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
@@ -17,253 +17,147 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Custard Calendar</h1>
-    <p>Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, Hefner's, Kraverz, and Oscar's.</p>
-    <nav class="nav-links">
-      <a href="map.html">Custard Map</a>
-      <a href="radar.html">Flavor Radar</a>
+  <header class="forecast-header">
+    <h1 style="color:#003366;font-size:1.5rem;">Custard Forecast</h1>
+    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Today's flavor and the week ahead</p>
+
+    <div class="location-bar">
+      <div class="location-bar-inner">
+        <div class="location-input-wrap">
+          <input type="text" id="store-search" placeholder="Find your store..." autocomplete="off">
+          <button id="geo-btn" class="location-geo-btn" title="Use my location">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+            </svg>
+          </button>
+        </div>
+        <div id="store-dropdown" class="store-dropdown" hidden></div>
+        <div id="current-store" class="current-store-badge" hidden>
+          <span id="current-store-name"></span>
+          <button id="change-store-btn" class="change-store-btn">change</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav-links" style="margin-top:0.75rem;">
+      <a href="index.html" class="nav-active">Forecast</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="map.html">Map</a>
+      <a href="radar.html">Radar</a>
       <a href="alerts.html">Alerts</a>
       <a href="siri.html">Siri</a>
     </nav>
   </header>
 
   <main>
-    <section id="store-selector">
-      <div class="filter-row">
-        <div class="filter-group">
-          <label for="state-filter">State</label>
-          <select id="state-filter">
-            <option value="">All States</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="city-search">Search</label>
-          <input type="text" id="city-search" placeholder="City or store name...">
-        </div>
-        <div class="filter-group">
-          <button id="nearby-btn" type="button" title="Sort stores by distance from your location">Nearby</button>
-        </div>
+    <!-- Empty state: no store selected -->
+    <section id="empty-state">
+      <div class="hero-empty">
+        <h2>What's scooping today?</h2>
+        <p>Pick your store to see today's flavor and the week ahead.</p>
+        <button class="btn-primary" id="find-store-btn">Find your store</button>
       </div>
+    </section>
 
-      <div class="selection-panels">
-        <div class="panel">
-          <h2>Primary Store</h2>
-          <p class="hint">Your main location — its flavor appears in the event title.</p>
-          <div id="primary-selected" class="selected-badge" hidden></div>
-          <select id="primary-select" size="8">
-            <option value="" disabled selected>Loading stores...</option>
-          </select>
-        </div>
+    <!-- Loading skeleton -->
+    <section id="today-loading" hidden>
+      <div class="today-card-skeleton">
+        <div class="skeleton-line skeleton-short"></div>
+        <div class="skeleton-line skeleton-long"></div>
+        <div class="skeleton-line skeleton-medium"></div>
+        <div class="skeleton-line skeleton-short"></div>
+      </div>
+    </section>
 
-        <div class="panel">
-          <h2>Backup Stores <span id="secondary-count">(0/3)</span></h2>
-          <p class="hint">Up to 3 alternatives — click to add, use badges to remove.</p>
-          <div id="secondary-selected" class="selected-badges"></div>
-          <select id="secondary-select" size="8">
-            <option value="" disabled>Select primary store first</option>
-          </select>
+    <!-- Error state -->
+    <section id="error-state" hidden>
+      <div class="error-card">
+        <p id="error-message">Something went wrong loading the forecast.</p>
+        <button class="btn-retry" id="retry-btn">Try again</button>
+      </div>
+    </section>
+
+    <!-- Today's flavor hero card -->
+    <section id="today-section" hidden>
+      <div class="today-card">
+        <div class="today-card-accent" id="today-accent"></div>
+        <div class="today-card-body">
+          <div class="today-card-header">
+            <span class="today-card-label">Today's Flavor</span>
+            <span id="today-badge" class="day-card-badge"></span>
+          </div>
+          <div class="today-flavor-name" id="today-flavor"></div>
+          <div class="today-flavor-desc" id="today-desc"></div>
+          <div class="today-predictions" id="today-predictions"></div>
+          <div class="today-meta">
+            <span class="today-store" id="today-store"></span>
+            <span class="freshness-ts" id="today-freshness"></span>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="result" hidden>
-      <h2>Your Calendar Subscription</h2>
-
-      <div id="preview-card" class="cal-preview" hidden>
-        <div class="cal-preview-header">
-          <span class="cal-preview-label">Preview — how today's event will look</span>
-          <span id="preview-loading" class="cal-preview-loading" hidden>Loading...</span>
-        </div>
-        <div id="preview-event" class="cal-event">
-          <div class="cal-event-color"></div>
-          <div class="cal-event-body">
-            <div id="preview-title" class="cal-event-title"></div>
-            <div id="preview-date" class="cal-event-date"></div>
-            <div id="preview-location" class="cal-event-location"></div>
-            <div id="preview-desc" class="cal-event-desc"></div>
-          </div>
-        </div>
+    <!-- Week strip -->
+    <section id="week-section" hidden>
+      <div class="week-header">
+        <h2>Week Ahead</h2>
+        <span class="freshness-ts" id="week-freshness"></span>
       </div>
+      <div class="week-strip" id="week-strip"></div>
+    </section>
 
-      <div class="url-box">
-        <input type="text" id="ics-url" readonly>
-        <button id="copy-btn" title="Copy URL">Copy</button>
+    <!-- Quick actions -->
+    <section id="actions-section">
+      <div class="quick-actions">
+        <a href="calendar.html" class="action-card">
+          <span class="action-icon">&#x1F4C5;</span>
+          <span class="action-label">Calendar</span>
+          <span class="action-hint">Subscribe to daily flavors</span>
+        </a>
+        <a href="map.html" class="action-card">
+          <span class="action-icon">&#x1F5FA;</span>
+          <span class="action-label">Map</span>
+          <span class="action-hint">Find shops nearby</span>
+        </a>
+        <a href="alerts.html" class="action-card">
+          <span class="action-icon">&#x1F514;</span>
+          <span class="action-label">Alerts</span>
+          <span class="action-hint">Email when favorites hit</span>
+        </a>
+        <a href="siri.html" class="action-card">
+          <span class="action-icon">&#x1F3A4;</span>
+          <span class="action-label">Siri</span>
+          <span class="action-hint">Ask Siri for today's flavor</span>
+        </a>
+        <a href="radar.html" class="action-card">
+          <span class="action-icon">&#x1F4CA;</span>
+          <span class="action-label">Radar</span>
+          <span class="action-hint">7-day deep forecast</span>
+        </a>
       </div>
-
-      <div class="subscribe-buttons">
-        <a id="apple-btn" href="#" class="btn btn-apple">Add to Apple Calendar</a>
-        <a id="google-btn" href="#" target="_blank" rel="noopener" class="btn btn-google">Add to Google Calendar</a>
-      </div>
-      <div id="google-mobile-toast" class="mobile-toast" hidden>
-        URL copied! Open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar settings</a>, tap <strong>Add calendar &gt; From URL</strong>, and paste.
-      </div>
-
-      <details>
-        <summary>Setup instructions</summary>
-        <ol>
-          <li><strong>Apple Calendar:</strong> Click "Add to Apple Calendar" — it opens directly in Calendar.app.</li>
-          <li><strong>Google Calendar (desktop):</strong> Click "Add to Google Calendar" to subscribe directly.</li>
-          <li><strong>Google Calendar (phone):</strong> The Google Calendar app can't subscribe to URLs directly. Copy the URL above, then open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar on the web</a> &gt; Add calendar &gt; From URL, and paste it.</li>
-          <li>Events update automatically every 12-24 hours.</li>
-          <li>Each event shows your primary store's flavor in the title, with backup options in the description.</li>
-        </ol>
-      </details>
     </section>
   </main>
 
   <footer>
-    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="footer-brands">Culver's / Kopp's / Gille's / Hefner's / Kraverz / Oscar's</div>
+    <div class="footer-links">
+      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+    </div>
+    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
   </footer>
 
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
-    const ACCESS_TOKEN = ''; // Set to match Worker's ACCESS_TOKEN, or leave empty for open access
-    let allStores = [];
-    let primarySlug = null;
-    let secondarySlugs = new Set();
-    let previewAbort = null; // AbortController for in-flight preview fetches
-    let userLat = null;
-    let userLng = null;
-    let sortByDistance = false;
 
-    // DOM elements
-    const stateFilter = document.getElementById('state-filter');
-    const citySearch = document.getElementById('city-search');
-    const primarySelect = document.getElementById('primary-select');
-    const secondarySelect = document.getElementById('secondary-select');
-    const primarySelected = document.getElementById('primary-selected');
-    const secondarySelected = document.getElementById('secondary-selected');
-    const secondaryCount = document.getElementById('secondary-count');
-    const resultSection = document.getElementById('result');
-    const icsUrl = document.getElementById('ics-url');
-    const copyBtn = document.getElementById('copy-btn');
-    const googleBtn = document.getElementById('google-btn');
-    const appleBtn = document.getElementById('apple-btn');
-    const previewCard = document.getElementById('preview-card');
-    const previewLoading = document.getElementById('preview-loading');
-    const previewTitle = document.getElementById('preview-title');
-    const nearbyBtn = document.getElementById('nearby-btn');
-    const previewDate = document.getElementById('preview-date');
-    const previewLocation = document.getElementById('preview-location');
-    const previewDesc = document.getElementById('preview-desc');
-
-    // Haversine distance in miles
-    function haversine(lat1, lng1, lat2, lng2) {
-      const R = 3958.8; // Earth radius in miles
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLng = (lng2 - lng1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLng / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function saveFavorites() {
-      try {
-        if (primarySlug) {
-          localStorage.setItem('custard-primary', primarySlug);
-        } else {
-          localStorage.removeItem('custard-primary');
-        }
-        if (secondarySlugs.size > 0) {
-          localStorage.setItem('custard-secondary', JSON.stringify([...secondarySlugs]));
-        } else {
-          localStorage.removeItem('custard-secondary');
-        }
-      } catch { /* localStorage unavailable */ }
-    }
-
-    function restoreFavorites() {
-      try {
-        const slugSet = new Set(allStores.map(s => s.slug));
-        const savedPrimary = localStorage.getItem('custard-primary');
-        if (savedPrimary && slugSet.has(savedPrimary)) {
-          primarySlug = savedPrimary;
-        }
-        const savedSecondary = localStorage.getItem('custard-secondary');
-        if (savedSecondary) {
-          const parsed = JSON.parse(savedSecondary);
-          for (const slug of parsed) {
-            if (slugSet.has(slug) && slug !== primarySlug && secondarySlugs.size < 3) {
-              secondarySlugs.add(slug);
-            }
-          }
-        }
-      } catch { /* localStorage unavailable or corrupt */ }
-    }
-
-    // Load store manifest
-    async function loadStores() {
-      try {
-        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
-        const data = await resp.json();
-        allStores = data.stores || [];
-        populateStateFilter();
-        restoreFavorites();
-        renderStoreList();
-        if (primarySlug) {
-          updateSelectedBadges();
-          updateResult();
-        }
-        // Auto-select state based on user's IP geolocation (skip if favorites restored a selection)
-        if (!primarySlug) autoSelectState();
-      } catch (err) {
-        primarySelect.innerHTML = '<option disabled>Failed to load stores</option>';
-        console.error('Failed to load stores:', err);
-      }
-    }
-
-    async function autoSelectState() {
-      try {
-        const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
-        const geo = await resp.json();
-        if (geo.state && stateFilter.querySelector(`option[value="${geo.state}"]`)) {
-          stateFilter.value = geo.state;
-          renderStoreList();
-        }
-      } catch (err) {
-        // Silent fail — geolocation is a nice-to-have
-        console.debug('Geolocation unavailable:', err);
-      }
-    }
-
-    function populateStateFilter() {
-      const states = [...new Set(allStores.map(s => s.state))].sort();
-      for (const state of states) {
-        const opt = document.createElement('option');
-        opt.value = state;
-        opt.textContent = state;
-        stateFilter.appendChild(opt);
-      }
-    }
-
-    function getFilteredStores() {
-      const state = stateFilter.value;
-      const query = citySearch.value.toLowerCase().trim();
-      let filtered = allStores.filter(s => {
-        if (state && s.state !== state) return false;
-        if (query) {
-          const searchable = `${s.name} ${s.city} ${s.address} ${s.slug} ${s.brand || ''} ${BRAND_DISPLAY[s.brand] || ''}`.toLowerCase();
-          return searchable.includes(query);
-        }
-        return true;
-      });
-
-      // Sort by distance when geolocation is active
-      if (sortByDistance && userLat !== null && userLng !== null) {
-        filtered = filtered.map(s => {
-          if (s.lat != null && s.lng != null) {
-            s._dist = haversine(userLat, userLng, s.lat, s.lng);
-          } else {
-            s._dist = Infinity;
-          }
-          return s;
-        }).sort((a, b) => a._dist - b._dist);
-      }
-
-      return filtered;
-    }
+    const BRAND_COLORS = {
+      culvers: '#005696',
+      kopps: '#000000',
+      gilles: '#EBCC35',
+      hefners: '#93BE46',
+      kraverz: '#CE742D',
+      oscars: '#BC272C',
+    };
 
     const BRAND_DISPLAY = {
       kopps: "Kopp's",
@@ -273,407 +167,449 @@
       oscars: "Oscar's",
     };
 
-    const BRAND_COLORS = {
-      kopps: '#000000',
-      gilles: '#EBCC35',
-      hefners: '#93BE46',
-      kraverz: '#CE742D',
-      oscars: '#BC272C',
-    };
-
-    function brandPrefix(store) {
-      if (!store.brand) return '';
-      return (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ';
+    // Brand detection from slug (mirrors Worker's BRAND_REGISTRY)
+    function brandFromSlug(slug) {
+      if (!slug) return 'culvers';
+      if (slug.startsWith('kopps-')) return 'kopps';
+      if (slug === 'gilles') return 'gilles';
+      if (slug === 'hefners') return 'hefners';
+      if (slug === 'kraverz') return 'kraverz';
+      if (slug.startsWith('oscars')) return 'oscars';
+      return 'culvers';
     }
 
-    function storeLabel(store) {
-      let label = `${brandPrefix(store)}${store.city}, ${store.state} \u2014 ${store.address}`;
-      if (sortByDistance && store._dist != null && store._dist !== Infinity) {
-        label += ` (${store._dist.toFixed(1)} mi)`;
-      }
-      return label;
-    }
+    let allStores = [];
+    let currentSlug = null;
+    let userLat = null;
+    let userLng = null;
 
-    function renderStoreList() {
-      const filtered = getFilteredStores();
+    // DOM refs
+    const storeSearch = document.getElementById('store-search');
+    const storeDropdown = document.getElementById('store-dropdown');
+    const currentStoreEl = document.getElementById('current-store');
+    const currentStoreName = document.getElementById('current-store-name');
+    const changeStoreBtn = document.getElementById('change-store-btn');
+    const geoBtn = document.getElementById('geo-btn');
+    const findStoreBtn = document.getElementById('find-store-btn');
+    const emptyState = document.getElementById('empty-state');
+    const todayLoading = document.getElementById('today-loading');
+    const errorState = document.getElementById('error-state');
+    const errorMessage = document.getElementById('error-message');
+    const retryBtn = document.getElementById('retry-btn');
+    const todaySection = document.getElementById('today-section');
+    const todayAccent = document.getElementById('today-accent');
+    const todayBadge = document.getElementById('today-badge');
+    const todayFlavor = document.getElementById('today-flavor');
+    const todayDesc = document.getElementById('today-desc');
+    const todayPredictions = document.getElementById('today-predictions');
+    const todayStore = document.getElementById('today-store');
+    const todayFreshness = document.getElementById('today-freshness');
+    const weekSection = document.getElementById('week-section');
+    const weekStrip = document.getElementById('week-strip');
+    const weekFreshness = document.getElementById('week-freshness');
 
-      // Primary dropdown
-      primarySelect.innerHTML = '';
-      if (filtered.length === 0) {
-        primarySelect.innerHTML = '<option disabled>No stores match your search</option>';
-      } else {
-        for (const store of filtered) {
-          const opt = document.createElement('option');
-          opt.value = store.slug;
-          opt.textContent = storeLabel(store);
-          if (store.slug === primarySlug) opt.selected = true;
-          primarySelect.appendChild(opt);
-        }
-      }
-
-      // Secondary dropdown: single-select, click to add
-      // Exclude primary and already-selected secondaries
-      secondarySelect.innerHTML = '';
-      const availableForSecondary = filtered.filter(
-        s => s.slug !== primarySlug && !secondarySlugs.has(s.slug)
-      );
-      if (!primarySlug) {
-        secondarySelect.innerHTML = '<option disabled>Select primary store first</option>';
-      } else if (secondarySlugs.size >= 3) {
-        secondarySelect.innerHTML = '<option disabled>Maximum 3 backups selected</option>';
-      } else if (availableForSecondary.length === 0) {
-        secondarySelect.innerHTML = '<option disabled>No other stores match</option>';
-      } else {
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        placeholder.textContent = 'Click a store to add as backup...';
-        secondarySelect.appendChild(placeholder);
-        for (const store of availableForSecondary) {
-          const opt = document.createElement('option');
-          opt.value = store.slug;
-          opt.textContent = storeLabel(store);
-          secondarySelect.appendChild(opt);
-        }
-      }
-    }
-
-    function updateSelectedBadges() {
-      // Primary badge
-      if (primarySlug) {
-        const store = allStores.find(s => s.slug === primarySlug);
-        primarySelected.textContent = store ? storeLabel(store) : primarySlug;
-        primarySelected.hidden = false;
-      } else {
-        primarySelected.hidden = true;
-      }
-
-      // Secondary badges — these persist regardless of filter
-      secondarySelected.innerHTML = '';
-      for (const slug of secondarySlugs) {
-        const store = allStores.find(s => s.slug === slug);
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.textContent = store ? `${brandPrefix(store)}${store.city}, ${store.state} \u2014 ${store.address}` : slug;
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '\u00d7';
-        removeBtn.title = 'Remove';
-        removeBtn.onclick = () => {
-          secondarySlugs.delete(slug);
-          updateSelectedBadges();
-          renderStoreList();
-          updateResult();
-        };
-        badge.appendChild(removeBtn);
-        secondarySelected.appendChild(badge);
-      }
-
-      secondaryCount.textContent = `(${secondarySlugs.size}/3)`;
-    }
-
-    function updateResult() {
-      saveFavorites();
-      if (!primarySlug) {
-        resultSection.hidden = true;
-        previewCard.hidden = true;
-        return;
-      }
-
-      let url = `${WORKER_BASE}/v1/calendar.ics?primary=${primarySlug}`;
-      if (secondarySlugs.size > 0) {
-        url += `&secondary=${[...secondarySlugs].join(',')}`;
-      }
-      if (ACCESS_TOKEN) {
-        url += `&token=${ACCESS_TOKEN}`;
-      }
-
-      icsUrl.value = url;
-      resultSection.hidden = false;
-
-      // Apple Calendar uses webcal:// protocol directly
-      const webcalUrl = url.replace('http://', 'webcal://').replace('https://', 'webcal://');
-      appleBtn.href = webcalUrl;
-
-      // Google Calendar: cid parameter requires webcal:// protocol
-      const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
-      googleBtn.href = googleUrl;
-
-      // Fetch live preview
-      fetchPreview(url);
-    }
-
-    /**
-     * Parse a raw .ics string and return the first VEVENT as an object.
-     */
-    function parseFirstEvent(icsText) {
-      // Unfold continuation lines (RFC 5545: CRLF followed by space/tab)
-      const unfolded = icsText.replace(/\r\n[ \t]/g, '');
-      const lines = unfolded.split(/\r?\n/);
-
-      let inEvent = false;
-      const props = {};
-
-      for (const line of lines) {
-        if (line === 'BEGIN:VEVENT') { inEvent = true; continue; }
-        if (line === 'END:VEVENT') break;
-        if (!inEvent) continue;
-
-        const colonIdx = line.indexOf(':');
-        if (colonIdx === -1) continue;
-        const key = line.slice(0, colonIdx).split(';')[0]; // strip params like VALUE=DATE
-        const value = line.slice(colonIdx + 1);
-        props[key] = value;
-      }
-
-      return props;
-    }
-
-    /**
-     * Unescape .ics text values.
-     */
-    function unescapeIcs(text) {
-      return text
-        .replace(/\\n/g, '\n')
-        .replace(/\\,/g, ',')
-        .replace(/\\;/g, ';')
-        .replace(/\\\\/g, '\\');
-    }
-
-    /**
-     * Format YYYYMMDD as a readable date string.
-     */
-    function formatDate(dateStr) {
-      // dateStr is YYYYMMDD
-      const y = parseInt(dateStr.slice(0, 4));
-      const m = parseInt(dateStr.slice(4, 6)) - 1;
-      const d = parseInt(dateStr.slice(6, 8));
-      const date = new Date(y, m, d);
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      });
-    }
-
-    /**
-     * Render description text into HTML with proper line breaks and linkified URLs.
-     */
-    function renderDescription(raw) {
-      const text = unescapeIcs(raw);
-      const parts = text.split(/\n{2,}/); // split on double newlines into sections
-      let html = '';
-
-      for (const part of parts) {
-        const trimmed = part.trim();
-        if (!trimmed) continue;
-
-        if (trimmed === 'Backup Option' || trimmed === 'Backup Options') {
-          html += `<div class="cal-event-backups-header">${trimmed}</div>`;
-        } else if (trimmed.startsWith('\u{1F368}') || trimmed.startsWith('\u{1F366}')) {
-          // Backup line(s) with emoji
-          const backupLines = trimmed.split('\n');
-          for (const bl of backupLines) {
-            html += `<div class="cal-event-backup-line">${escapeHtml(bl)}</div>`;
-          }
-        } else {
-          // Regular text — linkify URLs
-          const linked = escapeHtml(trimmed).replace(
-            /(https?:\/\/[^\s]+)/g,
-            '<a href="$1" target="_blank" rel="noopener">$1</a>'
-          );
-          html += `<div class="cal-event-text">${linked.replace(/\n/g, '<br>')}</div>`;
-        }
-      }
-
-      return html;
-    }
-
+    // --- Utility ---
     function escapeHtml(str) {
+      if (!str) return '';
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    /**
-     * Fetch the .ics and render a preview of today's event.
-     */
-    async function fetchPreview(url) {
-      // Cancel any in-flight fetch
-      if (previewAbort) previewAbort.abort();
-      previewAbort = new AbortController();
+    function toISODate(d) {
+      return d.toISOString().slice(0, 10);
+    }
 
-      previewCard.hidden = false;
-      previewLoading.hidden = false;
-      previewTitle.textContent = '';
-      previewDate.textContent = '';
-      previewLocation.textContent = '';
-      previewDesc.innerHTML = '';
+    function addDays(d, n) {
+      const r = new Date(d);
+      r.setDate(r.getDate() + n);
+      return r;
+    }
 
-      // Set accent color based on primary store's brand
-      const primaryStore = allStores.find(s => s.slug === primarySlug);
-      const accentColor = (primaryStore && primaryStore.brand && BRAND_COLORS[primaryStore.brand]) || '#039be5';
-      document.querySelector('.cal-event-color').style.background = accentColor;
+    function timeSince(isoStr) {
+      if (!isoStr) return '';
+      const diff = Date.now() - new Date(isoStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + ' min ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + ' hr ago';
+      const days = Math.floor(hrs / 24);
+      return days + 'd ago';
+    }
+
+    function haversine(lat1, lng1, lat2, lng2) {
+      const R = 3958.8;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // --- Store loading ---
+    async function loadStores() {
+      try {
+        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const data = await resp.json();
+        allStores = data.stores || [];
+      } catch (err) {
+        console.error('Failed to load stores:', err);
+      }
+    }
+
+    // --- Store picker ---
+    function filterStores(query) {
+      const q = query.toLowerCase().trim();
+      if (!q) return [];
+      let filtered = allStores.filter(s => {
+        const searchable = (s.name + ' ' + s.city + ' ' + (s.address || '') + ' ' + s.slug + ' ' + (s.brand || '') + ' ' + (BRAND_DISPLAY[s.brand] || '')).toLowerCase();
+        return searchable.includes(q);
+      });
+
+      // Sort by distance if available
+      if (userLat !== null && userLng !== null) {
+        filtered = filtered.map(s => {
+          s._dist = (s.lat != null && s.lng != null)
+            ? haversine(userLat, userLng, s.lat, s.lng) : Infinity;
+          return s;
+        }).sort((a, b) => a._dist - b._dist);
+      }
+
+      return filtered.slice(0, 8);
+    }
+
+    function renderDropdown(stores) {
+      if (stores.length === 0) {
+        storeDropdown.hidden = true;
+        return;
+      }
+      storeDropdown.innerHTML = '';
+      for (const store of stores) {
+        const item = document.createElement('div');
+        item.className = 'store-dropdown-item';
+        const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+        const prefix = brand ? brand + ' -- ' : '';
+        const dist = (store._dist != null && store._dist !== Infinity) ? ' (' + store._dist.toFixed(1) + ' mi)' : '';
+        item.innerHTML = '<div class="store-dropdown-name">' + escapeHtml(prefix + store.name) + '</div>'
+          + '<div class="store-dropdown-detail">' + escapeHtml(store.city + ', ' + store.state + ' -- ' + (store.address || '')) + escapeHtml(dist) + '</div>';
+        item.addEventListener('click', () => selectStore(store.slug));
+        storeDropdown.appendChild(item);
+      }
+      storeDropdown.hidden = false;
+    }
+
+    function selectStore(slug) {
+      currentSlug = slug;
+      const store = allStores.find(s => s.slug === slug);
+      if (!store) return;
+
+      // Save to localStorage (shared with calendar page)
+      try { localStorage.setItem('custard-primary', slug); } catch (e) {}
+
+      // Update UI
+      const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) + ' -- ' : '';
+      currentStoreName.textContent = brand + store.city + ', ' + store.state + ' -- ' + (store.address || '');
+      currentStoreEl.hidden = false;
+      storeSearch.value = '';
+      storeDropdown.hidden = true;
+      emptyState.hidden = true;
+
+      loadForecast(slug);
+    }
+
+    function showStorePicker() {
+      currentStoreEl.hidden = true;
+      storeSearch.value = '';
+      storeSearch.focus();
+    }
+
+    // --- Geolocation ---
+    async function geolocateAndSort() {
+      geoBtn.disabled = true;
+      try {
+        // Try browser geolocation first
+        const pos = await new Promise((resolve, reject) => {
+          if (!navigator.geolocation) return reject(new Error('No geolocation'));
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+      } catch (e) {
+        // Fall back to IP-based
+        try {
+          const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
+          const geo = await resp.json();
+          if (geo.lat && geo.lon) {
+            userLat = geo.lat;
+            userLng = geo.lon;
+          }
+        } catch (err) {
+          console.debug('Geolocation unavailable:', err);
+        }
+      }
+      geoBtn.disabled = false;
+      // If we got coords, show sorted results immediately
+      if (userLat !== null && allStores.length > 0) {
+        const sorted = allStores.map(s => {
+          s._dist = (s.lat != null && s.lng != null) ? haversine(userLat, userLng, s.lat, s.lng) : Infinity;
+          return s;
+        }).sort((a, b) => a._dist - b._dist);
+        renderDropdown(sorted.slice(0, 8));
+        storeSearch.focus();
+      }
+    }
+
+    // --- Forecast loading ---
+    async function loadForecast(slug) {
+      // Show loading
+      todaySection.hidden = true;
+      weekSection.hidden = true;
+      errorState.hidden = true;
+      todayLoading.hidden = false;
 
       try {
-        const resp = await fetch(url, { signal: previewAbort.signal });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const icsText = await resp.text();
+        const [flavorsResp, forecastResp] = await Promise.all([
+          fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug)),
+          fetch(WORKER_BASE + '/api/v1/forecast/' + encodeURIComponent(slug)),
+        ]);
 
-        // Find today's event (or the nearest future one)
-        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const event = findEventForDate(icsText, todayStr);
-
-        if (!event.SUMMARY) {
-          previewDesc.innerHTML = '<div class="cal-event-text" style="color:#888">No events found.</div>';
-          previewLoading.hidden = true;
-          return;
+        let confirmedFlavors = [];
+        let fetchedAt = null;
+        if (flavorsResp.ok) {
+          const cData = await flavorsResp.json();
+          confirmedFlavors = (cData.flavors || []).map(f => ({
+            date: f.date,
+            title: f.title,
+            description: f.description || '',
+          }));
+          fetchedAt = cData.fetched_at || null;
         }
 
-        previewTitle.textContent = unescapeIcs(event.SUMMARY);
-        previewDate.textContent = formatDate(event.DTSTART || todayStr);
-        if (event.LOCATION) {
-          previewLocation.textContent = '\u{1F4CD} ' + unescapeIcs(event.LOCATION);
+        let forecast = null;
+        if (forecastResp.ok) {
+          forecast = await forecastResp.json();
         }
-        if (event.DESCRIPTION) {
-          previewDesc.innerHTML = renderDescription(event.DESCRIPTION);
+
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        const timeline = buildTimeline(confirmedFlavors, forecast, today);
+
+        todayLoading.hidden = true;
+
+        if (timeline.length > 0) {
+          renderTodayCard(timeline[0], slug, fetchedAt, forecast);
+          renderWeekStrip(timeline.slice(1), fetchedAt);
+        } else {
+          renderTodayCard({ date: toISODate(today), type: 'none' }, slug, fetchedAt, forecast);
         }
       } catch (err) {
-        if (err.name === 'AbortError') return; // superseded by newer fetch
-        previewDesc.innerHTML = '<div class="cal-event-text" style="color:#c00">Failed to load preview.</div>';
-      } finally {
-        previewLoading.hidden = true;
+        console.error('Forecast load error:', err);
+        todayLoading.hidden = true;
+        errorMessage.textContent = 'Something went wrong loading the forecast.';
+        errorState.hidden = false;
       }
     }
 
-    /**
-     * Find the VEVENT for a given date (YYYYMMDD), or the nearest future one.
-     */
-    function findEventForDate(icsText, targetDate) {
-      const unfolded = icsText.replace(/\r\n[ \t]/g, '');
-      const lines = unfolded.split(/\r?\n/);
+    function buildTimeline(confirmedFlavors, forecast, today) {
+      const timeline = [];
+      for (let i = 0; i < 7; i++) {
+        const date = addDays(today, i);
+        const dateStr = toISODate(date);
 
-      let inEvent = false;
-      let props = {};
-      let bestEvent = {};
-      let bestDate = null;
-
-      for (const line of lines) {
-        if (line === 'BEGIN:VEVENT') {
-          inEvent = true;
-          props = {};
+        const confirmed = confirmedFlavors.find(f => f.date === dateStr);
+        if (confirmed) {
+          timeline.push({ date: dateStr, type: 'confirmed', flavor: confirmed.title, description: confirmed.description || '' });
           continue;
         }
-        if (line === 'END:VEVENT') {
-          inEvent = false;
-          const evDate = props.DTSTART || '';
-          // Exact match for today
-          if (evDate === targetDate) return props;
-          // Track nearest future event
-          if (evDate >= targetDate && (bestDate === null || evDate < bestDate)) {
-            bestDate = evDate;
-            bestEvent = props;
+
+        const forecastDay = forecast && forecast.days
+          ? forecast.days.find(d => d.date === dateStr)
+          : null;
+        if (forecastDay && forecastDay.predictions && forecastDay.predictions.length > 0) {
+          timeline.push({
+            date: dateStr,
+            type: 'predicted',
+            flavor: forecastDay.predictions[0].flavor,
+            probability: forecastDay.predictions[0].probability,
+            predictions: forecastDay.predictions.slice(0, 3),
+          });
+          continue;
+        }
+
+        timeline.push({ date: dateStr, type: 'none' });
+      }
+      return timeline;
+    }
+
+    // --- Rendering ---
+    function renderTodayCard(day, slug, fetchedAt, forecast) {
+      const store = allStores.find(s => s.slug === slug);
+      const brand = brandFromSlug(slug);
+      const color = BRAND_COLORS[brand] || '#005696';
+      todayAccent.style.background = color;
+
+      if (day.type === 'confirmed') {
+        todayBadge.textContent = 'Confirmed';
+        todayBadge.className = 'day-card-badge day-card-badge-confirmed';
+        todayFlavor.textContent = day.flavor;
+        todayDesc.textContent = day.description || '';
+        todayDesc.hidden = !day.description;
+        todayPredictions.innerHTML = '';
+      } else if (day.type === 'predicted') {
+        todayBadge.textContent = 'Predicted';
+        todayBadge.className = 'day-card-badge day-card-badge-predicted';
+        todayFlavor.textContent = day.flavor;
+        todayDesc.textContent = '';
+        todayDesc.hidden = true;
+
+        // Show top predictions with bars
+        if (day.predictions && day.predictions.length > 0) {
+          const maxProb = day.predictions[0].probability || 0.1;
+          let html = '';
+          for (const p of day.predictions) {
+            const pct = (p.probability * 100).toFixed(1);
+            const barWidth = Math.max(5, (p.probability / Math.max(maxProb, 0.01)) * 100);
+            const conf = p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low');
+            html += '<div class="prediction-row">'
+              + '<span class="prediction-name">' + escapeHtml(p.flavor) + '</span>'
+              + '<div class="prediction-bar-wrap"><div class="prediction-bar prediction-bar-' + conf + '" style="width:' + barWidth + '%"></div></div>'
+              + '<span class="prediction-pct">' + pct + '%</span>'
+              + '</div>';
           }
-          continue;
+          todayPredictions.innerHTML = html;
+        } else {
+          todayPredictions.innerHTML = '';
         }
-        if (!inEvent) continue;
-
-        const colonIdx = line.indexOf(':');
-        if (colonIdx === -1) continue;
-        const key = line.slice(0, colonIdx).split(';')[0];
-        const value = line.slice(colonIdx + 1);
-        props[key] = value;
+      } else {
+        todayBadge.textContent = '';
+        todayBadge.className = 'day-card-badge';
+        todayFlavor.textContent = 'No data yet';
+        todayFlavor.style.color = '#999';
+        todayDesc.textContent = 'Check back later -- flavor data updates throughout the day.';
+        todayDesc.hidden = false;
+        todayPredictions.innerHTML = '';
       }
 
-      return bestEvent;
+      todayStore.textContent = store ? store.name : slug;
+
+      const freshness = fetchedAt ? 'Updated ' + timeSince(fetchedAt) : '';
+      todayFreshness.textContent = freshness;
+
+      todaySection.hidden = false;
     }
 
-    // Event handlers
-    nearbyBtn.addEventListener('click', () => {
-      if (sortByDistance) {
-        // Toggle off
-        sortByDistance = false;
-        nearbyBtn.textContent = 'Nearby';
-        nearbyBtn.classList.remove('active');
-        renderStoreList();
-        return;
-      }
-      if (!navigator.geolocation) {
-        nearbyBtn.textContent = 'Not supported';
-        setTimeout(() => { nearbyBtn.textContent = 'Nearby'; }, 2000);
-        return;
-      }
-      nearbyBtn.textContent = 'Locating...';
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          userLat = pos.coords.latitude;
-          userLng = pos.coords.longitude;
-          sortByDistance = true;
-          stateFilter.value = ''; // Clear state filter to show all
-          nearbyBtn.textContent = 'Nearby \u2714';
-          nearbyBtn.classList.add('active');
-          renderStoreList();
-        },
-        () => {
-          nearbyBtn.textContent = 'Denied';
-          setTimeout(() => { nearbyBtn.textContent = 'Nearby'; }, 2000);
-        },
-        { timeout: 10000 }
-      );
-    });
-    stateFilter.addEventListener('change', renderStoreList);
-    citySearch.addEventListener('input', renderStoreList);
+    function renderWeekStrip(days, fetchedAt) {
+      weekStrip.innerHTML = '';
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
 
-    primarySelect.addEventListener('change', () => {
-      primarySlug = primarySelect.value;
-      // Remove primary from secondaries if it was there
-      secondarySlugs.delete(primarySlug);
-      updateSelectedBadges();
-      renderStoreList();
-      updateResult();
-    });
+      let hasAnyData = false;
 
-    // Single-click adds to secondaries (no multi-select needed)
-    secondarySelect.addEventListener('change', () => {
-      const slug = secondarySelect.value;
-      if (!slug || secondarySlugs.size >= 3) return;
-      secondarySlugs.add(slug);
-      updateSelectedBadges();
-      renderStoreList(); // re-render to remove from dropdown
-      updateResult();
-    });
+      for (const day of days) {
+        const d = new Date(day.date + 'T12:00:00');
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(icsUrl.value);
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
-      } catch {
-        icsUrl.select();
-        document.execCommand('copy');
-      }
-    });
+        const card = document.createElement('div');
 
-    // On mobile, Google Calendar can't subscribe via cid= link (Android intercepts
-    // and opens native app which doesn't support URL subscriptions).
-    // Instead: copy URL to clipboard and show instructions.
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const googleMobileToast = document.getElementById('google-mobile-toast');
-
-    if (isMobile) {
-      googleBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-          await navigator.clipboard.writeText(icsUrl.value);
-        } catch {
-          icsUrl.select();
-          document.execCommand('copy');
+        if (day.type === 'confirmed') {
+          hasAnyData = true;
+          card.className = 'week-day-card';
+          card.innerHTML =
+            '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
+            + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+            + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
+            + '<div class="week-day-confidence" style="color:#2e7d32;">Confirmed</div>';
+        } else if (day.type === 'predicted') {
+          hasAnyData = true;
+          const pct = day.probability ? (day.probability * 100).toFixed(0) + '%' : '';
+          card.className = 'week-day-card week-day-card-predicted';
+          card.innerHTML =
+            '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
+            + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+            + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
+            + (pct ? '<div class="week-day-confidence">' + pct + ' likely</div>' : '');
+        } else {
+          card.className = 'week-day-card week-day-card-none';
+          card.innerHTML =
+            '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
+            + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+            + '<div class="week-day-flavor" style="color:#999;font-style:italic;">No data</div>';
         }
-        googleMobileToast.hidden = false;
-        setTimeout(() => { googleMobileToast.hidden = true; }, 10000);
-      });
+
+        weekStrip.appendChild(card);
+      }
+
+      if (fetchedAt) {
+        weekFreshness.textContent = 'Updated ' + timeSince(fetchedAt);
+      } else {
+        weekFreshness.textContent = '';
+      }
+
+      weekSection.hidden = !hasAnyData && days.every(d => d.type === 'none');
     }
 
-    // Initialize
-    loadStores();
+    // --- Event handlers ---
+    storeSearch.addEventListener('input', () => {
+      const q = storeSearch.value.trim();
+      if (q.length < 2) {
+        storeDropdown.hidden = true;
+        return;
+      }
+      const results = filterStores(q);
+      renderDropdown(results);
+    });
 
-    // Register service worker for offline/PWA support
+    storeSearch.addEventListener('focus', () => {
+      const q = storeSearch.value.trim();
+      if (q.length >= 2) {
+        const results = filterStores(q);
+        renderDropdown(results);
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.location-bar-inner')) {
+        storeDropdown.hidden = true;
+      }
+    });
+
+    changeStoreBtn.addEventListener('click', showStorePicker);
+
+    findStoreBtn.addEventListener('click', () => {
+      storeSearch.focus();
+    });
+
+    geoBtn.addEventListener('click', geolocateAndSort);
+
+    retryBtn.addEventListener('click', () => {
+      if (currentSlug) {
+        errorState.hidden = true;
+        loadForecast(currentSlug);
+      }
+    });
+
+    // --- Init ---
+    async function init() {
+      await loadStores();
+
+      // Check localStorage for a saved store
+      let savedSlug = null;
+      try { savedSlug = localStorage.getItem('custard-primary'); } catch (e) {}
+
+      if (savedSlug && allStores.find(s => s.slug === savedSlug)) {
+        selectStore(savedSlug);
+      } else {
+        emptyState.hidden = false;
+        todaySection.hidden = true;
+        weekSection.hidden = true;
+      }
+    }
+
+    init();
+
+    // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }

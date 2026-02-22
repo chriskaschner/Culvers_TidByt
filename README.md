@@ -150,7 +150,9 @@ uv run pytest
 # Analytics only (84 tests)
 uv run pytest analytics/tests/ -v
 
-# Pipeline + static assets (~33 tests)
+# Pipeline + static assets + browser nav click-through
+# (requires `cd worker && npm install` and local Chrome/Chromium;
+# set CHROME_BIN if needed)
 uv run pytest tests/ -v
 
 # Store manifest + e2e (~25 tests)

@@ -1,7 +1,7 @@
 {
-  "name": "Custard Calendar",
-  "short_name": "Custard Cal",
-  "description": "Subscribe to Flavor of the Day calendars for Culver's, Kopp's, Gille's, and more.",
+  "name": "Custard Forecast",
+  "short_name": "Custard",
+  "description": "Today's Flavor of the Day forecast for frozen custard shops.",
   "start_url": "./",
   "display": "standalone",
   "theme_color": "#003366",

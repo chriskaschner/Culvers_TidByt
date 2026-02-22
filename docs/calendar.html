@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custard Calendar — Subscribe to Flavor of the Day</title>
+  <meta name="description" content="Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, and more frozen custard shops.">
+  <meta property="og:title" content="Custard Calendar — Subscribe to Flavor of the Day">
+  <meta property="og:description" content="Subscribe to a calendar showing daily Flavor of the Day for frozen custard shops near you.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/calendar.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Custard Calendar</h1>
+    <p>Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, Hefner's, Kraverz, and Oscar's.</p>
+    <nav class="nav-links">
+      <a href="index.html">Forecast</a>
+      <a href="calendar.html" class="nav-active">Calendar</a>
+      <a href="map.html">Map</a>
+      <a href="radar.html">Radar</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="siri.html">Siri</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="store-selector">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="state-filter">State</label>
+          <select id="state-filter">
+            <option value="">All States</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="city-search">Search</label>
+          <input type="text" id="city-search" placeholder="City or store name...">
+        </div>
+        <div class="filter-group">
+          <button id="nearby-btn" type="button" title="Sort stores by distance from your location">Nearby</button>
+        </div>
+      </div>
+
+      <div class="selection-panels">
+        <div class="panel">
+          <h2>Primary Store</h2>
+          <p class="hint">Your main location — its flavor appears in the event title.</p>
+          <div id="primary-selected" class="selected-badge" hidden></div>
+          <select id="primary-select" size="8">
+            <option value="" disabled selected>Loading stores...</option>
+          </select>
+        </div>
+
+        <div class="panel">
+          <h2>Backup Stores <span id="secondary-count">(0/3)</span></h2>
+          <p class="hint">Up to 3 alternatives — click to add, use badges to remove.</p>
+          <div id="secondary-selected" class="selected-badges"></div>
+          <select id="secondary-select" size="8">
+            <option value="" disabled>Select primary store first</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" hidden>
+      <h2>Your Calendar Subscription</h2>
+
+      <div id="preview-card" class="cal-preview" hidden>
+        <div class="cal-preview-header">
+          <span class="cal-preview-label">Preview — how today's event will look</span>
+          <span id="preview-loading" class="cal-preview-loading" hidden>Loading...</span>
+        </div>
+        <div id="preview-event" class="cal-event">
+          <div class="cal-event-color"></div>
+          <div class="cal-event-body">
+            <div id="preview-title" class="cal-event-title"></div>
+            <div id="preview-date" class="cal-event-date"></div>
+            <div id="preview-location" class="cal-event-location"></div>
+            <div id="preview-desc" class="cal-event-desc"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="url-box">
+        <input type="text" id="ics-url" readonly>
+        <button id="copy-btn" title="Copy URL">Copy</button>
+      </div>
+
+      <div class="subscribe-buttons">
+        <a id="apple-btn" href="#" class="btn btn-apple">Add to Apple Calendar</a>
+        <a id="google-btn" href="#" target="_blank" rel="noopener" class="btn btn-google">Add to Google Calendar</a>
+      </div>
+      <div id="google-mobile-toast" class="mobile-toast" hidden>
+        URL copied! Open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar settings</a>, tap <strong>Add calendar &gt; From URL</strong>, and paste.
+      </div>
+
+      <details>
+        <summary>Setup instructions</summary>
+        <ol>
+          <li><strong>Apple Calendar:</strong> Click "Add to Apple Calendar" — it opens directly in Calendar.app.</li>
+          <li><strong>Google Calendar (desktop):</strong> Click "Add to Google Calendar" to subscribe directly.</li>
+          <li><strong>Google Calendar (phone):</strong> The Google Calendar app can't subscribe to URLs directly. Copy the URL above, then open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar on the web</a> &gt; Add calendar &gt; From URL, and paste it.</li>
+          <li>Events update automatically every 12-24 hours.</li>
+          <li>Each event shows your primary store's flavor in the title, with backup options in the description.</li>
+        </ol>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+  </footer>
+
+  <script>
+    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    const ACCESS_TOKEN = ''; // Set to match Worker's ACCESS_TOKEN, or leave empty for open access
+    let allStores = [];
+    let primarySlug = null;
+    let secondarySlugs = new Set();
+    let previewAbort = null; // AbortController for in-flight preview fetches
+    let userLat = null;
+    let userLng = null;
+    let sortByDistance = false;
+
+    // DOM elements
+    const stateFilter = document.getElementById('state-filter');
+    const citySearch = document.getElementById('city-search');
+    const primarySelect = document.getElementById('primary-select');
+    const secondarySelect = document.getElementById('secondary-select');
+    const primarySelected = document.getElementById('primary-selected');
+    const secondarySelected = document.getElementById('secondary-selected');
+    const secondaryCount = document.getElementById('secondary-count');
+    const resultSection = document.getElementById('result');
+    const icsUrl = document.getElementById('ics-url');
+    const copyBtn = document.getElementById('copy-btn');
+    const googleBtn = document.getElementById('google-btn');
+    const appleBtn = document.getElementById('apple-btn');
+    const previewCard = document.getElementById('preview-card');
+    const previewLoading = document.getElementById('preview-loading');
+    const previewTitle = document.getElementById('preview-title');
+    const nearbyBtn = document.getElementById('nearby-btn');
+    const previewDate = document.getElementById('preview-date');
+    const previewLocation = document.getElementById('preview-location');
+    const previewDesc = document.getElementById('preview-desc');
+
+    // Haversine distance in miles
+    function haversine(lat1, lng1, lat2, lng2) {
+      const R = 3958.8; // Earth radius in miles
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function saveFavorites() {
+      try {
+        if (primarySlug) {
+          localStorage.setItem('custard-primary', primarySlug);
+        } else {
+          localStorage.removeItem('custard-primary');
+        }
+        if (secondarySlugs.size > 0) {
+          localStorage.setItem('custard-secondary', JSON.stringify([...secondarySlugs]));
+        } else {
+          localStorage.removeItem('custard-secondary');
+        }
+      } catch { /* localStorage unavailable */ }
+    }
+
+    function restoreFavorites() {
+      try {
+        const slugSet = new Set(allStores.map(s => s.slug));
+        const savedPrimary = localStorage.getItem('custard-primary');
+        if (savedPrimary && slugSet.has(savedPrimary)) {
+          primarySlug = savedPrimary;
+        }
+        const savedSecondary = localStorage.getItem('custard-secondary');
+        if (savedSecondary) {
+          const parsed = JSON.parse(savedSecondary);
+          for (const slug of parsed) {
+            if (slugSet.has(slug) && slug !== primarySlug && secondarySlugs.size < 3) {
+              secondarySlugs.add(slug);
+            }
+          }
+        }
+      } catch { /* localStorage unavailable or corrupt */ }
+    }
+
+    // Load store manifest
+    async function loadStores() {
+      try {
+        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const data = await resp.json();
+        allStores = data.stores || [];
+        populateStateFilter();
+        restoreFavorites();
+        renderStoreList();
+        if (primarySlug) {
+          updateSelectedBadges();
+          updateResult();
+        }
+        // Auto-select state based on user's IP geolocation (skip if favorites restored a selection)
+        if (!primarySlug) autoSelectState();
+      } catch (err) {
+        primarySelect.innerHTML = '<option disabled>Failed to load stores</option>';
+        console.error('Failed to load stores:', err);
+      }
+    }
+
+    async function autoSelectState() {
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
+        const geo = await resp.json();
+        if (geo.state && stateFilter.querySelector(`option[value="${geo.state}"]`)) {
+          stateFilter.value = geo.state;
+          renderStoreList();
+        }
+      } catch (err) {
+        // Silent fail — geolocation is a nice-to-have
+        console.debug('Geolocation unavailable:', err);
+      }
+    }
+
+    function populateStateFilter() {
+      const states = [...new Set(allStores.map(s => s.state))].sort();
+      for (const state of states) {
+        const opt = document.createElement('option');
+        opt.value = state;
+        opt.textContent = state;
+        stateFilter.appendChild(opt);
+      }
+    }
+
+    function getFilteredStores() {
+      const state = stateFilter.value;
+      const query = citySearch.value.toLowerCase().trim();
+      let filtered = allStores.filter(s => {
+        if (state && s.state !== state) return false;
+        if (query) {
+          const searchable = `${s.name} ${s.city} ${s.address} ${s.slug} ${s.brand || ''} ${BRAND_DISPLAY[s.brand] || ''}`.toLowerCase();
+          return searchable.includes(query);
+        }
+        return true;
+      });
+
+      // Sort by distance when geolocation is active
+      if (sortByDistance && userLat !== null && userLng !== null) {
+        filtered = filtered.map(s => {
+          if (s.lat != null && s.lng != null) {
+            s._dist = haversine(userLat, userLng, s.lat, s.lng);
+          } else {
+            s._dist = Infinity;
+          }
+          return s;
+        }).sort((a, b) => a._dist - b._dist);
+      }
+
+      return filtered;
+    }
+
+    const BRAND_DISPLAY = {
+      kopps: "Kopp's",
+      gilles: "Gille's",
+      hefners: "Hefner's",
+      kraverz: "Kraverz",
+      oscars: "Oscar's",
+    };
+
+    const BRAND_COLORS = {
+      kopps: '#000000',
+      gilles: '#EBCC35',
+      hefners: '#93BE46',
+      kraverz: '#CE742D',
+      oscars: '#BC272C',
+    };
+
+    function brandPrefix(store) {
+      if (!store.brand) return '';
+      return (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ';
+    }
+
+    function storeLabel(store) {
+      let label = `${brandPrefix(store)}${store.city}, ${store.state} \u2014 ${store.address}`;
+      if (sortByDistance && store._dist != null && store._dist !== Infinity) {
+        label += ` (${store._dist.toFixed(1)} mi)`;
+      }
+      return label;
+    }
+
+    function renderStoreList() {
+      const filtered = getFilteredStores();
+
+      // Primary dropdown
+      primarySelect.innerHTML = '';
+      if (filtered.length === 0) {
+        primarySelect.innerHTML = '<option disabled>No stores match your search</option>';
+      } else {
+        for (const store of filtered) {
+          const opt = document.createElement('option');
+          opt.value = store.slug;
+          opt.textContent = storeLabel(store);
+          if (store.slug === primarySlug) opt.selected = true;
+          primarySelect.appendChild(opt);
+        }
+      }
+
+      // Secondary dropdown: single-select, click to add
+      // Exclude primary and already-selected secondaries
+      secondarySelect.innerHTML = '';
+      const availableForSecondary = filtered.filter(
+        s => s.slug !== primarySlug && !secondarySlugs.has(s.slug)
+      );
+      if (!primarySlug) {
+        secondarySelect.innerHTML = '<option disabled>Select primary store first</option>';
+      } else if (secondarySlugs.size >= 3) {
+        secondarySelect.innerHTML = '<option disabled>Maximum 3 backups selected</option>';
+      } else if (availableForSecondary.length === 0) {
+        secondarySelect.innerHTML = '<option disabled>No other stores match</option>';
+      } else {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        placeholder.textContent = 'Click a store to add as backup...';
+        secondarySelect.appendChild(placeholder);
+        for (const store of availableForSecondary) {
+          const opt = document.createElement('option');
+          opt.value = store.slug;
+          opt.textContent = storeLabel(store);
+          secondarySelect.appendChild(opt);
+        }
+      }
+    }
+
+    function updateSelectedBadges() {
+      // Primary badge
+      if (primarySlug) {
+        const store = allStores.find(s => s.slug === primarySlug);
+        primarySelected.textContent = store ? storeLabel(store) : primarySlug;
+        primarySelected.hidden = false;
+      } else {
+        primarySelected.hidden = true;
+      }
+
+      // Secondary badges — these persist regardless of filter
+      secondarySelected.innerHTML = '';
+      for (const slug of secondarySlugs) {
+        const store = allStores.find(s => s.slug === slug);
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = store ? `${brandPrefix(store)}${store.city}, ${store.state} \u2014 ${store.address}` : slug;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '\u00d7';
+        removeBtn.title = 'Remove';
+        removeBtn.onclick = () => {
+          secondarySlugs.delete(slug);
+          updateSelectedBadges();
+          renderStoreList();
+          updateResult();
+        };
+        badge.appendChild(removeBtn);
+        secondarySelected.appendChild(badge);
+      }
+
+      secondaryCount.textContent = `(${secondarySlugs.size}/3)`;
+    }
+
+    function updateResult() {
+      saveFavorites();
+      if (!primarySlug) {
+        resultSection.hidden = true;
+        previewCard.hidden = true;
+        return;
+      }
+
+      let url = `${WORKER_BASE}/v1/calendar.ics?primary=${primarySlug}`;
+      if (secondarySlugs.size > 0) {
+        url += `&secondary=${[...secondarySlugs].join(',')}`;
+      }
+      if (ACCESS_TOKEN) {
+        url += `&token=${ACCESS_TOKEN}`;
+      }
+
+      icsUrl.value = url;
+      resultSection.hidden = false;
+
+      // Apple Calendar uses webcal:// protocol directly
+      const webcalUrl = url.replace('http://', 'webcal://').replace('https://', 'webcal://');
+      appleBtn.href = webcalUrl;
+
+      // Google Calendar: cid parameter requires webcal:// protocol
+      const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
+      googleBtn.href = googleUrl;
+
+      // Fetch live preview
+      fetchPreview(url);
+    }
+
+    /**
+     * Parse a raw .ics string and return the first VEVENT as an object.
+     */
+    function parseFirstEvent(icsText) {
+      // Unfold continuation lines (RFC 5545: CRLF followed by space/tab)
+      const unfolded = icsText.replace(/\r\n[ \t]/g, '');
+      const lines = unfolded.split(/\r?\n/);
+
+      let inEvent = false;
+      const props = {};
+
+      for (const line of lines) {
+        if (line === 'BEGIN:VEVENT') { inEvent = true; continue; }
+        if (line === 'END:VEVENT') break;
+        if (!inEvent) continue;
+
+        const colonIdx = line.indexOf(':');
+        if (colonIdx === -1) continue;
+        const key = line.slice(0, colonIdx).split(';')[0]; // strip params like VALUE=DATE
+        const value = line.slice(colonIdx + 1);
+        props[key] = value;
+      }
+
+      return props;
+    }
+
+    /**
+     * Unescape .ics text values.
+     */
+    function unescapeIcs(text) {
+      return text
+        .replace(/\\n/g, '\n')
+        .replace(/\\,/g, ',')
+        .replace(/\\;/g, ';')
+        .replace(/\\\\/g, '\\');
+    }
+
+    /**
+     * Format YYYYMMDD as a readable date string.
+     */
+    function formatDate(dateStr) {
+      // dateStr is YYYYMMDD
+      const y = parseInt(dateStr.slice(0, 4));
+      const m = parseInt(dateStr.slice(4, 6)) - 1;
+      const d = parseInt(dateStr.slice(6, 8));
+      const date = new Date(y, m, d);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
+
+    /**
+     * Render description text into HTML with proper line breaks and linkified URLs.
+     */
+    function renderDescription(raw) {
+      const text = unescapeIcs(raw);
+      const parts = text.split(/\n{2,}/); // split on double newlines into sections
+      let html = '';
+
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (!trimmed) continue;
+
+        if (trimmed === 'Backup Option' || trimmed === 'Backup Options') {
+          html += `<div class="cal-event-backups-header">${trimmed}</div>`;
+        } else if (trimmed.startsWith('\u{1F368}') || trimmed.startsWith('\u{1F366}')) {
+          // Backup line(s) with emoji
+          const backupLines = trimmed.split('\n');
+          for (const bl of backupLines) {
+            html += `<div class="cal-event-backup-line">${escapeHtml(bl)}</div>`;
+          }
+        } else {
+          // Regular text — linkify URLs
+          const linked = escapeHtml(trimmed).replace(
+            /(https?:\/\/[^\s]+)/g,
+            '<a href="$1" target="_blank" rel="noopener">$1</a>'
+          );
+          html += `<div class="cal-event-text">${linked.replace(/\n/g, '<br>')}</div>`;
+        }
+      }
+
+      return html;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /**
+     * Fetch the .ics and render a preview of today's event.
+     */
+    async function fetchPreview(url) {
+      // Cancel any in-flight fetch
+      if (previewAbort) previewAbort.abort();
+      previewAbort = new AbortController();
+
+      previewCard.hidden = false;
+      previewLoading.hidden = false;
+      previewTitle.textContent = '';
+      previewDate.textContent = '';
+      previewLocation.textContent = '';
+      previewDesc.innerHTML = '';
+
+      // Set accent color based on primary store's brand
+      const primaryStore = allStores.find(s => s.slug === primarySlug);
+      const accentColor = (primaryStore && primaryStore.brand && BRAND_COLORS[primaryStore.brand]) || '#039be5';
+      document.querySelector('.cal-event-color').style.background = accentColor;
+
+      try {
+        const resp = await fetch(url, { signal: previewAbort.signal });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const icsText = await resp.text();
+
+        // Find today's event (or the nearest future one)
+        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const event = findEventForDate(icsText, todayStr);
+
+        if (!event.SUMMARY) {
+          previewDesc.innerHTML = '<div class="cal-event-text" style="color:#888">No events found.</div>';
+          previewLoading.hidden = true;
+          return;
+        }
+
+        previewTitle.textContent = unescapeIcs(event.SUMMARY);
+        previewDate.textContent = formatDate(event.DTSTART || todayStr);
+        if (event.LOCATION) {
+          previewLocation.textContent = '\u{1F4CD} ' + unescapeIcs(event.LOCATION);
+        }
+        if (event.DESCRIPTION) {
+          previewDesc.innerHTML = renderDescription(event.DESCRIPTION);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return; // superseded by newer fetch
+        previewDesc.innerHTML = '<div class="cal-event-text" style="color:#c00">Failed to load preview.</div>';
+      } finally {
+        previewLoading.hidden = true;
+      }
+    }
+
+    /**
+     * Find the VEVENT for a given date (YYYYMMDD), or the nearest future one.
+     */
+    function findEventForDate(icsText, targetDate) {
+      const unfolded = icsText.replace(/\r\n[ \t]/g, '');
+      const lines = unfolded.split(/\r?\n/);
+
+      let inEvent = false;
+      let props = {};
+      let bestEvent = {};
+      let bestDate = null;
+
+      for (const line of lines) {
+        if (line === 'BEGIN:VEVENT') {
+          inEvent = true;
+          props = {};
+          continue;
+        }
+        if (line === 'END:VEVENT') {
+          inEvent = false;
+          const evDate = props.DTSTART || '';
+          // Exact match for today
+          if (evDate === targetDate) return props;
+          // Track nearest future event
+          if (evDate >= targetDate && (bestDate === null || evDate < bestDate)) {
+            bestDate = evDate;
+            bestEvent = props;
+          }
+          continue;
+        }
+        if (!inEvent) continue;
+
+        const colonIdx = line.indexOf(':');
+        if (colonIdx === -1) continue;
+        const key = line.slice(0, colonIdx).split(';')[0];
+        const value = line.slice(colonIdx + 1);
+        props[key] = value;
+      }
+
+      return bestEvent;
+    }
+
+    // Event handlers
+    nearbyBtn.addEventListener('click', () => {
+      if (sortByDistance) {
+        // Toggle off
+        sortByDistance = false;
+        nearbyBtn.textContent = 'Nearby';
+        nearbyBtn.classList.remove('active');
+        renderStoreList();
+        return;
+      }
+      if (!navigator.geolocation) {
+        nearbyBtn.textContent = 'Not supported';
+        setTimeout(() => { nearbyBtn.textContent = 'Nearby'; }, 2000);
+        return;
+      }
+      nearbyBtn.textContent = 'Locating...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          sortByDistance = true;
+          stateFilter.value = ''; // Clear state filter to show all
+          nearbyBtn.textContent = 'Nearby \u2714';
+          nearbyBtn.classList.add('active');
+          renderStoreList();
+        },
+        () => {
+          nearbyBtn.textContent = 'Denied';
+          setTimeout(() => { nearbyBtn.textContent = 'Nearby'; }, 2000);
+        },
+        { timeout: 10000 }
+      );
+    });
+    stateFilter.addEventListener('change', renderStoreList);
+    citySearch.addEventListener('input', renderStoreList);
+
+    primarySelect.addEventListener('change', () => {
+      primarySlug = primarySelect.value;
+      // Remove primary from secondaries if it was there
+      secondarySlugs.delete(primarySlug);
+      updateSelectedBadges();
+      renderStoreList();
+      updateResult();
+    });
+
+    // Single-click adds to secondaries (no multi-select needed)
+    secondarySelect.addEventListener('change', () => {
+      const slug = secondarySelect.value;
+      if (!slug || secondarySlugs.size >= 3) return;
+      secondarySlugs.add(slug);
+      updateSelectedBadges();
+      renderStoreList(); // re-render to remove from dropdown
+      updateResult();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(icsUrl.value);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+      } catch {
+        icsUrl.select();
+        document.execCommand('copy');
+      }
+    });
+
+    // On mobile, Google Calendar can't subscribe via cid= link (Android intercepts
+    // and opens native app which doesn't support URL subscriptions).
+    // Instead: copy URL to clipboard and show instructions.
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const googleMobileToast = document.getElementById('google-mobile-toast');
+
+    if (isMobile) {
+      googleBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await navigator.clipboard.writeText(icsUrl.value);
+        } catch {
+          icsUrl.select();
+          document.execCommand('copy');
+        }
+        googleMobileToast.hidden = false;
+        setTimeout(() => { googleMobileToast.hidden = true; }, 10000);
+      });
+    }
+
+    // Initialize
+    loadStores();
+
+    // Register service worker for offline/PWA support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
