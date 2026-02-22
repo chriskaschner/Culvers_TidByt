@@ -396,6 +396,35 @@ details ol {
   text-decoration: underline;
 }
 
+/* Flavor autocomplete dropdown */
+.flavor-input-wrap {
+  position: relative;
+}
+
+.flavor-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flavor-option {
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.flavor-option:hover {
+  background: #f0f4f8;
+}
+
 /* Map page */
 #map-container {
   margin: 1rem 0;
@@ -462,30 +491,34 @@ details ol {
   flex: 0 0 auto;
 }
 
-.btn-row {
+/* Brand filter chips */
+.brand-chips {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-#not-culvers-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #003366;
-  border-radius: 4px;
+.brand-chip {
+  padding: 0.375rem 0.875rem;
+  border: 1.5px solid #ccc;
+  border-radius: 999px;
   background: white;
-  color: #003366;
-  font-size: 0.875rem;
+  color: #444;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
-#not-culvers-btn:hover {
-  background: #f0f4f8;
+.brand-chip:hover {
+  border-color: #999;
 }
 
-#not-culvers-btn.active {
-  background: #003366;
+.brand-chip.active {
   color: white;
+  border-color: transparent;
 }
 
 /* Suggestions panel */

@@ -24,8 +24,10 @@
       <div class="filter-row">
         <div class="filter-group">
           <label for="flavor-input">Flavor (optional)</label>
-          <input type="text" id="flavor-input" list="flavor-list" placeholder="e.g. Mint Explosion">
-          <datalist id="flavor-list"></datalist>
+          <div class="flavor-input-wrap">
+            <input type="text" id="flavor-input" placeholder="e.g. Mint Explosion" autocomplete="off">
+            <div id="flavor-dropdown" class="flavor-dropdown" hidden></div>
+          </div>
         </div>
         <div class="filter-group filter-group-location">
           <label for="location-input">Location</label>
@@ -41,11 +43,16 @@
         </div>
         <div class="filter-group filter-group-btn">
           <label>&nbsp;</label>
-          <div class="btn-row">
-            <button id="search-btn" class="btn btn-search">Search</button>
-            <button id="not-culvers-btn">Not Culver's</button>
-          </div>
+          <button id="search-btn" class="btn btn-search">Search</button>
         </div>
+      </div>
+      <div class="brand-chips">
+        <button class="brand-chip active" data-brand="culvers" style="background:#003366;border-color:transparent">Culver's</button>
+        <button class="brand-chip" data-brand="kopps">Kopp's</button>
+        <button class="brand-chip" data-brand="gilles">Gille's</button>
+        <button class="brand-chip" data-brand="hefners">Hefner's</button>
+        <button class="brand-chip" data-brand="kraverz">Kraverz</button>
+        <button class="brand-chip" data-brand="oscars">Oscar's</button>
       </div>
     </section>
 
@@ -104,7 +111,7 @@
 
     // DOM elements
     const flavorInput = document.getElementById('flavor-input');
-    const flavorList = document.getElementById('flavor-list');
+    const flavorDropdown = document.getElementById('flavor-dropdown');
     const locationInput = document.getElementById('location-input');
     const geolocateBtn = document.getElementById('geolocate-btn');
     const searchBtn = document.getElementById('search-btn');
@@ -122,17 +129,222 @@
     }).addTo(map);
 
     let markers = L.layerGroup().addTo(map);
-    const notCulversBtn = document.getElementById('not-culvers-btn');
-    let notCulversActive = false;
     let brandStores = []; // loaded from stores.json
     let skipMoveHandler = false; // flag to skip moveend during programmatic fitBounds
 
-    // Populate flavor datalist
-    for (const f of KNOWN_FLAVORS) {
-      const opt = document.createElement('option');
-      opt.value = f;
-      flavorList.appendChild(opt);
+    // Brand chip state
+    const BRAND_CHIP_COLORS = { culvers: '#003366', ...BRAND_COLORS };
+    const activeBrands = new Set(['culvers']);
+
+    // Wire up brand chips
+    document.querySelectorAll('.brand-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const brand = chip.dataset.brand;
+        if (activeBrands.has(brand)) {
+          activeBrands.delete(brand);
+          chip.classList.remove('active');
+          chip.style.background = '';
+          chip.style.borderColor = '';
+        } else {
+          activeBrands.add(brand);
+          chip.classList.add('active');
+          chip.style.background = BRAND_CHIP_COLORS[brand];
+          chip.style.borderColor = 'transparent';
+        }
+        refreshResults();
+      });
+    });
+
+    async function refreshResults() {
+      const hasCulvers = activeBrands.has('culvers');
+      const nonCulversBrands = [...activeBrands].filter(b => b !== 'culvers');
+
+      // If nothing active, just clear
+      if (!hasCulvers && nonCulversBrands.length === 0) {
+        markers.clearLayers();
+        resultsSection.hidden = true;
+        return;
+      }
+
+      // Kick off both in parallel
+      const culversPromise = hasCulvers && locationInput.value.trim() ? doCulversSearch() : Promise.resolve(null);
+      const brandPromise = nonCulversBrands.length > 0 ? doBrandSearch(nonCulversBrands) : Promise.resolve([]);
+
+      const [culversData, brandResults] = await Promise.all([culversPromise, brandPromise]);
+
+      // Merge and render
+      markers.clearLayers();
+      const bounds = L.latLngBounds();
+      let html = '';
+
+      if (culversData) {
+        const hasFlavorFilter = !!culversData.query.flavor;
+        // Render Culver's markers
+        for (const store of culversData.matches) {
+          if (!store.lat || !store.lon) continue;
+          const marker = L.marker([store.lat, store.lon], { icon: greenIcon }).bindPopup(storePopup(store, true));
+          markers.addLayer(marker);
+          bounds.extend([store.lat, store.lon]);
+        }
+        for (const store of culversData.nearby) {
+          if (!store.lat || !store.lon) continue;
+          const marker = L.marker([store.lat, store.lon], {
+            icon: hasFlavorFilter ? blueIcon : defaultIcon,
+          }).bindPopup(storePopup(store, false));
+          markers.addLayer(marker);
+          bounds.extend([store.lat, store.lon]);
+        }
+
+        // Suggestions
+        if (hasFlavorFilter && culversData.matches.length === 0 && culversData.suggestions.length > 0) {
+          renderSuggestions(culversData);
+        } else {
+          suggestionsPanel.hidden = true;
+        }
+
+        // Culver's result cards
+        if (hasFlavorFilter && culversData.matches.length > 0) {
+          html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(culversData.query.flavor)} (${culversData.matches.length})</h3>`;
+          for (const store of culversData.matches) html += storeCard(store, true);
+          html += '</div>';
+        }
+        if (culversData.nearby.length > 0) {
+          let nearbyLabel;
+          if (!hasFlavorFilter) {
+            nearbyLabel = `Nearby stores (${culversData.nearby.length})`;
+          } else if (culversData.matches.length > 0) {
+            const altIntros = [
+              'Meanwhile, nearby',
+              'Not your flavor? These stores beg to differ',
+              'Other scoops in the neighborhood',
+              'The rest of the cone-petition',
+              'What the other stores are dishing out',
+              'In other frozen news',
+              'But wait, there\'s more custard',
+              'The supporting cast',
+            ];
+            nearbyLabel = altIntros[Math.floor(Math.random() * altIntros.length)];
+          } else {
+            const nearbyIntros = [
+              `No ${escapeHtml(culversData.query.flavor)} nearby — here's what's scooping instead`,
+              `${escapeHtml(culversData.query.flavor)}? Not today. But check out what is`,
+              `Fresh out of ${escapeHtml(culversData.query.flavor)} — but never fresh out of options`,
+              `The custard must flow — just not ${escapeHtml(culversData.query.flavor)} right now`,
+              `${escapeHtml(culversData.query.flavor)} is playing hard to get. These aren't`,
+              `No ${escapeHtml(culversData.query.flavor)}? That's the way the cookie crumbles. Here's what's left`,
+              `We all scream for ${escapeHtml(culversData.query.flavor)} but today we settle`,
+              `Life gave you no ${escapeHtml(culversData.query.flavor)}. Make custard-ade`,
+            ];
+            nearbyLabel = nearbyIntros[Math.floor(Math.random() * nearbyIntros.length)];
+          }
+          html += `<div class="results-group"><h3 class="results-group-title">${nearbyLabel}</h3>`;
+          for (const store of culversData.nearby) html += storeCard(store, false);
+          html += '</div>';
+        }
+      } else {
+        suggestionsPanel.hidden = true;
+      }
+
+      // Render brand results
+      if (brandResults.length > 0) {
+        // Group by brand
+        const byBrand = {};
+        for (const store of brandResults) {
+          const b = store.brand;
+          if (!byBrand[b]) byBrand[b] = [];
+          byBrand[b].push(store);
+        }
+        for (const [brand, stores] of Object.entries(byBrand)) {
+          const color = BRAND_COLORS[brand] || '#003366';
+          for (const store of stores) {
+            if (!store.lat && !store.lng) continue;
+            const marker = L.circleMarker([store.lat, store.lng], {
+              radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
+            }).bindPopup(storePopup(store, false));
+            markers.addLayer(marker);
+            bounds.extend([store.lat, store.lng]);
+          }
+          html += `<div class="results-group"><h3 class="results-group-title">${escapeHtml(BRAND_DISPLAY[brand] || brand)} (${stores.length})</h3>`;
+          for (const store of stores) html += storeCard(store, false);
+          html += '</div>';
+        }
+      }
+
+      if (bounds.isValid()) {
+        skipMoveHandler = true;
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+      }
+
+      resultsBody.innerHTML = html || '<div class="no-results">No results.</div>';
+      resultsSection.hidden = false;
     }
+
+    // Fetch Culver's data (returns API response or null)
+    async function doCulversSearch() {
+      const location = locationInput.value.trim();
+      if (!location) return null;
+      const flavor = flavorInput.value.trim();
+      let url = `${WORKER_BASE}/api/nearby-flavors?location=${encodeURIComponent(location)}`;
+      if (flavor) url += `&flavor=${encodeURIComponent(flavor)}`;
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) return null;
+        return await resp.json();
+      } catch { return null; }
+    }
+
+    // Fetch brand stores + their flavors
+    async function doBrandSearch(brands) {
+      const stores = await loadBrandStores();
+      const filtered = stores.filter(s => brands.includes(s.brand));
+      if (filtered.length === 0) return [];
+
+      const results = await Promise.all(filtered.map(async (store) => {
+        try {
+          const resp = await fetch(`${WORKER_BASE}/api/flavors?slug=${encodeURIComponent(store.slug)}`);
+          if (!resp.ok) return { ...store, flavor: 'Unavailable' };
+          const data = await resp.json();
+          const today = new Date().toISOString().slice(0, 10);
+          const todayFlavor = (data.flavors || []).find(f => f.date === today);
+          const fl = todayFlavor || (data.flavors && data.flavors[0]);
+          return { ...store, flavor: fl ? (fl.title || fl.flavor || 'Unavailable') : 'Unavailable', description: fl ? (fl.description || '') : '' };
+        } catch {
+          return { ...store, flavor: 'Unavailable' };
+        }
+      }));
+      return results;
+    }
+
+    // Custom flavor dropdown autocomplete
+    function showFlavorDropdown() {
+      const query = flavorInput.value.trim().toLowerCase();
+      if (!query) { flavorDropdown.hidden = true; return; }
+      const matches = KNOWN_FLAVORS.filter(f => f.toLowerCase().includes(query));
+      if (matches.length === 0) { flavorDropdown.hidden = true; return; }
+      flavorDropdown.innerHTML = matches.map(f =>
+        `<div class="flavor-option">${escapeHtml(f)}</div>`
+      ).join('');
+      flavorDropdown.hidden = false;
+    }
+
+    flavorInput.addEventListener('input', showFlavorDropdown);
+
+    flavorInput.addEventListener('focus', () => {
+      if (flavorInput.value.trim()) showFlavorDropdown();
+    });
+
+    flavorDropdown.addEventListener('click', (e) => {
+      const opt = e.target.closest('.flavor-option');
+      if (!opt) return;
+      flavorInput.value = opt.textContent;
+      flavorDropdown.hidden = true;
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!flavorInput.contains(e.target) && !flavorDropdown.contains(e.target)) {
+        flavorDropdown.hidden = true;
+      }
+    });
 
     // Read URL params on load
     function readUrlParams() {
@@ -200,188 +412,63 @@
     let moveTimer = null;
     map.on('moveend', () => {
       if (skipMoveHandler) { skipMoveHandler = false; return; }
-      if (notCulversActive) return; // don't re-search in "Not Culver's" mode
+      if (!activeBrands.has('culvers')) return; // only dynamic-search for Culver's
       clearTimeout(moveTimer);
       moveTimer = setTimeout(() => {
         const center = map.getCenter();
         locationInput.value = `${center.lat.toFixed(4)},${center.lng.toFixed(4)}`;
-        doSearch(true); // true = triggered by map move (skip fitBounds)
+        doSearch(true);
       }, 300);
     });
 
-    let searchAbort = null;
-
     async function doSearch(fromMapMove = false) {
       const location = locationInput.value.trim();
-      if (!location) {
+      if (!location && activeBrands.has('culvers')) {
         locationInput.focus();
         return;
       }
-
       updateUrl();
-
-      // Cancel previous search
-      if (searchAbort) searchAbort.abort();
-      searchAbort = new AbortController();
-
       searchBtn.disabled = true;
       searchBtn.textContent = 'Searching...';
-      suggestionsPanel.hidden = true;
-      resultsSection.hidden = true;
-
-      const flavor = flavorInput.value.trim();
-      let url = `${WORKER_BASE}/api/nearby-flavors?location=${encodeURIComponent(location)}`;
-      if (flavor) url += `&flavor=${encodeURIComponent(flavor)}`;
-
-      try {
-        const resp = await fetch(url, { signal: searchAbort.signal });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.error || `HTTP ${resp.status}`);
-        }
-        const data = await resp.json();
-        renderResults(data, fromMapMove);
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-        resultsBody.innerHTML = `<div class="error-msg">Search failed: ${escapeHtml(err.message)}</div>`;
-        resultsSection.hidden = false;
-      } finally {
-        searchBtn.disabled = false;
-        searchBtn.textContent = 'Search';
-      }
+      await refreshResults();
+      searchBtn.disabled = false;
+      searchBtn.textContent = 'Search';
     }
 
-    function renderResults(data, skipFitBounds = false) {
-      markers.clearLayers();
-
-      const hasFlavorFilter = !!data.query.flavor;
-      const allStores = [...data.matches, ...data.nearby];
-
-      if (allStores.length === 0) {
-        resultsBody.innerHTML = '<div class="no-results">No Culver\'s locations found near that location.</div>';
-        resultsSection.hidden = false;
-        return;
-      }
-
-      // Suggestions with rotating fun intros
-      if (hasFlavorFilter && data.matches.length === 0 && data.suggestions.length > 0) {
-        const intros = [
-          'You could broaden your horizons and try',
-          'How about something a little different?',
-          'What about something out of left field?',
-          'Might I interest you in',
-          'Live a little — go for',
-          'Plot twist:',
-          'Hear me out —',
-          'The universe is telling you to try',
-          'Your taste buds called, they want',
-          'Bold move incoming:',
-          'Cone-sider trying',
-          'Don\'t have a meltdown — try',
-          'Sundae funday alternative:',
-          'This one\'s the real scoop:',
-          'Spoon-worthy option:',
-          'Worth the brain freeze:',
-        ];
-        // Shuffle and pick one intro per suggestion
-        const shuffled = intros.sort(() => Math.random() - 0.5);
-        const lines = data.suggestions.map((s, i) => {
-          const intro = shuffled[i % shuffled.length];
-          const link = `<button class="suggestion-link" data-flavor="${escapeAttr(s.flavor)}">${escapeHtml(s.flavor)}</button>`;
-          const count = `(${s.count} store${s.count > 1 ? 's' : ''})`;
-          return `${intro} ${link} ${count}`;
+    function renderSuggestions(data) {
+      const intros = [
+        'You could broaden your horizons and try',
+        'How about something a little different?',
+        'What about something out of left field?',
+        'Might I interest you in',
+        'Live a little — go for',
+        'Plot twist:',
+        'Hear me out —',
+        'The universe is telling you to try',
+        'Your taste buds called, they want',
+        'Bold move incoming:',
+        'Cone-sider trying',
+        'Don\'t have a meltdown — try',
+        'Sundae funday alternative:',
+        'This one\'s the real scoop:',
+        'Spoon-worthy option:',
+        'Worth the brain freeze:',
+      ];
+      const shuffled = intros.sort(() => Math.random() - 0.5);
+      const lines = data.suggestions.map((s, i) => {
+        const intro = shuffled[i % shuffled.length];
+        const link = `<button class="suggestion-link" data-flavor="${escapeAttr(s.flavor)}">${escapeHtml(s.flavor)}</button>`;
+        const count = `(${s.count} store${s.count > 1 ? 's' : ''})`;
+        return `${intro} ${link} ${count}`;
+      });
+      suggestionsContent.innerHTML = `<strong>No ${escapeHtml(data.query.flavor)} today.</strong><br>${lines.join('<br>')}`;
+      suggestionsPanel.hidden = false;
+      suggestionsPanel.querySelectorAll('.suggestion-link').forEach(btn => {
+        btn.addEventListener('click', () => {
+          flavorInput.value = btn.dataset.flavor;
+          doSearch();
         });
-        suggestionsContent.innerHTML = `<strong>No ${escapeHtml(data.query.flavor)} today.</strong><br>${lines.join('<br>')}`;
-        suggestionsPanel.hidden = false;
-
-        // Bind suggestion clicks
-        suggestionsPanel.querySelectorAll('.suggestion-link').forEach(btn => {
-          btn.addEventListener('click', () => {
-            flavorInput.value = btn.dataset.flavor;
-            doSearch();
-          });
-        });
-      } else if (hasFlavorFilter && data.matches.length > 0) {
-        suggestionsPanel.hidden = true;
-      } else {
-        suggestionsPanel.hidden = true;
-      }
-
-      // Map markers
-      const bounds = L.latLngBounds();
-
-      for (const store of data.matches) {
-        if (!store.lat || !store.lon) continue;
-        const marker = L.marker([store.lat, store.lon], {
-          icon: greenIcon,
-        }).bindPopup(storePopup(store, true));
-        markers.addLayer(marker);
-        bounds.extend([store.lat, store.lon]);
-      }
-
-      for (const store of data.nearby) {
-        if (!store.lat || !store.lon) continue;
-        const marker = L.marker([store.lat, store.lon], {
-          icon: hasFlavorFilter ? blueIcon : defaultIcon,
-        }).bindPopup(storePopup(store, false));
-        markers.addLayer(marker);
-        bounds.extend([store.lat, store.lon]);
-      }
-
-      if (bounds.isValid() && !skipFitBounds) {
-        skipMoveHandler = true;
-        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
-      }
-
-      // Results list
-      let html = '';
-
-      if (hasFlavorFilter && data.matches.length > 0) {
-        html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(data.query.flavor)} (${data.matches.length})</h3>`;
-        for (const store of data.matches) {
-          html += storeCard(store, true);
-        }
-        html += '</div>';
-      }
-
-      if (data.nearby.length > 0) {
-        let nearbyLabel;
-        if (!hasFlavorFilter) {
-          nearbyLabel = `Nearby stores (${data.nearby.length})`;
-        } else if (data.matches.length > 0) {
-          const altIntros = [
-            'Meanwhile, nearby',
-            'Not your flavor? These stores beg to differ',
-            'Other scoops in the neighborhood',
-            'The rest of the cone-petition',
-            'What the other stores are dishing out',
-            'In other frozen news',
-            'But wait, there\'s more custard',
-            'The supporting cast',
-          ];
-          nearbyLabel = altIntros[Math.floor(Math.random() * altIntros.length)];
-        } else {
-          const nearbyIntros = [
-            `No ${escapeHtml(data.query.flavor)} nearby — here's what's scooping instead`,
-            `${escapeHtml(data.query.flavor)}? Not today. But check out what is`,
-            `Fresh out of ${escapeHtml(data.query.flavor)} — but never fresh out of options`,
-            `The custard must flow — just not ${escapeHtml(data.query.flavor)} right now`,
-            `${escapeHtml(data.query.flavor)} is playing hard to get. These aren't`,
-            `No ${escapeHtml(data.query.flavor)}? That's the way the cookie crumbles. Here's what's left`,
-            `We all scream for ${escapeHtml(data.query.flavor)} but today we settle`,
-            `Life gave you no ${escapeHtml(data.query.flavor)}. Make custard-ade`,
-          ];
-          nearbyLabel = nearbyIntros[Math.floor(Math.random() * nearbyIntros.length)];
-        }
-        html += `<div class="results-group"><h3 class="results-group-title">${nearbyLabel}</h3>`;
-        for (const store of data.nearby) {
-          html += storeCard(store, false);
-        }
-        html += '</div>';
-      }
-
-      resultsBody.innerHTML = html;
-      resultsSection.hidden = false;
+      });
     }
 
     // Custom map icons
@@ -459,86 +546,6 @@
       }
       return brandStores;
     }
-
-    // "Not Culver's" toggle
-    notCulversBtn.addEventListener('click', async () => {
-      notCulversActive = !notCulversActive;
-      notCulversBtn.classList.toggle('active', notCulversActive);
-
-      if (!notCulversActive) {
-        // Toggle off: clear and re-search normally
-        notCulversBtn.textContent = "Not Culver's";
-        markers.clearLayers();
-        resultsSection.hidden = true;
-        if (locationInput.value.trim()) doSearch();
-        return;
-      }
-
-      notCulversBtn.textContent = 'Loading...';
-      const stores = await loadBrandStores();
-      if (stores.length === 0) {
-        notCulversBtn.textContent = 'No stores';
-        setTimeout(() => {
-          notCulversBtn.textContent = "Not Culver's";
-          notCulversActive = false;
-          notCulversBtn.classList.remove('active');
-        }, 2000);
-        return;
-      }
-
-      // Fetch today's flavor for each brand store in parallel
-      const flavorPromises = stores.map(async (store) => {
-        try {
-          const resp = await fetch(`${WORKER_BASE}/api/flavors?slug=${encodeURIComponent(store.slug)}`);
-          if (!resp.ok) return { ...store, flavor: 'Unavailable' };
-          const data = await resp.json();
-          const today = new Date().toISOString().slice(0, 10);
-          const todayFlavor = (data.flavors || []).find(f => f.date === today);
-          const fl = todayFlavor || (data.flavors && data.flavors[0]);
-          return { ...store, flavor: fl ? (fl.title || fl.flavor || 'Unavailable') : 'Unavailable', description: fl ? (fl.description || '') : '' };
-        } catch {
-          return { ...store, flavor: 'Unavailable' };
-        }
-      });
-
-      const results = await Promise.all(flavorPromises);
-
-      notCulversBtn.textContent = "Not Culver's";
-
-      // Render brand store results
-      markers.clearLayers();
-      const bounds = L.latLngBounds();
-
-      for (const store of results) {
-        if (!store.lat && !store.lng) continue;
-        const lat = store.lat;
-        const lng = store.lng;
-        const color = BRAND_COLORS[store.brand] || '#003366';
-        const marker = L.circleMarker([lat, lng], {
-          radius: 10,
-          fillColor: color,
-          color: '#fff',
-          weight: 2,
-          fillOpacity: 0.9,
-        }).bindPopup(storePopup(store, false));
-        markers.addLayer(marker);
-        bounds.extend([lat, lng]);
-      }
-
-      if (bounds.isValid()) {
-        skipMoveHandler = true;
-        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
-      }
-
-      // Render result cards
-      let html = `<div class="results-group"><h3 class="results-group-title">MKE Area Custard Shops (${results.length})</h3>`;
-      for (const store of results) {
-        html += storeCard(store, false);
-      }
-      html += '</div>';
-      resultsBody.innerHTML = html;
-      resultsSection.hidden = false;
-    });
 
     // Auto-detect location on load via Cloudflare geolocation, then search
     async function initLocation() {
