@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Siri Shortcut — Custard Calendar</title>
+  <meta name="description" content="Ask Siri for today's Flavor of the Day at your favorite custard shop.">
+  <meta property="og:title" content="Siri Shortcut — Custard Calendar">
+  <meta property="og:description" content="Ask Siri for today's Flavor of the Day at your favorite custard shop.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/siri.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .step-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .step-card h3 {
+      font-size: 1rem;
+      color: #003366;
+      margin-bottom: 0.5rem;
+    }
+    .step-card p {
+      font-size: 0.875rem;
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+    .step-card code {
+      background: #f0f4f8;
+      padding: 0.125rem 0.375rem;
+      border-radius: 3px;
+      font-size: 0.8125rem;
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #003366;
+      color: white;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    .api-url-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .api-url-box input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      font-family: monospace;
+      background: #f5f5f5;
+    }
+    .api-url-box button {
+      padding: 0.5rem 1rem;
+      background: #003366;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+    .api-url-box button:hover { background: #004488; }
+    .try-it {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f0f4f8;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .try-it .flavor-result {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #003366;
+      margin-top: 0.5rem;
+    }
+    .try-it .spoken-result {
+      font-size: 0.875rem;
+      color: #555;
+      font-style: italic;
+      margin-top: 0.25rem;
+    }
+    .shortcut-download {
+      text-align: center;
+      margin: 2rem 0;
+    }
+    .shortcut-download a {
+      display: inline-block;
+      padding: 0.875rem 2rem;
+      background: #333;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .shortcut-download a:hover { background: #444; }
+    .platforms {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .platform-badge {
+      text-align: center;
+      padding: 0.75rem;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      color: #444;
+    }
+    .platform-badge .emoji { font-size: 1.5rem; display: block; margin-bottom: 0.25rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ask Siri for Today's Flavor</h1>
+    <p>"Hey Siri, flavor of the day" — and Siri reads it aloud.</p>
+    <nav class="nav-links">
+      <a href="index.html">Calendar</a>
+      <a href="map.html">Custard Map</a>
+      <a href="alerts.html">Alerts</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="platforms">
+      <div class="platform-badge"><span class="emoji">📱</span> iPhone</div>
+      <div class="platform-badge"><span class="emoji">🏠</span> HomePod</div>
+      <div class="platform-badge"><span class="emoji">⌚</span> Apple Watch</div>
+      <div class="platform-badge"><span class="emoji">💻</span> Mac</div>
+    </div>
+
+    <!-- Step 1: Pick a store -->
+    <section id="store-selector">
+      <div class="step-card">
+        <h3><span class="step-number">1</span> Pick your store</h3>
+        <p>Choose your go-to custard shop. The Shortcut will check this store every time you ask.</p>
+
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="state-filter">State</label>
+            <select id="state-filter">
+              <option value="">All States</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="city-search">Search</label>
+            <input type="text" id="city-search" placeholder="City or store name...">
+          </div>
+        </div>
+
+        <div id="store-selected" class="selected-badge" hidden></div>
+        <select id="store-select" size="6">
+          <option value="" disabled selected>Loading stores...</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Step 2: Try the API -->
+    <section id="try-section" hidden>
+      <div class="step-card">
+        <h3><span class="step-number">2</span> Test it</h3>
+        <p>Here's what Siri will say for your store:</p>
+
+        <div class="try-it" id="try-result">
+          <div id="try-loading">Loading today's flavor...</div>
+        </div>
+
+        <p style="margin-top: 0.75rem;">Your API URL (you'll paste this into the Shortcut):</p>
+        <div class="api-url-box">
+          <input type="text" id="api-url" readonly>
+          <button onclick="copyUrl()">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Build the Shortcut -->
+    <section id="setup-section" hidden>
+      <div class="step-card">
+        <h3><span class="step-number">3</span> Create the Shortcut</h3>
+        <p>Open the <strong>Shortcuts</strong> app on your iPhone or Mac and create a new shortcut with these actions:</p>
+
+        <ol style="padding-left: 1.5rem; font-size: 0.875rem; color: #555; line-height: 2;">
+          <li>Add <strong>"Get Contents of URL"</strong> — paste the API URL above</li>
+          <li>Add <strong>"Get Dictionary Value"</strong> — key: <code>spoken</code></li>
+          <li>Add <strong>"Speak Text"</strong> — it will speak the result from step 2</li>
+        </ol>
+
+        <p style="margin-top: 0.75rem;">Name it something short like <strong>"Flavor of the Day"</strong>. Then say:</p>
+        <p style="font-size: 1.125rem; font-weight: 600; color: #003366; text-align: center; margin: 1rem 0;">
+          "Hey Siri, flavor of the day"
+        </p>
+        <p>Works on iPhone, HomePod, Apple Watch, and Mac.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+  </footer>
+
+  <script>
+    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    let allStores = [];
+    let selectedSlug = null;
+
+    // Load stores
+    async function loadStores() {
+      try {
+        const res = await fetch('stores.json');
+        allStores = await res.json();
+        populateStates();
+        filterStores();
+      } catch (e) {
+        document.getElementById('store-select').innerHTML = '<option disabled>Failed to load stores</option>';
+      }
+    }
+
+    function populateStates() {
+      const states = [...new Set(allStores.map(s => s.state))].sort();
+      const sel = document.getElementById('state-filter');
+      states.forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st;
+        opt.textContent = st;
+        sel.appendChild(opt);
+      });
+      // Default to WI
+      sel.value = 'WI';
+    }
+
+    function filterStores() {
+      const state = document.getElementById('state-filter').value;
+      const query = document.getElementById('city-search').value.toLowerCase().trim();
+      let filtered = allStores;
+      if (state) filtered = filtered.filter(s => s.state === state);
+      if (query) filtered = filtered.filter(s =>
+        `${s.name} ${s.city} ${s.slug}`.toLowerCase().includes(query)
+      );
+
+      const sel = document.getElementById('store-select');
+      sel.innerHTML = '';
+      filtered.slice(0, 50).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.slug;
+        opt.textContent = `${s.name} — ${s.city}, ${s.state}`;
+        sel.appendChild(opt);
+      });
+
+      if (filtered.length === 0) {
+        sel.innerHTML = '<option disabled>No stores found</option>';
+      }
+    }
+
+    function selectStore(slug) {
+      selectedSlug = slug;
+      const store = allStores.find(s => s.slug === slug);
+      if (!store) return;
+
+      const badge = document.getElementById('store-selected');
+      badge.textContent = `${store.name} — ${store.city}, ${store.state}`;
+      badge.hidden = false;
+
+      document.getElementById('try-section').hidden = false;
+      document.getElementById('setup-section').hidden = false;
+
+      const apiUrl = `${WORKER_BASE}/api/v1/today?slug=${slug}`;
+      document.getElementById('api-url').value = apiUrl;
+
+      fetchToday(apiUrl);
+    }
+
+    async function fetchToday(url) {
+      const el = document.getElementById('try-result');
+      el.innerHTML = '<div id="try-loading">Loading today\'s flavor...</div>';
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.flavor) {
+          el.innerHTML = `
+            <div class="flavor-result">${data.flavor}</div>
+            <div class="spoken-result">"${data.spoken}"</div>
+          `;
+        } else {
+          el.innerHTML = `
+            <div class="spoken-result">"${data.spoken}"</div>
+          `;
+        }
+      } catch (e) {
+        el.innerHTML = '<div style="color: #c00;">Could not reach the API. The Worker may be waking up — try again in a moment.</div>';
+      }
+    }
+
+    function copyUrl() {
+      const input = document.getElementById('api-url');
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+
+    // Event listeners
+    document.getElementById('state-filter').addEventListener('change', filterStores);
+    document.getElementById('city-search').addEventListener('input', filterStores);
+    document.getElementById('store-select').addEventListener('change', (e) => {
+      if (e.target.value) selectStore(e.target.value);
+    });
+
+    loadStores();
+  </script>
+</body>
+</html>

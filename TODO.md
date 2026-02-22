@@ -5,7 +5,8 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 ## Active
 
 ### Product Features
-- [ ] **Voice assistant integration** — ask Siri / home assistant "what's the flavor of the day" and get a spoken response (Siri Shortcuts, HomeKit, or Alexa skill)
+- [x] **Voice assistant integration (Siri)** — `/api/v1/today` endpoint with `spoken` field, `docs/siri.html` setup page with store picker + live preview. User builds 3-action Shortcut and shares via iCloud link.
+- [ ] **Alexa skill** — custom Alexa skill using `/api/v1/today` endpoint (requires Amazon developer account + certification)
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" — multiple people vote/rank flavors, system suggests store by combined preferences + proximity
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
 ### Docs
