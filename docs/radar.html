@@ -72,6 +72,49 @@
       <div id="trust-banner" class="trust-banner" hidden></div>
     </section>
 
+    <section id="next-best-section" hidden>
+      <h2>Next Best Store</h2>
+      <p class="hint">When your favorites are weak at this store, we'll suggest nearby alternatives with stronger odds.</p>
+      <div class="phase2-controls">
+        <label for="drive-radius">Drive radius</label>
+        <select id="drive-radius">
+          <option value="10">10 mi</option>
+          <option value="25" selected>25 mi</option>
+          <option value="50">50 mi</option>
+        </select>
+        <button id="refresh-next-best" class="btn btn-search" type="button">Refresh</button>
+      </div>
+      <div id="next-best-status" class="hint"></div>
+      <div id="next-best-list" class="next-best-list"></div>
+    </section>
+
+    <section id="accuracy-section" hidden>
+      <h2>Forecast Accuracy Dashboard</h2>
+      <p class="hint">Live quality signals for this store's 7-day model output.</p>
+      <div class="accuracy-grid">
+        <div class="accuracy-card">
+          <div class="accuracy-label">Expected Top-1 Hit (Proxy)</div>
+          <div class="accuracy-value" id="acc-top1">--</div>
+          <div class="accuracy-note">Average top prediction probability across the week.</div>
+        </div>
+        <div class="accuracy-card">
+          <div class="accuracy-label">Coverage</div>
+          <div class="accuracy-value" id="acc-coverage">--</div>
+          <div class="accuracy-note" id="acc-coverage-note">--</div>
+        </div>
+        <div class="accuracy-card">
+          <div class="accuracy-label">Confidence Mix</div>
+          <div class="accuracy-value" id="acc-confidence">--</div>
+          <div class="accuracy-note">Top prediction confidence by day (High/Med/Low).</div>
+        </div>
+        <div class="accuracy-card">
+          <div class="accuracy-label">Model Depth</div>
+          <div class="accuracy-value" id="acc-depth">--</div>
+          <div class="accuracy-note" id="acc-depth-note">--</div>
+        </div>
+      </div>
+    </section>
+
     <section id="favorites-section" hidden>
       <div id="overdue-section" class="overdue-section" hidden>
         <h3>Overdue favorites</h3>
@@ -97,11 +140,11 @@
       margin-top: 0.5rem;
     }
 
-    #flavor-section, #timeline-section, #favorites-section {
+    #flavor-section, #timeline-section, #next-best-section, #accuracy-section, #favorites-section {
       margin-top: 2rem;
     }
 
-    #flavor-section h2, #timeline-section h2 {
+    #flavor-section h2, #timeline-section h2, #next-best-section h2, #accuracy-section h2 {
       font-size: 1rem;
       color: #003366;
       margin-bottom: 0.5rem;
@@ -165,6 +208,154 @@
       color: #f9a825;
       margin-right: 0.25rem;
     }
+
+    .intel-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .intel-badges-inline {
+      margin-top: 0.1rem;
+    }
+
+    .intel-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0.1rem 0.45rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .intel-badge-rarity {
+      background: #eef4ff;
+      color: #0d3b7a;
+      border-color: #bdd6ff;
+    }
+
+    .intel-badge-streak {
+      background: #fff3e0;
+      color: #9a5a00;
+      border-color: #ffd8a8;
+    }
+
+    .intel-badge-overdue {
+      background: #f3f3ff;
+      color: #5c3cb0;
+      border-color: #ddd3ff;
+    }
+
+    .phase2-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .phase2-controls label {
+      font-size: 0.8125rem;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .phase2-controls select {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      padding: 0.35rem 0.45rem;
+      background: white;
+    }
+
+    .next-best-list {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .next-best-card {
+      border: 1px solid #d9e4ef;
+      border-left: 4px solid #003366;
+      border-radius: 8px;
+      padding: 0.75rem;
+      background: #fbfdff;
+    }
+
+    .next-best-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #003366;
+      margin-bottom: 0.3rem;
+      line-height: 1.35;
+    }
+
+    .next-best-detail {
+      font-size: 0.8125rem;
+      color: #555;
+      line-height: 1.4;
+      margin-bottom: 0.35rem;
+    }
+
+    .next-best-links a {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #005696;
+      text-decoration: none;
+      border-bottom: 1px dotted #005696;
+    }
+
+    .next-best-links a:hover {
+      color: #003366;
+      border-bottom-color: #003366;
+    }
+
+    .accuracy-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .accuracy-card {
+      border: 1px solid #d9e4ef;
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 0.75rem;
+    }
+
+    .accuracy-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6a7c90;
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+    }
+
+    .accuracy-value {
+      font-size: 1.15rem;
+      color: #003366;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .accuracy-note {
+      font-size: 0.75rem;
+      color: #666;
+      line-height: 1.3;
+    }
+
+    @media (max-width: 640px) {
+      .accuracy-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 
   <script>
@@ -202,11 +393,32 @@
     const timelineSection = document.getElementById('timeline-section');
     const timelineEl = document.getElementById('timeline');
     const trustBanner = document.getElementById('trust-banner');
+    const nextBestSection = document.getElementById('next-best-section');
+    const driveRadius = document.getElementById('drive-radius');
+    const refreshNextBestBtn = document.getElementById('refresh-next-best');
+    const nextBestStatus = document.getElementById('next-best-status');
+    const nextBestList = document.getElementById('next-best-list');
+    const accuracySection = document.getElementById('accuracy-section');
+    const accTop1 = document.getElementById('acc-top1');
+    const accCoverage = document.getElementById('acc-coverage');
+    const accCoverageNote = document.getElementById('acc-coverage-note');
+    const accConfidence = document.getElementById('acc-confidence');
+    const accDepth = document.getElementById('acc-depth');
+    const accDepthNote = document.getElementById('acc-depth-note');
     const favoritesSection = document.getElementById('favorites-section');
     const overdueSection = document.getElementById('overdue-section');
     const overdueList = document.getElementById('overdue-list');
     const similarSection = document.getElementById('similar-section');
     const similarList = document.getElementById('similar-list');
+
+    // Phase 2 caches
+    const forecastCacheBySlug = new Map();
+    const flavorMetricsCache = new Map();
+    const flavorMetricsInflight = new Map();
+    let cachedStoreMetrics = null;
+    let cachedStoreMetricsSlug = null;
+    let storeFlavorCounts = new Map();
+    let storeActiveStreaks = new Map();
 
     // --- Utilities ---
     function toISODate(d) {
@@ -233,11 +445,39 @@
     }
 
     function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function normalize(s) {
-      return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+      return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    }
+
+    function timeSince(iso) {
+      if (!iso) return 'Unknown';
+      const then = new Date(iso).getTime();
+      if (!Number.isFinite(then)) return 'Unknown';
+      const deltaMs = Date.now() - then;
+      const mins = Math.max(0, Math.round(deltaMs / 60000));
+      if (mins < 1) return 'Just now';
+      if (mins < 60) return mins + ' min ago';
+      const hrs = Math.round(mins / 60);
+      if (hrs < 24) return hrs + ' hr ago';
+      const days = Math.round(hrs / 24);
+      return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+    }
+
+    function haversineMiles(lat1, lon1, lat2, lon2) {
+      const toRad = (d) => d * Math.PI / 180;
+      const R = 3958.8;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function selectedStore() {
+      return allStores.find(s => s.slug === selectedSlug) || null;
     }
 
     function isFavorite(flavorName) {
@@ -297,7 +537,7 @@
       try {
         const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
         const data = await resp.json();
-        return data.region || 'WI';
+        return data.state || 'WI';
       } catch (e) {
         // Geolocate blocked (CORS / offline) -- default to WI
         return 'WI';
@@ -443,6 +683,338 @@
     let cachedForecast = null;
     let cachedTimeline = [];
 
+    async function fetchForecastForSlug(slug) {
+      if (forecastCacheBySlug.has(slug)) {
+        return forecastCacheBySlug.get(slug);
+      }
+      const p = fetch(WORKER_BASE + '/api/v1/forecast/' + encodeURIComponent(slug))
+        .then((resp) => resp.ok ? resp.json() : null)
+        .catch(() => null);
+      forecastCacheBySlug.set(slug, p);
+      return p;
+    }
+
+    async function loadStoreMetrics(slug) {
+      if (!slug) return;
+      if (cachedStoreMetricsSlug === slug) return;
+
+      cachedStoreMetrics = null;
+      cachedStoreMetricsSlug = slug;
+      storeFlavorCounts = new Map();
+      storeActiveStreaks = new Map();
+
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/v1/metrics/store/' + encodeURIComponent(slug));
+        if (!resp.ok) return;
+        const data = await resp.json();
+        cachedStoreMetrics = data;
+
+        for (const row of (data.recent_history || [])) {
+          const key = normalize(row.flavor);
+          storeFlavorCounts.set(key, (storeFlavorCounts.get(key) || 0) + 1);
+        }
+        for (const streak of (data.active_streaks || [])) {
+          const key = normalize(streak.flavor);
+          if (streak.length >= 2) {
+            storeActiveStreaks.set(key, streak.length);
+          }
+        }
+      } catch (err) {
+        console.debug('Store metrics unavailable:', err);
+      }
+    }
+
+    async function loadFlavorMetrics(flavorName) {
+      const key = normalize(flavorName);
+      if (!key) return null;
+      if (flavorMetricsCache.has(key)) return flavorMetricsCache.get(key);
+      if (flavorMetricsInflight.has(key)) return flavorMetricsInflight.get(key);
+
+      const p = fetch(WORKER_BASE + '/api/v1/metrics/flavor/' + encodeURIComponent(key))
+        .then((resp) => resp.ok ? resp.json() : null)
+        .then((data) => {
+          flavorMetricsCache.set(key, data);
+          flavorMetricsInflight.delete(key);
+          return data;
+        })
+        .catch(() => {
+          flavorMetricsInflight.delete(key);
+          return null;
+        });
+      flavorMetricsInflight.set(key, p);
+      return p;
+    }
+
+    async function preloadFlavorMetrics() {
+      const unique = new Set();
+      for (const day of cachedTimeline) {
+        if (day.type === 'confirmed' && day.flavor) {
+          unique.add(day.flavor);
+        }
+        if (day.type === 'predicted') {
+          for (const p of day.predictions.slice(0, 3)) {
+            unique.add(p.flavor);
+          }
+        }
+      }
+      for (const f of selectedFlavors) unique.add(f);
+      await Promise.all([...unique].map(loadFlavorMetrics));
+    }
+
+    function rarityBadge(flavorName) {
+      const metrics = flavorMetricsCache.get(normalize(flavorName));
+      if (!metrics) return null;
+      const total = Number(metrics.total_appearances || 0);
+      if (total <= 150) return 'Ultra Rare';
+      if (total <= 500) return 'Rare';
+      if (total <= 1500) return 'Uncommon';
+      return null;
+    }
+
+    function streakBadge(flavorName) {
+      const key = normalize(flavorName);
+      const streakLen = storeActiveStreaks.get(key);
+      if (streakLen && streakLen >= 2) {
+        return streakLen + '-day streak';
+      }
+      const monthlyCount = storeFlavorCounts.get(key) || 0;
+      if (monthlyCount >= 3) {
+        return monthlyCount + 'x this month';
+      }
+      return null;
+    }
+
+    function overdueBadge(flavorName, day) {
+      if (!day || day.type !== 'predicted' || !Array.isArray(day.overdue)) return null;
+      const key = normalize(flavorName);
+      const entry = day.overdue.find((o) => normalize(o.flavor) === key);
+      if (!entry || !entry.avg_gap) return null;
+      const ratio = entry.days_since / Math.max(entry.avg_gap, 1);
+      if (ratio >= 1.5) return 'Overdue return';
+      return null;
+    }
+
+    function renderFlavorBadges(flavorName, day, inline = false) {
+      const chips = [];
+      const rarity = rarityBadge(flavorName);
+      const streak = streakBadge(flavorName);
+      const overdue = overdueBadge(flavorName, day);
+      if (rarity) chips.push({ type: 'rarity', label: rarity });
+      if (streak) chips.push({ type: 'streak', label: streak });
+      if (overdue) chips.push({ type: 'overdue', label: overdue });
+      if (chips.length === 0) return '';
+      return '<div class="intel-badges' + (inline ? ' intel-badges-inline' : '') + '">' +
+        chips.slice(0, 2).map((chip) =>
+          '<span class="intel-badge intel-badge-' + chip.type + '">' + escapeHtml(chip.label) + '</span>'
+        ).join('') +
+      '</div>';
+    }
+
+    function renderAccuracyDashboard() {
+      if (!selectedSlug || cachedTimeline.length === 0) {
+        accuracySection.hidden = true;
+        return;
+      }
+
+      const predicted = cachedTimeline.filter(d => d.type === 'predicted');
+      const confirmed = cachedTimeline.filter(d => d.type === 'confirmed');
+      const coveredDays = predicted.length + confirmed.length;
+      const topScores = [];
+      const confidenceCounts = { high: 0, medium: 0, low: 0 };
+
+      for (const day of confirmed) {
+        topScores.push(1.0);
+      }
+      for (const day of predicted) {
+        const top = day.predictions[0];
+        if (top && Number.isFinite(top.probability)) {
+          topScores.push(top.probability);
+          const conf = top.confidence || (top.probability > 0.10 ? 'high' : top.probability >= 0.05 ? 'medium' : 'low');
+          if (confidenceCounts[conf] !== undefined) confidenceCounts[conf]++;
+        }
+      }
+
+      const avgTop = topScores.length
+        ? (topScores.reduce((sum, p) => sum + p, 0) / topScores.length)
+        : 0;
+      accTop1.textContent = (avgTop * 100).toFixed(1) + '%';
+      accCoverage.textContent = Math.round((coveredDays / 7) * 100) + '%';
+      accCoverageNote.textContent = coveredDays + '/7 days with confirmed or predicted data';
+      accConfidence.textContent = confidenceCounts.high + ' / ' + confidenceCounts.medium + ' / ' + confidenceCounts.low;
+
+      if (cachedForecast && cachedForecast.history_depth) {
+        accDepth.textContent = cachedForecast.history_depth.toLocaleString();
+        accDepthNote.textContent = 'observations, updated ' + timeSince(cachedForecast.generated_at);
+      } else {
+        accDepth.textContent = '--';
+        accDepthNote.textContent = 'Forecast history depth unavailable';
+      }
+
+      accuracySection.hidden = false;
+    }
+
+    function computePrimaryFavoriteScores() {
+      const scores = new Map();
+      for (const fav of selectedFlavors) {
+        scores.set(normalize(fav), 0);
+      }
+
+      for (const day of cachedTimeline) {
+        if (day.type === 'confirmed') {
+          const k = normalize(day.flavor);
+          if (scores.has(k)) scores.set(k, 1);
+          continue;
+        }
+        if (day.type === 'predicted') {
+          for (const p of day.predictions || []) {
+            const k = normalize(p.flavor);
+            if (scores.has(k)) {
+              const current = scores.get(k) || 0;
+              if (p.probability > current) scores.set(k, p.probability);
+            }
+          }
+        }
+      }
+      return scores;
+    }
+
+    function findBestPredictionForFlavor(forecast, flavorName) {
+      if (!forecast || !Array.isArray(forecast.days)) return null;
+      const key = normalize(flavorName);
+      let best = null;
+      for (const day of forecast.days) {
+        for (const p of (day.predictions || [])) {
+          if (normalize(p.flavor) !== key) continue;
+          if (!best || p.probability > best.probability) {
+            best = {
+              date: day.date,
+              probability: p.probability,
+              confidence: p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low'),
+            };
+          }
+        }
+      }
+      return best;
+    }
+
+    function buildCandidateStores(radiusMiles) {
+      const primary = selectedStore();
+      if (!primary) return [];
+      const baseLat = Number(primary.lat);
+      const baseLng = Number(primary.lng);
+      const hasCoords = Number.isFinite(baseLat) && Number.isFinite(baseLng);
+
+      const candidates = allStores
+        .filter(s => s.slug !== selectedSlug)
+        .map((s) => {
+          const lat = Number(s.lat);
+          const lng = Number(s.lng);
+          let dist = null;
+          if (hasCoords && Number.isFinite(lat) && Number.isFinite(lng)) {
+            dist = haversineMiles(baseLat, baseLng, lat, lng);
+          }
+          return { ...s, _distanceMiles: dist };
+        })
+        .filter((s) => {
+          if (!hasCoords) return s.state === primary.state;
+          return s._distanceMiles !== null && s._distanceMiles <= radiusMiles;
+        })
+        .sort((a, b) => {
+          if (a._distanceMiles === null && b._distanceMiles === null) return 0;
+          if (a._distanceMiles === null) return 1;
+          if (b._distanceMiles === null) return -1;
+          return a._distanceMiles - b._distanceMiles;
+        });
+
+      return candidates.slice(0, 24);
+    }
+
+    async function renderNextBestStoreRecommendations() {
+      if (!selectedSlug || selectedFlavors.size === 0 || cachedTimeline.length === 0) {
+        nextBestSection.hidden = true;
+        return;
+      }
+
+      nextBestSection.hidden = false;
+      nextBestList.innerHTML = '';
+      nextBestStatus.textContent = 'Scanning nearby stores...';
+
+      const radiusMiles = parseInt(driveRadius.value, 10) || 25;
+      const candidates = buildCandidateStores(radiusMiles);
+      if (candidates.length === 0) {
+        nextBestStatus.textContent = 'No nearby stores found in your selected radius.';
+        return;
+      }
+
+      const primaryScores = computePrimaryFavoriteScores();
+      const favorites = [...selectedFlavors];
+      const recs = [];
+
+      await Promise.all(candidates.map(async (store) => {
+        const forecast = await fetchForecastForSlug(store.slug);
+        if (!forecast) return;
+
+        for (const fav of favorites) {
+          const best = findBestPredictionForFlavor(forecast, fav);
+          if (!best) continue;
+
+          const primaryScore = primaryScores.get(normalize(fav)) || 0;
+          const minLift = primaryScore < 0.05 ? 0.04 : 0.02;
+          if (best.probability < primaryScore + minLift) continue;
+
+          recs.push({
+            store,
+            flavor: fav,
+            date: best.date,
+            probability: best.probability,
+            confidence: best.confidence,
+            primaryScore,
+            delta: best.probability - primaryScore,
+          });
+        }
+      }));
+
+      if (recs.length === 0) {
+        nextBestStatus.textContent = 'No stronger nearby alternatives found this week for your selected favorites.';
+        return;
+      }
+
+      recs.sort((a, b) => (b.delta - a.delta) || (b.probability - a.probability) || ((a.store._distanceMiles || 999) - (b.store._distanceMiles || 999)));
+
+      const byFlavor = new Map();
+      for (const rec of recs) {
+        const key = normalize(rec.flavor);
+        if (!byFlavor.has(key)) byFlavor.set(key, rec);
+      }
+      const picks = [...byFlavor.values()].slice(0, 3);
+
+      nextBestStatus.textContent = 'Found ' + picks.length + ' stronger alternative' + (picks.length === 1 ? '' : 's') + '.';
+      nextBestList.innerHTML = picks.map((rec) => {
+        const locationQ = rec.store.city && rec.store.state
+          ? rec.store.city + ', ' + rec.store.state
+          : rec.store.name;
+        const mapHref = 'map.html?flavor=' + encodeURIComponent(rec.flavor) +
+          '&location=' + encodeURIComponent(locationQ);
+        const distText = Number.isFinite(rec.store._distanceMiles)
+          ? rec.store._distanceMiles.toFixed(1) + ' mi'
+          : 'distance unknown';
+        return (
+          '<div class="next-best-card">' +
+            '<div class="next-best-title">' + escapeHtml(rec.flavor) + ': better odds at ' + escapeHtml(rec.store.name) + '</div>' +
+            '<div class="next-best-detail">' +
+              escapeHtml(formatDate(rec.date)) + ' -- ' +
+              (rec.probability * 100).toFixed(1) + '% (' + escapeHtml(rec.confidence) + ')' +
+              ' vs ' + (rec.primaryScore * 100).toFixed(1) + '% at your primary store.' +
+            '</div>' +
+            '<div class="next-best-detail">' +
+              escapeHtml(rec.store.address || locationQ) + ' -- ' + distText +
+            '</div>' +
+            '<div class="next-best-links"><a href="' + mapHref + '">See on map</a></div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
     function findForecastDay(forecast, dateStr) {
       if (!forecast) return null;
       // Multi-day format
@@ -485,7 +1057,7 @@
       try {
         const [confirmedResp, forecastResp] = await Promise.all([
           fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(selectedSlug)),
-          fetch(WORKER_BASE + '/api/v1/forecast/' + encodeURIComponent(selectedSlug)),
+          fetchForecastForSlug(selectedSlug),
         ]);
 
         cachedConfirmed = [];
@@ -498,16 +1070,19 @@
           }));
         }
 
-        cachedForecast = null;
-        if (forecastResp.ok) {
-          cachedForecast = await forecastResp.json();
-        }
+        cachedForecast = forecastResp || null;
 
         const today = new Date();
         today.setHours(12, 0, 0, 0);
         cachedTimeline = buildTimeline(cachedConfirmed, cachedForecast, today);
+        await loadStoreMetrics(selectedSlug);
         renderTimeline();
         renderFavoritesIntel();
+        renderAccuracyDashboard();
+        await renderNextBestStoreRecommendations();
+        preloadFlavorMetrics().then(() => {
+          renderTimeline();
+        });
 
         if (cachedForecast && cachedForecast.history_depth) {
           trustBanner.textContent = 'Predictions based on ' + cachedForecast.history_depth + ' historical observations for this store.';
@@ -536,6 +1111,7 @@
               '<span class="day-card-badge day-card-badge-confirmed">Confirmed</span>' +
             '</div>' +
             '<div class="day-card-flavor">' + (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) + '</div>' +
+            renderFlavorBadges(day.flavor, day) +
             (day.description ? '<div class="day-card-desc">' + escapeHtml(day.description) + '</div>' : '');
 
         } else if (day.type === 'predicted') {
@@ -560,6 +1136,7 @@
                   (fav ? '<span class="star-indicator">*</span>' : '') +
                   escapeHtml(p.flavor) +
                 '</span>' +
+                renderFlavorBadges(p.flavor, day, true) +
                 '<div class="prediction-bar-wrap">' +
                   '<div class="prediction-bar prediction-bar-' + conf + '" style="width:' + barWidth + '%"></div>' +
                 '</div>' +
@@ -586,6 +1163,8 @@
       if (cachedTimeline.length > 0) {
         renderTimeline();
         renderFavoritesIntel();
+        renderAccuracyDashboard();
+        void renderNextBestStoreRecommendations();
       }
     }
 
@@ -666,6 +1245,8 @@
     storeSelect.addEventListener('change', () => selectStore(storeSelect.value));
     flavorSearch.addEventListener('input', () => searchFlavors(flavorSearch.value));
     flavorSearch.addEventListener('focus', () => searchFlavors(flavorSearch.value));
+    driveRadius.addEventListener('change', () => { void renderNextBestStoreRecommendations(); });
+    refreshNextBestBtn.addEventListener('click', () => { void renderNextBestStoreRecommendations(); });
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#flavor-section')) {

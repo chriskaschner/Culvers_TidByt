@@ -144,6 +144,9 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 # Worker (Vitest) -- 294 tests across 16 suites
 cd worker && npm test
 
+# Browser smoke suite (Playwright: nav + Radar Phase 2)
+cd worker && npm run test:browser -- --workers=1
+
 # All Python tests (~142 tests)
 uv run pytest
 

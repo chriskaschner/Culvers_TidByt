@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import os
+import socket
 import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKER_DIR = REPO_ROOT / "worker"
 PLAYWRIGHT_CONFIG = WORKER_DIR / "playwright.config.mjs"
-PLAYWRIGHT_SPEC = WORKER_DIR / "test" / "browser" / "nav-clickthrough.spec.mjs"
 
 
 def _find_browser_binary() -> str:
@@ -30,8 +30,14 @@ def _find_browser_binary() -> str:
     )
 
 
-def test_docs_nav_clickthrough_in_browser():
-    """Click through Forecast -> Calendar -> Map -> Radar -> Alerts -> Siri -> Forecast."""
+def _find_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+def test_docs_browser_smoke_suite():
+    """Run browser smoke tests (nav + Radar Phase 2 interactions)."""
 
     playwright_bin = WORKER_DIR / "node_modules" / ".bin" / "playwright"
     if not playwright_bin.exists():
@@ -41,16 +47,15 @@ def test_docs_nav_clickthrough_in_browser():
         "Run: cd worker && npm install"
     )
     assert PLAYWRIGHT_CONFIG.exists(), f"Missing Playwright config: {PLAYWRIGHT_CONFIG}"
-    assert PLAYWRIGHT_SPEC.exists(), f"Missing Playwright spec: {PLAYWRIGHT_SPEC}"
 
     env = os.environ.copy()
     env["CHROME_BIN"] = _find_browser_binary()
+    env["PLAYWRIGHT_DOCS_PORT"] = str(_find_free_port())
 
     result = subprocess.run(
         [
             str(playwright_bin),
             "test",
-            str(PLAYWRIGHT_SPEC),
             "--config",
             str(PLAYWRIGHT_CONFIG),
             "--workers",

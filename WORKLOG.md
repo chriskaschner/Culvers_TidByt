@@ -1,5 +1,35 @@
 # Worklog
 
+## Session Update (2026-02-22)
+
+### Shipped In This Session
+
+- Phase 1 forecast homepage UX shipped to `main` (`939a026`):
+  - `docs/index.html` rewritten as forecast dashboard
+  - `docs/calendar.html` created from legacy homepage flow
+  - unified 6-link nav across all docs pages
+  - `docs/manifest.json` + `docs/sw.js` updated for forecast branding and cache coverage
+- Browser smoke testing added and wired into standard test flow:
+  - Playwright config in `worker/playwright.config.mjs`
+  - nav smoke test in `worker/test/browser/nav-clickthrough.spec.mjs`
+  - pytest wrapper in `tests/test_browser_clickthrough.py`
+- Radar Phase 2 implemented in `docs/radar.html`:
+  - Next Best Store recommendations (cross-store comparison + distance radius)
+  - rarity/streak/overdue badges on forecast rows
+  - Forecast Accuracy Dashboard (proxy hit-rate, coverage, confidence mix, history depth)
+- Radar Phase 2 browser test added in `worker/test/browser/radar-phase2.spec.mjs`.
+
+### Validation Status
+
+- `cd worker && npm run test:browser -- --workers=1` passes (nav + Radar Phase 2 browser tests).
+- `.venv/bin/pytest tests/ -v` passes (25 tests, includes browser suite wrapper).
+
+### Next Session Start Point
+
+1. TODO #3: Forecast accuracy tracking (prediction vs actual for WI stores; hit-rate metrics and retraining loop).
+2. TODO #2: Alexa skill integration after accuracy tracking baseline is in place.
+3. Keep TODO #1 as done; no remaining Phase 2 UI blockers.
+
 ## Analytics Pipeline (2026-02-22)
 
 ### What Was Built
