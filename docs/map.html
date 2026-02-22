@@ -282,6 +282,28 @@
         suggestionsPanel.hidden = true;
       }
 
+      // Easter egg: no Culver's, brands only, zoomed into MKE
+      if (!hasCulvers && brandResults.length > 0) {
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        const nearMKE = center.lat > 42.8 && center.lat < 43.3 && center.lng > -88.2 && center.lng < -87.7;
+        if (nearMKE && zoom >= 9) {
+          const quips = [
+            "Getting a bit big for yer britches, aren't ya?",
+            "Oh, too good for Culver's now, are we?",
+            "Someone's been spending too much time on Brady Street.",
+            "Look at you, Mr. Third Ward.",
+            "Ope, found the custard hipster.",
+            "Real Milwaukeeans eat both, bud.",
+            "You can take the kid outta Culver's, but you can't take the Culver's outta the kid.",
+            "Your aunt from Waukesha is very disappointed in you right now.",
+            "Bold move, Cotton. Let's see if it pays off.",
+            "Tell me you're from the East Side without telling me you're from the East Side.",
+          ];
+          html += `<div class="results-group"><p style="font-style:italic;color:#888;text-align:center;margin:0.5rem 0">${quips[Math.floor(Math.random() * quips.length)]}</p></div>`;
+        }
+      }
+
       // Render brand results
       if (brandResults.length > 0) {
         // Group by brand
