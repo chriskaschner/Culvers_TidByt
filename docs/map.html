@@ -177,6 +177,9 @@
       });
     });
 
+    let cachedBrandResults = []; // cached so map moves don't re-fetch
+    let cachedBrandKey = '';    // tracks which brands are cached
+
     async function refreshResults(skipFitBounds = false) {
       const hasCulvers = activeBrands.has('culvers');
       const nonCulversBrands = [...activeBrands].filter(b => b !== 'culvers');
@@ -185,14 +188,26 @@
       if (!hasCulvers && nonCulversBrands.length === 0) {
         markers.clearLayers();
         resultsSection.hidden = true;
+        cachedBrandResults = [];
+        cachedBrandKey = '';
         return;
       }
 
-      // Kick off both in parallel
-      const culversPromise = hasCulvers && locationInput.value.trim() ? doCulversSearch() : Promise.resolve(null);
-      const brandPromise = nonCulversBrands.length > 0 ? doBrandSearch(nonCulversBrands) : Promise.resolve([]);
+      // Only re-fetch brands when the active set changes
+      const brandKey = nonCulversBrands.sort().join(',');
+      const needBrandFetch = brandKey && brandKey !== cachedBrandKey;
 
-      const [culversData, brandResults] = await Promise.all([culversPromise, brandPromise]);
+      // Kick off Culver's search; only fetch brands if selection changed
+      const culversPromise = hasCulvers && locationInput.value.trim() ? doCulversSearch() : Promise.resolve(null);
+      const brandPromise = needBrandFetch ? doBrandSearch(nonCulversBrands) : Promise.resolve(null);
+
+      const [culversData, freshBrandResults] = await Promise.all([culversPromise, brandPromise]);
+
+      if (freshBrandResults !== null) {
+        cachedBrandResults = freshBrandResults;
+        cachedBrandKey = brandKey;
+      }
+      const brandResults = brandKey ? cachedBrandResults : [];
 
       // Merge and render — use separate bounds so brand stores don't pull the map away
       markers.clearLayers();
