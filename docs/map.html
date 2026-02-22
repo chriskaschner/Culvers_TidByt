@@ -544,9 +544,9 @@
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
       const desc = store.description ? `<br><small>${escapeHtml(store.description)}</small>` : '';
-      const brandLabel = store.brand && BRAND_DISPLAY[store.brand] ? `<small style="color:${BRAND_COLORS[store.brand] || '#003366'}">${escapeHtml(BRAND_DISPLAY[store.brand])}</small><br>` : '';
+      const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
       return `<div class="store-popup">
-        ${brandLabel}<strong>${escapeHtml(store.name)}</strong>${matchBadge}<br>
+        <strong${nameColor}>${escapeHtml(store.name)}</strong>${matchBadge}<br>
         ${escapeHtml(store.address)}<br>
         <em>${escapeHtml(store.flavor)}</em>${desc}
       </div>`;
@@ -559,14 +559,14 @@
 
     function storeCard(store, isMatch) {
       const matchClass = isMatch ? ' store-card-match' : (store.brand ? brandClass(store) : ' brand-culvers');
-      const brandLabel = store.brand && BRAND_DISPLAY[store.brand] ? `<span style="color:${BRAND_COLORS[store.brand] || '#003366'}; font-size:0.75rem; font-weight:600">${escapeHtml(BRAND_DISPLAY[store.brand])}</span> ` : '';
+      const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
       const culversUrl = store.slug ? (store.brand ? '#' : `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}`) : '#';
       const linkText = store.brand ? '' : `<a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>`;
       const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
       const rankHtml = store.rank != null ? `<span class="store-card-rank">#${store.rank}</span>` : '';
       return `<div class="store-card${matchClass}">
         <div class="store-card-header">
-          <span class="store-card-name">${brandLabel}${escapeHtml(store.name)}</span>
+          <span class="store-card-name"${nameColor}>${escapeHtml(store.name)}</span>
           ${rankHtml}
         </div>
         <div class="store-card-address">${escapeHtml(store.address || '')}</div>
