@@ -239,18 +239,21 @@
         }
       }
 
+      const flavorQuery = flavorInput.value.trim().toLowerCase();
       for (const store of brandResults) {
         const lat = store.lat;
         const lon = store.lng || store.lon;
         if (!lat || !lon) continue;
-        allStores.push({ ...store, _lat: lat, _lon: lon, _match: false, _brand: store.brand,
+        const brandFlavorMatch = flavorQuery && store.flavor &&
+          store.flavor.toLowerCase().includes(flavorQuery);
+        allStores.push({ ...store, _lat: lat, _lon: lon, _match: brandFlavorMatch, _brand: store.brand,
           _dist: haversine(center.lat, center.lng, lat, lon) });
       }
 
       // Markers + bounds
       markers.clearLayers();
       const allBounds = L.latLngBounds();
-      const hasFlavorFilter = culversData ? !!culversData.query.flavor : false;
+      const hasFlavorFilter = culversData ? !!culversData.query.flavor : !!flavorQuery;
 
       for (const store of allStores) {
         allBounds.extend([store._lat, store._lon]);
@@ -262,7 +265,7 @@
           const color = BRAND_COLORS[store._brand] || '#003366';
           const marker = L.circleMarker([store._lat, store._lon], {
             radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
-          }).bindPopup(storePopup(store, false));
+          }).bindPopup(storePopup(store, store._match));
           markers.addLayer(marker);
         }
       }
@@ -303,13 +306,14 @@
       }
 
       // Build result cards — unified list sorted by distance
+      const flavorName = culversData ? culversData.query.flavor : flavorInput.value.trim();
       let html = '';
       if (hasFlavorFilter) {
         const matches = allStores.filter(s => s._match).sort((a, b) => a._dist - b._dist);
         const rest = allStores.filter(s => !s._match).sort((a, b) => a._dist - b._dist);
 
         if (matches.length > 0) {
-          html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(culversData.query.flavor)} (${matches.length})</h3>`;
+          html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(flavorName)} (${matches.length})</h3>`;
           for (const store of matches) html += storeCard(store, true);
           html += '</div>';
         }
@@ -329,14 +333,14 @@
             nearbyLabel = altIntros[Math.floor(Math.random() * altIntros.length)];
           } else {
             const nearbyIntros = [
-              `No ${escapeHtml(culversData.query.flavor)} nearby — here's what's scooping instead`,
-              `${escapeHtml(culversData.query.flavor)}? Not today. But check out what is`,
-              `Fresh out of ${escapeHtml(culversData.query.flavor)} — but never fresh out of options`,
-              `The custard must flow — just not ${escapeHtml(culversData.query.flavor)} right now`,
-              `${escapeHtml(culversData.query.flavor)} is playing hard to get. These aren't`,
-              `No ${escapeHtml(culversData.query.flavor)}? That's the way the cookie crumbles. Here's what's left`,
-              `We all scream for ${escapeHtml(culversData.query.flavor)} but today we settle`,
-              `Life gave you no ${escapeHtml(culversData.query.flavor)}. Make custard-ade`,
+              `No ${escapeHtml(flavorName)} nearby — here's what's scooping instead`,
+              `${escapeHtml(flavorName)}? Not today. But check out what is`,
+              `Fresh out of ${escapeHtml(flavorName)} — but never fresh out of options`,
+              `The custard must flow — just not ${escapeHtml(flavorName)} right now`,
+              `${escapeHtml(flavorName)} is playing hard to get. These aren't`,
+              `No ${escapeHtml(flavorName)}? That's the way the cookie crumbles. Here's what's left`,
+              `We all scream for ${escapeHtml(flavorName)} but today we settle`,
+              `Life gave you no ${escapeHtml(flavorName)}. Make custard-ade`,
             ];
             nearbyLabel = nearbyIntros[Math.floor(Math.random() * nearbyIntros.length)];
           }
