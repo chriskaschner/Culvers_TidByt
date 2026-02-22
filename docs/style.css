@@ -462,25 +462,29 @@ details ol {
   flex: 0 0 auto;
 }
 
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
 #not-culvers-btn {
   padding: 0.5rem 1rem;
-  border: 1px solid #6A1B9A;
+  border: 1px solid #003366;
   border-radius: 4px;
   background: white;
-  color: #6A1B9A;
+  color: #003366;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 1.2rem;
   white-space: nowrap;
 }
 
 #not-culvers-btn:hover {
-  background: #f5f0fa;
+  background: #f0f4f8;
 }
 
 #not-culvers-btn.active {
-  background: #6A1B9A;
+  background: #003366;
   color: white;
 }
 
