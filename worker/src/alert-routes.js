@@ -265,7 +265,7 @@ async function handleConfirm(url, env, corsHeaders) {
      <p>Flavor alerts for <strong>${escapeHtml(storeName)}</strong> are now active.</p>
      <p>We'll email you when any of your favorites are coming up:</p>
      <ul>${favorites.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>
-     <p><a href="/alerts.html">Set up more alerts</a></p>`,
+     <p><a href="https://chriskaschner.github.io/custard-calendar/alerts.html">Set up more alerts</a></p>`,
     200,
     corsHeaders,
   );
@@ -302,7 +302,7 @@ async function handleUnsubscribe(url, env, corsHeaders) {
   return htmlResponse(
     `<h2>Unsubscribed</h2>
      <p>Your flavor alerts have been removed. You won't receive any more emails.</p>
-     <p><a href="/alerts.html">Sign up again</a></p>`,
+     <p><a href="https://chriskaschner.github.io/custard-calendar/alerts.html">Sign up again</a></p>`,
     200,
     corsHeaders,
   );
