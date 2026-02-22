@@ -35,4 +35,4 @@ migrations_dir = "src/migrations"
 #   Daily alert check at noon UTC (6-7 AM Central)
 #   Weekly digest at 2 PM UTC Sunday (8-9 AM Central)
 [triggers]
-crons = ["0 12 * * *", "0 14 * * 0"]
+crons = ["0 12 * * *", "0 14 * * 7"]

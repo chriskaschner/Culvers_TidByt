@@ -10,6 +10,9 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" — multiple people vote/rank flavors, system suggests store by combined preferences + proximity
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
 - [ ] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose
+### Bugs / Polish
+- [ ] **Google Calendar event color** — calendar events should use Culver's dark blue (`#005696`); current sync doesn't set color correctly
+
 ### Docs
 (none)
 
