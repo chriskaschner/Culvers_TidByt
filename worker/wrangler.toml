@@ -10,7 +10,7 @@ ENVIRONMENT = "production"
 ACCESS_TOKEN = ""
 # CORS origin restriction. Set to your GitHub Pages URL in production.
 # Leave empty for open access (default).
-ALLOWED_ORIGIN = ""
+ALLOWED_ORIGIN = "https://custard.chriskaschner.com"
 # Base URL for alert email links. Set to your Worker URL in production.
 WORKER_BASE_URL = "https://custard-calendar.chris-kaschner.workers.dev"
 # Email sender address for alerts. Requires verified domain in Resend.

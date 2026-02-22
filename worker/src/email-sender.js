@@ -175,7 +175,7 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
  * @param {string} apiKey
  * @param {string} fromAddress
  */
-export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative }, apiKey, fromAddress) {
+export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative, forecast }, apiKey, fromAddress) {
   const quip = getRandomQuip();
 
   const subject = matches.length > 0
@@ -204,6 +204,42 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
     ? `<p style="font-style: italic; color: #555; margin: 16px 0;">${escapeHtml(narrative)}</p>`
     : '';
 
+  // Build forecast predictions block if available
+  let forecastBlock = '';
+  if (forecast && forecast.predictions && forecast.predictions.length > 0) {
+    const predRows = forecast.predictions.slice(0, 5).map(p => {
+      const pct = Math.round(p.probability * 100);
+      const barWidth = Math.max(pct, 2);
+      return `
+      <tr>
+        <td style="padding: 4px 12px; font-size: 14px;">${escapeHtml(p.flavor)}</td>
+        <td style="padding: 4px 12px; width: 120px;">
+          <div style="background: #e3f2fd; border-radius: 4px; overflow: hidden;">
+            <div style="background: #005696; height: 16px; width: ${barWidth}%; border-radius: 4px; min-width: 4px;"></div>
+          </div>
+        </td>
+        <td style="padding: 4px 8px; font-size: 13px; color: #666;">${pct}%</td>
+      </tr>`;
+    }).join('\n');
+
+    const overdueSection = (forecast.overdue_flavors && forecast.overdue_flavors.length > 0)
+      ? `<p style="font-size: 13px; color: #555; margin: 8px 0 0 0;">Overdue: ${
+          forecast.overdue_flavors.map(o =>
+            `<strong>${escapeHtml(o.flavor)}</strong> (${o.days_since}d since last, avg ${Math.round(o.avg_gap)}d)`
+          ).join(', ')
+        }</p>`
+      : '';
+
+    forecastBlock = `
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <h3 style="color: #005696; margin: 0 0 8px 0; font-size: 15px;">Tomorrow's Forecast</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        ${predRows}
+      </table>
+      ${overdueSection}
+    </div>`;
+  }
+
   const matchSummary = matches.length > 0
     ? `<p>\u2b50 <strong>${matches.length} favorite${matches.length > 1 ? 's' : ''}</strong> spotted this week!</p>`
     : `<p>No favorites this week — but there's always next week.</p>`;
@@ -218,6 +254,7 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
   <p>\u{1F4CD} <strong>${escapeHtml(storeName)}</strong>${storeAddress ? ` \u2014 ${escapeHtml(storeAddress)}` : ''}</p>
   ${matchSummary}
   ${narrativeBlock}
+  ${forecastBlock}
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     <thead>
       <tr style="background: #f8f9fa;">

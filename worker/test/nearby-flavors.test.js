@@ -327,7 +327,7 @@ describe('/api/nearby-flavors endpoint', () => {
 
     expect(res.status).toBe(502);
     const body = await res.json();
-    expect(body.error).toMatch(/DNS/i);
+    expect(body.error).toMatch(/upstream locator/i);
   });
 
   it('handles locator response with empty geofences', async () => {

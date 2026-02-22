@@ -273,6 +273,9 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   };
 
   // Handle CORS preflight
@@ -293,8 +296,38 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
 
   // Health check (unversioned — always public)
   if (canonical === '/health') {
+    const checks = {};
+    let degraded = false;
+
+    // KV reachability
+    try {
+      if (env.FLAVOR_CACHE) {
+        const ts = await env.FLAVOR_CACHE.get('meta:last-alert-run');
+        checks.kv = { ok: true, last_alert_run: ts || null };
+        if (ts) {
+          const age = Date.now() - new Date(JSON.parse(ts).timestamp || ts).getTime();
+          if (age > 25 * 60 * 60 * 1000) { checks.kv.stale = true; degraded = true; }
+        }
+      } else {
+        checks.kv = { ok: false, error: 'not configured' }; degraded = true;
+      }
+    } catch { checks.kv = { ok: false }; degraded = true; }
+
+    // D1 + latest cron run
+    try {
+      if (env.DB) {
+        const row = await env.DB.prepare(
+          'SELECT handler, ran_at, checked, sent, errors_count FROM cron_runs ORDER BY id DESC LIMIT 1'
+        ).first();
+        checks.d1 = { ok: true, last_cron: row || null };
+        if (row && row.errors_count > 0) { checks.d1.has_errors = true; degraded = true; }
+      } else {
+        checks.d1 = { ok: false, error: 'not configured' };
+      }
+    } catch { checks.d1 = { ok: false }; degraded = true; }
+
     return Response.json(
-      { status: 'ok', timestamp: new Date().toISOString() },
+      { status: degraded ? 'degraded' : 'ok', timestamp: new Date().toISOString(), checks },
       { headers: corsHeaders }
     );
   }
@@ -483,7 +516,7 @@ async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
     });
   } catch (err) {
     return Response.json(
-      { error: `Failed to fetch flavor data: ${err.message}` },
+      { error: 'Failed to fetch flavor data. Please try again later.' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -552,7 +585,7 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
     });
   } catch (err) {
     return Response.json(
-      { error: `Failed to fetch flavor data: ${err.message}` },
+      { error: 'Failed to fetch flavor data. Please try again later.' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -644,7 +677,7 @@ async function handleApiNearbyFlavors(url, env, corsHeaders) {
       resp = await fetchFn(locatorUrl);
     } catch (err) {
       return Response.json(
-        { error: `Failed to reach Culver's locator API: ${err.message}` },
+        { error: 'Failed to reach upstream locator API. Please try again later.' },
         { status: 502, headers: corsHeaders }
       );
     }
@@ -788,13 +821,40 @@ export default {
 
   async scheduled(event, env, ctx) {
     const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors);
+    const start = Date.now();
 
     // Sunday 2 PM UTC cron → weekly digest for weekly subscribers
-    if (event.cron === '0 14 * * 0') {
-      ctx.waitUntil(checkWeeklyDigests(env, fetchFn));
-    } else {
-      // Daily cron → check daily subscribers and send flavor alert emails
-      ctx.waitUntil(checkAlerts(env, fetchFn));
-    }
+    const isWeekly = event.cron === '0 14 * * 7';
+    const handler = isWeekly ? 'weekly_digest' : 'daily_alerts';
+
+    const run = async () => {
+      const result = isWeekly
+        ? await checkWeeklyDigests(env, fetchFn)
+        : await checkAlerts(env, fetchFn);
+
+      // Persist cron results to D1 for observability (O1)
+      if (env.DB) {
+        try {
+          await env.DB.prepare(
+            `INSERT INTO cron_runs (handler, ran_at, checked, sent, errors_count, errors_json, duration_ms)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
+          ).bind(
+            handler,
+            new Date().toISOString(),
+            result.checked || 0,
+            result.sent || 0,
+            (result.errors || []).length,
+            (result.errors || []).length > 0 ? JSON.stringify(result.errors) : null,
+            Date.now() - start,
+          ).run();
+        } catch (err) {
+          console.error(`Failed to persist cron result: ${err.message}`);
+        }
+      }
+
+      return result;
+    };
+
+    ctx.waitUntil(run());
   },
 };
