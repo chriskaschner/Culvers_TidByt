@@ -1,6 +1,6 @@
 // Auto-generated from docs/stores.json — do not edit manually.
 // Regenerate with: node worker/scripts/generate-valid-slugs.js
-// 1071 stores as of 2026-02-21
+// 1077 stores (1071 Culver's + 6 MKE brands) as of 2026-02-21
 export const VALID_SLUGS = new Set([
   '10-mile-rd-rockford-mi',
   '87th-st-pkwy-lenexa-ks',
@@ -1073,4 +1073,11 @@ export const VALID_SLUGS = new Set([
   'zephyrhills-fl-gall-blvd',
   'zion',
   'zionsville-in-us-hwy-421',
+  // MKE custard brands
+  'gilles',
+  'hefners',
+  'kopps-brookfield',
+  'kopps-glendale',
+  'kopps-greenfield',
+  'kraverz',
 ]);

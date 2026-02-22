@@ -1,0 +1,21 @@
+{
+  "name": "Custard Calendar",
+  "short_name": "Custard Cal",
+  "description": "Subscribe to Flavor of the Day calendars for Culver's, Kopp's, Gille's, and more.",
+  "start_url": "./",
+  "display": "standalone",
+  "theme_color": "#003366",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

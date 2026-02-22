@@ -14,6 +14,11 @@ import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
 import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { normalize, matchesFlavor, findSimilarFlavors } from './flavor-matcher.js';
 
+import { fetchKoppsFlavors } from './kopp-fetcher.js';
+import { fetchGillesFlavors } from './gilles-fetcher.js';
+import { fetchHefnersFlavors } from './hefners-fetcher.js';
+import { fetchKraverzFlavors } from './kraverz-fetcher.js';
+
 const KV_TTL_SECONDS = 86400; // 24 hours
 const CACHE_MAX_AGE = 43200;  // 12 hours
 const MAX_SECONDARY = 3;
@@ -21,6 +26,58 @@ const MAX_DAILY_FETCHES = 50;
 
 // Reject slugs with invalid characters before checking allowlist (defense-in-depth)
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]{1,59}$/;
+
+/**
+ * Brand registry — maps slug patterns to fetcher functions + metadata.
+ * MKE custard brands get explicit entries; Culver's is the default.
+ */
+const BRAND_REGISTRY = [
+  { pattern: /^kopps-/, fetcher: fetchKoppsFlavors, url: 'https://www.kopps.com/flavor-forecast', brand: "Kopp's", kvPrefix: 'flavors:kopps-shared' },
+  { pattern: /^gilles$/, fetcher: fetchGillesFlavors, url: 'https://gillesfrozencustard.com/flavor-of-the-day', brand: "Gille's" },
+  { pattern: /^hefners$/, fetcher: fetchHefnersFlavors, url: 'https://www.hefnerscustard.com', brand: "Hefner's" },
+  { pattern: /^kraverz$/, fetcher: fetchKraverzFlavors, url: 'https://kraverzcustard.com/FlavorSchedule', brand: 'Kraverz' },
+];
+
+/**
+ * Get fetcher + brand metadata for a slug.
+ * Returns default Culver's fetcher when no MKE brand matches.
+ */
+export function getFetcherForSlug(slug, fallbackFetcher = defaultFetchFlavors) {
+  for (const entry of BRAND_REGISTRY) {
+    if (entry.pattern.test(slug)) {
+      return { fetcher: entry.fetcher, url: entry.url, brand: entry.brand, kvPrefix: entry.kvPrefix || null };
+    }
+  }
+  return { fetcher: fallbackFetcher, url: `https://www.culvers.com/restaurants/${slug}`, brand: "Culver's", kvPrefix: null };
+}
+
+/**
+ * Get the brand name for a slug.
+ */
+export function getBrandForSlug(slug) {
+  return getFetcherForSlug(slug).brand;
+}
+
+/**
+ * Generate fallback flavor events when scraping fails for a store.
+ * @param {string} slug
+ * @param {string[]} [dates] - dates to cover (defaults to today)
+ */
+function makeFallbackFlavors(slug, dates) {
+  const { url, brand } = getFetcherForSlug(slug);
+  if (!dates || dates.length === 0) {
+    dates = [new Date().toISOString().slice(0, 10)];
+  }
+  return {
+    name: slug,
+    address: '',
+    flavors: dates.map(date => ({
+      date,
+      title: `See ${brand} website for today's flavor`,
+      description: `Visit ${url}`,
+    })),
+  };
+}
 
 /**
  * Check access token if one is configured.
@@ -73,14 +130,22 @@ async function incrementFetchCount(kv) {
 
 /**
  * Get flavor data for a store, checking KV cache first.
+ * Supports brand routing — MKE brands use their own fetchers and may share KV keys.
+ * When fetchFlavorsFn is provided (tests), it overrides ALL brand fetchers.
  * @param {string} slug
  * @param {Object} kv - KV namespace binding
- * @param {Function} fetchFlavorsFn - flavor fetcher function
+ * @param {Function} fetchFlavorsFn - override fetcher (when provided, overrides brand fetchers too)
+ * @param {boolean} isOverride - true when fetchFlavorsFn should override brand routing
  * @returns {Promise<{name: string, flavors: Array}>}
  */
-async function getFlavorsCached(slug, kv, fetchFlavorsFn) {
+async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false) {
+  const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
+  const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
+  // When isOverride is true, use the provided fetcher for all brands (testing)
+  const fetcher = isOverride ? fetchFlavorsFn : brandInfo.fetcher;
+
   // Check KV cache
-  const cached = await kv.get(`flavors:${slug}`);
+  const cached = await kv.get(cacheKey);
   if (cached) {
     return JSON.parse(cached);
   }
@@ -91,11 +156,11 @@ async function getFlavorsCached(slug, kv, fetchFlavorsFn) {
     throw new Error('Daily upstream fetch limit reached. Try again later.');
   }
 
-  // Cache miss: fetch from Culver's
-  const data = await fetchFlavorsFn(slug);
+  // Cache miss: fetch from upstream
+  const data = await fetcher(slug);
 
   // Store in KV with TTL
-  await kv.put(`flavors:${slug}`, JSON.stringify(data), {
+  await kv.put(cacheKey, JSON.stringify(data), {
     expirationTtl: KV_TTL_SECONDS,
   });
 
@@ -178,6 +243,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
  * Handle /calendar.ics requests.
  */
 async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
+  // When a custom fetcher is passed (testing), it overrides all brand routing
+  const isOverride = fetchFlavorsFn !== defaultFetchFlavors;
   // Resolve the valid slugs set (allow test override)
   const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
 
@@ -221,31 +288,42 @@ async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
     }
   }
 
-  // Fetch flavor data for all stores
+  // Fetch flavor data for all stores (with per-store fallback)
   const stores = [];
   const flavorsBySlug = {};
 
+  // Fetch primary — use fallback on failure
   try {
-    // Fetch primary
-    const primaryData = await getFlavorsCached(primarySlug, env.FLAVOR_CACHE, fetchFlavorsFn);
-    stores.push({ slug: primarySlug, name: primaryData.name, address: primaryData.address || '', role: 'primary' });
+    const primaryData = await getFlavorsCached(primarySlug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride);
+    const brandUrl = getFetcherForSlug(primarySlug, fetchFlavorsFn).url;
+    stores.push({ slug: primarySlug, name: primaryData.name, address: primaryData.address || '', url: brandUrl, role: 'primary' });
     flavorsBySlug[primarySlug] = primaryData.flavors;
-
-    // Fetch secondaries
-    for (const slug of secondarySlugs) {
-      const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn);
-      stores.push({ slug, name: data.name, address: data.address || '', role: 'secondary' });
-      flavorsBySlug[slug] = data.flavors;
-    }
   } catch (err) {
-    return Response.json(
-      { error: `Failed to fetch flavor data: ${err.message}` },
-      { status: 400, headers: corsHeaders }
-    );
+    const fallback = makeFallbackFlavors(primarySlug);
+    stores.push({ slug: primarySlug, name: fallback.name, address: '', url: getFetcherForSlug(primarySlug).url, role: 'primary' });
+    flavorsBySlug[primarySlug] = fallback.flavors;
   }
 
-  // Generate .ics
-  const calendarName = `Culver's FOTD - ${stores[0].name}`;
+  // Collect primary dates for secondary fallback coverage
+  const primaryDates = (flavorsBySlug[primarySlug] || []).map(f => f.date);
+
+  // Fetch secondaries — use fallback on failure
+  for (const slug of secondarySlugs) {
+    try {
+      const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride);
+      const brandUrl = getFetcherForSlug(slug, fetchFlavorsFn).url;
+      stores.push({ slug, name: data.name, address: data.address || '', url: brandUrl, role: 'secondary' });
+      flavorsBySlug[slug] = data.flavors;
+    } catch (err) {
+      const fallback = makeFallbackFlavors(slug, primaryDates);
+      stores.push({ slug, name: fallback.name, address: '', url: getFetcherForSlug(slug).url, role: 'secondary' });
+      flavorsBySlug[slug] = fallback.flavors;
+    }
+  }
+
+  // Generate .ics with brand-aware calendar name
+  const primaryBrand = getBrandForSlug(primarySlug);
+  const calendarName = `${primaryBrand} FOTD - ${stores[0].name}`;
   const ics = generateIcs({ calendarName, stores, flavorsBySlug });
 
   return new Response(ics, {
@@ -265,6 +343,7 @@ async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
  * KV-cached fetch pipeline as the calendar endpoint.
  */
 async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
+  const isOverride = fetchFlavorsFn !== defaultFetchFlavors;
   const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
 
   const slug = url.searchParams.get('slug');
@@ -284,7 +363,7 @@ async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
   }
 
   try {
-    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn);
+    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride);
     return Response.json(data, {
       headers: {
         ...corsHeaders,

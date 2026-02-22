@@ -147,3 +147,40 @@ class TestValidateManifest:
         slugs = {s["slug"] for s in manifest["stores"]}
         assert "mt-horeb" in slugs
         assert "madison-todd-drive" in slugs
+
+    def test_valid_coordinates(self):
+        """Validates that lat/lng coordinates are in valid ranges."""
+        manifest = {
+            "generated": "2026-02-20T12:00:00Z",
+            "count": 1,
+            "stores": [
+                {"slug": "mt-horeb", "name": "Mt. Horeb", "city": "Mt. Horeb", "state": "WI",
+                 "address": "1700 Springdale St", "lat": 43.0045, "lng": -89.7387},
+            ],
+        }
+        errors = validate_manifest(manifest)
+        assert errors == []
+
+    def test_rejects_invalid_lat(self):
+        manifest = {
+            "generated": "2026-02-20T12:00:00Z",
+            "count": 1,
+            "stores": [
+                {"slug": "mt-horeb", "name": "Mt. Horeb", "city": "Mt. Horeb", "state": "WI",
+                 "address": "1700 Springdale St", "lat": 95.0, "lng": -89.7387},
+            ],
+        }
+        errors = validate_manifest(manifest)
+        assert any("lat" in e.lower() for e in errors)
+
+    def test_rejects_invalid_lng(self):
+        manifest = {
+            "generated": "2026-02-20T12:00:00Z",
+            "count": 1,
+            "stores": [
+                {"slug": "mt-horeb", "name": "Mt. Horeb", "city": "Mt. Horeb", "state": "WI",
+                 "address": "1700 Springdale St", "lat": 43.0, "lng": -200.0},
+            ],
+        }
+        errors = validate_manifest(manifest)
+        assert any("lng" in e.lower() for e in errors)

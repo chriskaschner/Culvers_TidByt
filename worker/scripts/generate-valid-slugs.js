@@ -9,7 +9,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const storesPath = join(__dirname, '..', '..', 'site', 'stores.json');
+const storesPath = join(__dirname, '..', '..', 'docs', 'stores.json');
 const outputPath = join(__dirname, '..', 'src', 'valid-slugs.js');
 
 const { stores } = JSON.parse(readFileSync(storesPath, 'utf8'));

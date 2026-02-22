@@ -89,13 +89,23 @@ def fetch_locator_stores(location: str, session: requests.Session) -> List[Dict]
             if not slug:
                 continue
 
-            stores.append({
+            # Extract coordinates from GeoJSON (note: GeoJSON is [lon, lat])
+            coords = geofence.get("geometryCenter", {}).get("coordinates", [])
+            lat = coords[1] if len(coords) >= 2 else None
+            lng = coords[0] if len(coords) >= 2 else None
+
+            store = {
                 "slug": slug,
                 "name": f"{meta.get('city', '').split(',')[0].strip()}, {meta.get('state', '')}",
                 "city": meta.get("city", "").split(",")[0].strip(),
                 "state": meta.get("state", ""),
                 "address": meta.get("street", ""),
-            })
+            }
+            if lat is not None and lng is not None:
+                store["lat"] = round(lat, 4)
+                store["lng"] = round(lng, 4)
+
+            stores.append(store)
 
         return stores
 
@@ -212,6 +222,16 @@ def validate_manifest(manifest: Dict) -> List[str]:
         if slug in slugs_seen:
             errors.append(f"Duplicate slug: {slug}")
         slugs_seen.add(slug)
+
+        # Validate coordinates if present
+        if "lat" in store:
+            lat = store["lat"]
+            if not isinstance(lat, (int, float)) or lat < -90 or lat > 90:
+                errors.append(f"Store #{i} ({slug}) has invalid lat: {lat}")
+        if "lng" in store:
+            lng = store["lng"]
+            if not isinstance(lng, (int, float)) or lng < -180 or lng > 180:
+                errors.append(f"Store #{i} ({slug}) has invalid lng: {lng}")
 
     return errors
 

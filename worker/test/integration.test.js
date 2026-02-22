@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleRequest, isValidSlug } from '../src/index.js';
+import { handleRequest, isValidSlug, getFetcherForSlug, getBrandForSlug } from '../src/index.js';
 
 // Mock flavor data returned by fetchFlavors
 const MOCK_FLAVORS = {
@@ -199,16 +199,19 @@ describe('Security hardening', () => {
     expect(mockFetchFlavors).not.toHaveBeenCalled();
   });
 
-  it('11: returns 400 when daily fetch budget is exhausted', async () => {
+  it('11: returns fallback event when daily fetch budget is exhausted', async () => {
     // Pre-fill the fetch counter to the limit
     mockKV._store.set('meta:fetch-count', '50');
 
     const req = makeRequest('/calendar.ics?primary=mt-horeb');
     const res = await handleRequest(req, env, mockFetchFlavors);
 
-    expect(res.status).toBe(400);
-    const body = await res.json();
-    expect(body.error).toMatch(/fetch limit/i);
+    // With fallback, budget exhaustion returns 200 with a "See website" event
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    expect(unfolded).toContain('See');
+    expect(unfolded).toContain('culvers.com');
     expect(mockFetchFlavors).not.toHaveBeenCalled();
   });
 
@@ -535,5 +538,181 @@ describe('/api/nearby-flavors route integration', () => {
     const res = await handleRequest(req, env);
 
     expect(res.status).toBe(204);
+  });
+});
+
+// --- "See website" fallback tests ---
+
+describe('Fallback events on fetch failure', () => {
+  let mockKV;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    env = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: new Set(['mt-horeb', 'madison-todd-drive', 'kopps-greenfield', 'gilles', 'hefners', 'kraverz']),
+    };
+  });
+
+  it('38: generates fallback event when primary store fetch fails', async () => {
+    const failingFetcher = vi.fn(async () => { throw new Error('Network error'); });
+    const req = makeRequest('/calendar.ics?primary=mt-horeb');
+    const res = await handleRequest(req, env, failingFetcher);
+
+    // Should still return 200 with a fallback event
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('BEGIN:VCALENDAR');
+    expect(body).toContain('BEGIN:VEVENT');
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    expect(unfolded).toContain('See');
+    expect(unfolded).toContain('website');
+  });
+
+  it('39: fallback event when secondary fails but primary succeeds', async () => {
+    let callCount = 0;
+    const partialFetcher = vi.fn(async (slug) => {
+      callCount++;
+      if (slug === 'madison-todd-drive') throw new Error('Site down');
+      return MOCK_FLAVORS[slug];
+    });
+
+    const req = makeRequest('/calendar.ics?primary=mt-horeb&secondary=madison-todd-drive');
+    const res = await handleRequest(req, env, partialFetcher);
+
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    // Primary should have real flavors
+    expect(unfolded).toContain('Dark Chocolate PB Crunch');
+    // Secondary should have fallback
+    expect(unfolded).toContain('See');
+  });
+
+  it('40: fallback event contains correct Culver\'s URL for Culver\'s store', async () => {
+    const failingFetcher = vi.fn(async () => { throw new Error('Network error'); });
+    const req = makeRequest('/calendar.ics?primary=mt-horeb');
+    const res = await handleRequest(req, env, failingFetcher);
+
+    const body = await res.text();
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    expect(unfolded).toContain('culvers.com/restaurants/mt-horeb');
+  });
+
+  it('41: fallback event contains correct brand URL for MKE brand', async () => {
+    const failingFetcher = vi.fn(async () => { throw new Error('Network error'); });
+    const req = makeRequest('/calendar.ics?primary=kopps-greenfield');
+    const res = await handleRequest(req, env, failingFetcher);
+
+    const body = await res.text();
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    expect(unfolded).toContain('kopps.com');
+  });
+});
+
+// --- Brand routing tests ---
+
+describe('Brand routing', () => {
+  it('42: getFetcherForSlug returns Kopp\'s for kopps-* slugs', () => {
+    const result = getFetcherForSlug('kopps-greenfield');
+    expect(result.brand).toBe("Kopp's");
+    expect(result.url).toContain('kopps.com');
+  });
+
+  it('43: getFetcherForSlug returns Gille\'s for gilles slug', () => {
+    const result = getFetcherForSlug('gilles');
+    expect(result.brand).toBe("Gille's");
+  });
+
+  it('44: getFetcherForSlug returns Hefner\'s for hefners slug', () => {
+    const result = getFetcherForSlug('hefners');
+    expect(result.brand).toBe("Hefner's");
+  });
+
+  it('45: getFetcherForSlug returns Kraverz for kraverz slug', () => {
+    const result = getFetcherForSlug('kraverz');
+    expect(result.brand).toBe('Kraverz');
+  });
+
+  it('46: getFetcherForSlug returns Culver\'s for regular slugs', () => {
+    const result = getFetcherForSlug('mt-horeb');
+    expect(result.brand).toBe("Culver's");
+    expect(result.url).toContain('culvers.com');
+  });
+
+  it('47: getBrandForSlug returns correct brand names', () => {
+    expect(getBrandForSlug('kopps-brookfield')).toBe("Kopp's");
+    expect(getBrandForSlug('gilles')).toBe("Gille's");
+    expect(getBrandForSlug('hefners')).toBe("Hefner's");
+    expect(getBrandForSlug('kraverz')).toBe('Kraverz');
+    expect(getBrandForSlug('mt-horeb')).toBe("Culver's");
+  });
+});
+
+// --- MKE brand calendar generation ---
+
+describe('MKE brand calendar generation', () => {
+  let mockKV;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    env = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: new Set(['mt-horeb', 'kopps-greenfield', 'kopps-brookfield', 'kopps-glendale', 'gilles', 'hefners', 'kraverz']),
+    };
+  });
+
+  it('48: Kopp\'s calendar has brand-specific name', async () => {
+    const koppsFetcher = vi.fn(async () => ({
+      name: "Kopp's Frozen Custard",
+      flavors: [{ date: '2026-02-21', title: "Reese's PB Kupps & Heath Bar", description: '' }],
+    }));
+    const req = makeRequest('/calendar.ics?primary=kopps-greenfield');
+    const res = await handleRequest(req, env, koppsFetcher);
+
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    expect(unfolded).toContain("Kopp's FOTD");
+  });
+
+  it('49: mixed calendar (Culver\'s primary + MKE secondary)', async () => {
+    const mixedFetcher = vi.fn(async (slug) => {
+      if (slug === 'mt-horeb') return MOCK_FLAVORS['mt-horeb'];
+      return {
+        name: "Kopp's Frozen Custard",
+        flavors: [{ date: '2026-02-21', title: 'Butter Pecan & Mint Oreo', description: '' }],
+      };
+    });
+    const req = makeRequest('/calendar.ics?primary=mt-horeb&secondary=kopps-greenfield');
+    const res = await handleRequest(req, env, mixedFetcher);
+
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    const unfolded = body.replace(/\r\n[ \t]/g, '');
+    // Primary should be Culver's branded
+    expect(unfolded).toContain("Culver's FOTD");
+    // Should contain backup from Kopp's
+    expect(unfolded).toContain('Butter Pecan');
+  });
+
+  it('50: Kopp\'s shared KV caching across all 3 slugs', async () => {
+    const koppsFetcher = vi.fn(async () => ({
+      name: "Kopp's Frozen Custard",
+      flavors: [{ date: '2026-02-21', title: 'Test Flavor', description: '' }],
+    }));
+
+    // First request for kopps-greenfield
+    const req1 = makeRequest('/calendar.ics?primary=kopps-greenfield');
+    await handleRequest(req1, env, koppsFetcher);
+    expect(koppsFetcher).toHaveBeenCalledTimes(1);
+
+    // Second request for kopps-brookfield should use cache
+    koppsFetcher.mockClear();
+    const req2 = makeRequest('/calendar.ics?primary=kopps-brookfield');
+    await handleRequest(req2, env, koppsFetcher);
+    expect(koppsFetcher).not.toHaveBeenCalled();
   });
 });

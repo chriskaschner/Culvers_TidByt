@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Culver's Flavor of the Day Calendar</title>
+  <title>Custard Calendar — Flavor of the Day</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003366">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>Culver's Flavor of the Day Calendar</h1>
-    <p>Subscribe to a calendar showing daily Flavor of the Day for your favorite Culver's locations.</p>
+    <h1>Custard Calendar</h1>
+    <p>Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, Hefner's, and Kraverz.</p>
     <nav class="nav-links">
       <a href="map.html">Custard Map</a>
     </nav>
@@ -28,6 +30,9 @@
         <div class="filter-group">
           <label for="city-search">Search</label>
           <input type="text" id="city-search" placeholder="City or store name...">
+        </div>
+        <div class="filter-group">
+          <button id="nearby-btn" type="button" title="Sort stores by distance from your location">Nearby</button>
         </div>
       </div>
 
@@ -95,7 +100,7 @@
   </main>
 
   <footer>
-    <p>Not affiliated with Culver's. Flavor data sourced from <a href="https://www.culvers.com" target="_blank" rel="noopener">culvers.com</a>.</p>
+    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
   </footer>
 
   <script>
@@ -105,6 +110,9 @@
     let primarySlug = null;
     let secondarySlugs = new Set();
     let previewAbort = null; // AbortController for in-flight preview fetches
+    let userLat = null;
+    let userLng = null;
+    let sortByDistance = false;
 
     // DOM elements
     const stateFilter = document.getElementById('state-filter');
@@ -122,20 +130,71 @@
     const previewCard = document.getElementById('preview-card');
     const previewLoading = document.getElementById('preview-loading');
     const previewTitle = document.getElementById('preview-title');
+    const nearbyBtn = document.getElementById('nearby-btn');
     const previewDate = document.getElementById('preview-date');
     const previewLocation = document.getElementById('preview-location');
     const previewDesc = document.getElementById('preview-desc');
 
+    // Haversine distance in miles
+    function haversine(lat1, lng1, lat2, lng2) {
+      const R = 3958.8; // Earth radius in miles
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function saveFavorites() {
+      try {
+        if (primarySlug) {
+          localStorage.setItem('custard-primary', primarySlug);
+        } else {
+          localStorage.removeItem('custard-primary');
+        }
+        if (secondarySlugs.size > 0) {
+          localStorage.setItem('custard-secondary', JSON.stringify([...secondarySlugs]));
+        } else {
+          localStorage.removeItem('custard-secondary');
+        }
+      } catch { /* localStorage unavailable */ }
+    }
+
+    function restoreFavorites() {
+      try {
+        const slugSet = new Set(allStores.map(s => s.slug));
+        const savedPrimary = localStorage.getItem('custard-primary');
+        if (savedPrimary && slugSet.has(savedPrimary)) {
+          primarySlug = savedPrimary;
+        }
+        const savedSecondary = localStorage.getItem('custard-secondary');
+        if (savedSecondary) {
+          const parsed = JSON.parse(savedSecondary);
+          for (const slug of parsed) {
+            if (slugSet.has(slug) && slug !== primarySlug && secondarySlugs.size < 3) {
+              secondarySlugs.add(slug);
+            }
+          }
+        }
+      } catch { /* localStorage unavailable or corrupt */ }
+    }
+
     // Load store manifest
     async function loadStores() {
       try {
-        const resp = await fetch('stores.json');
+        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
         const data = await resp.json();
         allStores = data.stores || [];
         populateStateFilter();
+        restoreFavorites();
         renderStoreList();
-        // Auto-select state based on user's IP geolocation
-        autoSelectState();
+        if (primarySlug) {
+          updateSelectedBadges();
+          updateResult();
+        }
+        // Auto-select state based on user's IP geolocation (skip if favorites restored a selection)
+        if (!primarySlug) autoSelectState();
       } catch (err) {
         primarySelect.innerHTML = '<option disabled>Failed to load stores</option>';
         console.error('Failed to load stores:', err);
@@ -169,7 +228,7 @@
     function getFilteredStores() {
       const state = stateFilter.value;
       const query = citySearch.value.toLowerCase().trim();
-      return allStores.filter(s => {
+      let filtered = allStores.filter(s => {
         if (state && s.state !== state) return false;
         if (query) {
           const searchable = `${s.name} ${s.city} ${s.address} ${s.slug}`.toLowerCase();
@@ -177,10 +236,28 @@
         }
         return true;
       });
+
+      // Sort by distance when geolocation is active
+      if (sortByDistance && userLat !== null && userLng !== null) {
+        filtered = filtered.map(s => {
+          if (s.lat != null && s.lng != null) {
+            s._dist = haversine(userLat, userLng, s.lat, s.lng);
+          } else {
+            s._dist = Infinity;
+          }
+          return s;
+        }).sort((a, b) => a._dist - b._dist);
+      }
+
+      return filtered;
     }
 
     function storeLabel(store) {
-      return `${store.city}, ${store.state} \u2014 ${store.address}`;
+      let label = `${store.city}, ${store.state} \u2014 ${store.address}`;
+      if (sortByDistance && store._dist != null && store._dist !== Infinity) {
+        label += ` (${store._dist.toFixed(1)} mi)`;
+      }
+      return label;
     }
 
     function renderStoreList() {
@@ -262,6 +339,7 @@
     }
 
     function updateResult() {
+      saveFavorites();
       if (!primarySlug) {
         resultSection.hidden = true;
         previewCard.hidden = true;
@@ -468,6 +546,38 @@
     }
 
     // Event handlers
+    nearbyBtn.addEventListener('click', () => {
+      if (sortByDistance) {
+        // Toggle off
+        sortByDistance = false;
+        nearbyBtn.textContent = 'Nearby';
+        nearbyBtn.classList.remove('active');
+        renderStoreList();
+        return;
+      }
+      if (!navigator.geolocation) {
+        nearbyBtn.textContent = 'Not supported';
+        setTimeout(() => { nearbyBtn.textContent = 'Nearby'; }, 2000);
+        return;
+      }
+      nearbyBtn.textContent = 'Locating...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          sortByDistance = true;
+          stateFilter.value = ''; // Clear state filter to show all
+          nearbyBtn.textContent = 'Nearby \u2714';
+          nearbyBtn.classList.add('active');
+          renderStoreList();
+        },
+        () => {
+          nearbyBtn.textContent = 'Denied';
+          setTimeout(() => { nearbyBtn.textContent = 'Nearby'; }, 2000);
+        },
+        { timeout: 10000 }
+      );
+    });
     stateFilter.addEventListener('change', renderStoreList);
     citySearch.addEventListener('input', renderStoreList);
 
@@ -503,6 +613,11 @@
 
     // Initialize
     loadStores();
+
+    // Register service worker for offline/PWA support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
   </script>
 </body>
 </html>

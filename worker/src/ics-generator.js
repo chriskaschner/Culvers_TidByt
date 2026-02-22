@@ -139,7 +139,8 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
 
     // Build description: flavor description + restaurant link + backup options
     let desc = flavor.description || '';
-    desc += `\nMore info: https://www.culvers.com/restaurants/${primary.slug}`;
+    const primaryUrl = primary.url || `https://www.culvers.com/restaurants/${primary.slug}`;
+    desc += `\nMore info: ${primaryUrl}`;
 
     const backupLines = [];
     let backupIndex = 0;

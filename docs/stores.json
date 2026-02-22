@@ -1,6 +1,6 @@
 {
   "generated": "2026-02-20T23:43:34.829208+00:00",
-  "count": 1071,
+  "count": 1077,
   "stores": [
     {
       "slug": "albertville-al-mathis-mill",
@@ -7484,6 +7484,66 @@
       "city": "Wisconsin Rapids",
       "state": "WI",
       "address": "2711 8th Street S."
+    },
+    {
+      "slug": "kopps-brookfield",
+      "name": "Kopp's Brookfield, WI",
+      "city": "Brookfield",
+      "state": "WI",
+      "address": "18880 W Bluemound Rd",
+      "brand": "kopps",
+      "lat": 43.0523,
+      "lng": -88.1535
+    },
+    {
+      "slug": "kopps-greenfield",
+      "name": "Kopp's Greenfield, WI",
+      "city": "Greenfield",
+      "state": "WI",
+      "address": "7631 W Layton Ave",
+      "brand": "kopps",
+      "lat": 42.9636,
+      "lng": -87.9984
+    },
+    {
+      "slug": "kopps-glendale",
+      "name": "Kopp's Glendale, WI",
+      "city": "Glendale",
+      "state": "WI",
+      "address": "5373 N Port Washington Rd",
+      "brand": "kopps",
+      "lat": 43.1197,
+      "lng": -87.9125
+    },
+    {
+      "slug": "gilles",
+      "name": "Gille's Milwaukee, WI",
+      "city": "Milwaukee",
+      "state": "WI",
+      "address": "7515 W Bluemound Rd",
+      "brand": "gilles",
+      "lat": 43.0400,
+      "lng": -88.0060
+    },
+    {
+      "slug": "hefners",
+      "name": "Hefner's West Allis, WI",
+      "city": "West Allis",
+      "state": "WI",
+      "address": "2325 S 108th St",
+      "brand": "hefners",
+      "lat": 42.9957,
+      "lng": -88.0511
+    },
+    {
+      "slug": "kraverz",
+      "name": "Kraverz Fond du Lac, WI",
+      "city": "Fond du Lac",
+      "state": "WI",
+      "address": "233 S Main St",
+      "brand": "kraverz",
+      "lat": 43.7719,
+      "lng": -88.4468
     },
     {
       "slug": "cheyenne",
