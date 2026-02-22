@@ -318,7 +318,7 @@ describe('/api/flavors endpoint', () => {
     const req = makeRequest('/api/flavors?slug=mt-horeb');
     const res = await handleRequest(req, env, mockFetchFlavors);
 
-    expect(res.headers.get('Cache-Control')).toBe('public, max-age=43200');
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=3600');
   });
 
   it('22: uses KV cache on second request', async () => {

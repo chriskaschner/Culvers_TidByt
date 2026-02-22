@@ -24,7 +24,7 @@ import { fetchKraverzFlavors } from './kraverz-fetcher.js';
 import { fetchOscarsFlavors } from './oscars-fetcher.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
-const CACHE_MAX_AGE = 43200;  // 12 hours
+const CACHE_MAX_AGE = 3600;   // 1 hour (browser + edge cache)
 const MAX_SECONDARY = 3;
 const MAX_DAILY_FETCHES = 50;
 
