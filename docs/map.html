@@ -287,7 +287,7 @@
         const center = map.getCenter();
         const zoom = map.getZoom();
         const nearMKE = center.lat > 42.8 && center.lat < 43.3 && center.lng > -88.2 && center.lng < -87.7;
-        if (nearMKE && zoom >= 9) {
+        if (nearMKE && zoom >= 7) {
           const quips = [
             "Oh sure, skip the ButterBurgers, that'll end well.",
             "Oh, too good for Culver's now, are we?",
@@ -493,13 +493,25 @@
       }
     }
 
-    // Search
-    searchBtn.addEventListener('click', doSearch);
+    // Search — always include Culver's when user explicitly searches
+    searchBtn.addEventListener('click', () => {
+      if (!activeBrands.has('culvers')) {
+        activeBrands.add('culvers');
+        syncChipStyles();
+      }
+      doSearch();
+    });
     locationInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') doSearch();
+      if (e.key === 'Enter') {
+        if (!activeBrands.has('culvers')) { activeBrands.add('culvers'); syncChipStyles(); }
+        doSearch();
+      }
     });
     flavorInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') doSearch();
+      if (e.key === 'Enter') {
+        if (!activeBrands.has('culvers')) { activeBrands.add('culvers'); syncChipStyles(); }
+        doSearch();
+      }
     });
 
     // Debounced map move handler for dynamic search
