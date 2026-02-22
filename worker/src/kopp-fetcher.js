@@ -103,7 +103,18 @@ export function parseKoppsHtml(html) {
       let desc = '';
       const descMatch = block.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
       if (descMatch) {
-        desc = descMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+        desc = descMatch[1]
+          .replace(/<[^>]+>/g, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&rsquo;/g, "'")
+          .replace(/&#8216;/g, "\u2018")
+          .replace(/&#8217;/g, "'")
+          .replace(/&#8211;/g, '-')
+          .replace(/&#39;/g, "'")
+          .replace(/&reg;/gi, '')
+          .replace(/\u00ae/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
       }
 
       if (name) flavorEntries.push({ name, desc });
