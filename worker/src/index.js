@@ -17,6 +17,7 @@ import { recordSnapshots } from './snapshot-writer.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
 import { handleMetricsRoute } from './metrics.js';
+import { handleSocialCard } from './social-card.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
@@ -305,6 +306,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   } else if (canonical === '/api/flavors/catalog') {
     // Must match before /api/flavors to avoid prefix collision
     response = await handleFlavorCatalog(env, corsHeaders);
+  } else if (canonical === '/api/today') {
+    response = await handleApiToday(url, env, corsHeaders, fetchFlavorsFn);
   } else if (canonical === '/api/flavors') {
     response = await handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn);
   } else if (canonical === '/api/stores') {
@@ -317,6 +320,11 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     const metricsResponse = await handleMetricsRoute(canonical, env, corsHeaders);
     if (metricsResponse) {
       response = metricsResponse;
+    }
+  } else if (canonical.startsWith('/og/')) {
+    const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
+    if (cardResponse) {
+      response = cardResponse;
     }
   } else if (canonical.startsWith('/api/alerts/')) {
     // Rewrite url.pathname for alert-routes matching
@@ -333,7 +341,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/alerts/*, /v1/calendar.ics, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -468,6 +476,75 @@ async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
         ...corsHeaders,
         'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`,
       },
+    });
+  } catch (err) {
+    return Response.json(
+      { error: `Failed to fetch flavor data: ${err.message}` },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+}
+
+/**
+ * Handle /api/today?slug=<slug> requests.
+ * Returns today's single flavor for a store, with a pre-composed spoken sentence
+ * for voice assistants (Siri Shortcuts, Alexa, etc.).
+ */
+async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
+  const isOverride = fetchFlavorsFn !== defaultFetchFlavors;
+  const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
+
+  const slug = url.searchParams.get('slug');
+  if (!slug) {
+    return Response.json(
+      { error: 'Missing required "slug" parameter. Usage: /api/today?slug=<store-slug>' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const check = isValidSlug(slug, validSlugs);
+  if (!check.valid) {
+    return Response.json(
+      { error: `Invalid store: ${check.reason}` },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  try {
+    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
+    const brand = getBrandForSlug(slug);
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Find today's flavor (or fall back to the first available)
+    const todayFlavor = data.flavors.find(f => f.date === today) || data.flavors[0] || null;
+
+    if (!todayFlavor) {
+      return Response.json({
+        store: data.name,
+        slug,
+        brand,
+        date: today,
+        flavor: null,
+        description: null,
+        spoken: `I couldn't find today's flavor of the day at ${data.name}. Check back later.`,
+      }, {
+        headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
+      });
+    }
+
+    const flavorName = todayFlavor.title;
+    const spoken = `Today's flavor of the day at ${data.name} ${brand} is ${flavorName}.`;
+
+    return Response.json({
+      store: data.name,
+      slug,
+      brand,
+      date: todayFlavor.date,
+      flavor: flavorName,
+      description: todayFlavor.description || null,
+      spoken,
+    }, {
+      headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
     });
   } catch (err) {
     return Response.json(

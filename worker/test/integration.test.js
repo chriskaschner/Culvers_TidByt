@@ -724,6 +724,10 @@ describe('normalizePath', () => {
     expect(normalizePath('/api/v1/flavors')).toEqual({ canonical: '/api/flavors', isVersioned: true });
   });
 
+  it('maps /api/v1/today to /api/today', () => {
+    expect(normalizePath('/api/v1/today')).toEqual({ canonical: '/api/today', isVersioned: true });
+  });
+
   it('maps /api/v1/stores to /api/stores', () => {
     expect(normalizePath('/api/v1/stores')).toEqual({ canonical: '/api/stores', isVersioned: true });
   });
@@ -920,5 +924,91 @@ describe('Bearer token auth', () => {
     const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
     const res = await handleRequest(req, env, mockFetchFlavors);
     expect(res.status).toBe(403);
+  });
+});
+
+// --- /api/today endpoint ---
+
+describe('/api/today endpoint', () => {
+  let mockKV;
+  let mockFetchFlavors;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    mockFetchFlavors = createMockFetchFlavors();
+    env = { FLAVOR_CACHE: mockKV, _validSlugsOverride: TEST_VALID_SLUGS };
+  });
+
+  it('64: returns today\'s flavor with spoken field', async () => {
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.store).toBe('Mt. Horeb');
+    expect(body.slug).toBe('mt-horeb');
+    expect(body.brand).toBe("Culver's");
+    expect(body.flavor).toBeTruthy();
+    expect(body.spoken).toMatch(/Today's flavor of the day at/);
+    expect(body.spoken).toContain("Mt. Horeb");
+    expect(body.spoken).toContain("Culver's");
+  });
+
+  it('65: returns 400 when slug is missing', async () => {
+    const req = makeRequest('/api/v1/today');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/slug/i);
+  });
+
+  it('66: returns 400 for invalid slug', async () => {
+    const req = makeRequest('/api/v1/today?slug=nonexistent');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/Unknown store/i);
+  });
+
+  it('67: legacy /api/today path works without API-Version header', async () => {
+    const req = makeRequest('/api/today?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBeNull();
+    const body = await res.json();
+    expect(body.flavor).toBeTruthy();
+  });
+
+  it('68: includes description when available', async () => {
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    const body = await res.json();
+    expect(body.description).toBeTruthy();
+    expect(body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('69: returns graceful response when no flavors available', async () => {
+    const emptyFetcher = vi.fn(async () => ({
+      name: 'Empty Store',
+      flavors: [],
+    }));
+    const emptyEnv = {
+      FLAVOR_CACHE: createMockKV(),
+      _validSlugsOverride: TEST_VALID_SLUGS,
+    };
+
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, emptyEnv, emptyFetcher);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.flavor).toBeNull();
+    expect(body.spoken).toMatch(/couldn't find/i);
   });
 });
