@@ -22,7 +22,6 @@ ENV/
 
 # Claude Code
 CLAUDE.md
-WORKLOG.md
 
 # Credentials and secrets
 credentials/
