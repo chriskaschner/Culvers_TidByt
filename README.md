@@ -2,7 +2,7 @@
 
 **Enterprise-grade flavor intelligence for the frozen custard ecosystem.**
 
-Custard Calendar is a full-stack custard observability platform that ingests, normalizes, caches, and distributes Flavor of the Day data across 1,000+ stores and 6 Wisconsin custard brands. It powers subscribable .ics calendars, real-time flavor maps, email alert pipelines, historical analytics, and a 64x32 pixel Tidbyt display — because no one should be blindsided by an unexpected Turtle day.
+Custard Calendar is a full-stack custard observability platform that ingests, normalizes, caches, and distributes Flavor of the Day data across 1,000+ stores and 6 Wisconsin custard brands. It powers subscribable .ics calendars, real-time flavor maps, email alert pipelines, ML-driven flavor predictions, Siri Shortcuts, historical analytics, and a 64x32 pixel Tidbyt display — because no one should be blindsided by an unexpected Turtle day.
 
 **Live at [custard.chriskaschner.com](https://custard.chriskaschner.com)**
 
@@ -13,6 +13,8 @@ Custard Calendar is a full-stack custard observability platform that ingests, no
 | [Calendar](https://custard.chriskaschner.com) | Subscribe to .ics flavor forecasts for any store |
 | [Custard Map](https://custard.chriskaschner.com/map.html) | Search nearby flavors across all brands, filter by flavor or location |
 | [Flavor Alerts](https://custard.chriskaschner.com/alerts.html) | Email notifications when your favorite flavor is coming up (daily or weekly digest) |
+| [Flavor Radar](https://custard.chriskaschner.com/radar.html) | 7-day personalized flavor outlook blending confirmed data with ML predictions |
+| [Siri Shortcut](https://custard.chriskaschner.com/siri.html) | "Hey Siri, what's the flavor of the day?" -- voice-first flavor lookup |
 | API v1 | Versioned REST API with flavor data, store search, geolocation, metrics, and social cards |
 | Tidbyt | Pixel-art ice cream cones on a 64x32 LED display |
 | Google Calendar | Event sync with emoji and backup-store options |
@@ -61,6 +63,8 @@ All endpoints accept both versioned (`/api/v1/`) and legacy (`/api/`) paths. Ver
 ```
 GET /v1/calendar.ics?primary=mt-horeb&secondary=madison-todd-drive
 GET /api/v1/flavors?slug=mt-horeb
+GET /api/v1/today?slug=mt-horeb
+GET /api/v1/forecast/{slug}
 GET /api/v1/stores?q=madison
 GET /api/v1/nearby-flavors?location=53705&flavor=turtle
 GET /api/v1/geolocate
@@ -75,7 +79,7 @@ GET /health
 
 **Auth:** `Authorization: Bearer <token>` header (preferred) or `?token=` query param (legacy). When no `ACCESS_TOKEN` is configured, all requests are open.
 
-**Rate limiting:** Per-slug fetch budget (3 upstream requests/day/slug) + global circuit breaker (200/day). Prevents any single store from exhausting the fleet's budget.
+**Rate limiting:** Per-slug fetch budget (3 upstream requests/day/slug) + global circuit breaker (200/day). Prevents any single store from exhausting the fleet's budget. Note: Cloudflare itself may return 429s under sustained burst traffic to upstream brand sites.
 
 ## Quick Start
 
@@ -110,7 +114,7 @@ uv run python main.py --skip-tidbyt      # Fetch + calendar
 ```bash
 cd worker
 npm install
-npm test              # 257 tests
+npm test              # 294 tests
 npx wrangler dev      # Local dev server
 ```
 
@@ -137,14 +141,19 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 ## Testing
 
 ```bash
-# Worker (Vitest) — 257 tests across 14 suites
+# Worker (Vitest) -- 294 tests across 16 suites
 cd worker && npm test
 
-# Python — 16 tests
-uv sync --extra dev
+# All Python tests (~142 tests)
+uv run pytest
+
+# Analytics only (84 tests)
+uv run pytest analytics/tests/ -v
+
+# Pipeline + static assets (~33 tests)
 uv run pytest tests/ -v
 
-# Store manifest + e2e
+# Store manifest + e2e (~25 tests)
 uv run pytest tools/
 ```
 
@@ -163,6 +172,7 @@ uv run pytest tools/
 | `snap:flavor:{normalized}` | Flavor index (all appearances) | permanent |
 | `alert:sub:{id}` | Alert subscription | permanent |
 | `alert:pending:{token}` | Double opt-in confirmation | 24h |
+| `forecast:{slug}` | Pre-computed ML predictions | 24h |
 | `locator:{location}:{limit}` | Culver's locator API cache | 1h |
 
 ### D1 Schema
@@ -212,12 +222,29 @@ custard-calendar/
 │   │   ├── email-sender.js        # Resend templates + rotating quips
 │   │   ├── valid-slugs.js         # Generated allowlist (~1,079 slugs)
 │   │   ├── store-index.js         # Generated store search index
+│   │   ├── forecast.js            # ML forecast endpoint + KV read
 │   │   └── migrations/            # D1 schema migrations
-│   └── test/                      # Vitest (257 tests)
+│   └── test/                      # Vitest (294 tests, 16 suites)
+├── analytics/                     # ML prediction pipeline (84 tests)
+│   ├── data_loader.py             # SQLite -> DataFrame
+│   ├── basic_metrics.py           # Frequency, recency, entropy, surprise
+│   ├── patterns.py                # DOW bias, recurrence, seasonality
+│   ├── markov.py                  # Transition matrices
+│   ├── collaborative.py           # NMF store clustering
+│   ├── predict.py                 # FrequencyRecency + Markov models
+│   ├── embeddings.py              # Flavor similarity (TF-IDF, sentence-transformer)
+│   ├── forecast_writer.py         # Weather-style prose generation
+│   ├── batch_forecast.py          # CLI batch forecast + KV upload
+│   ├── evaluate.py                # Train/test split, accuracy metrics
+│   └── tests/                     # 84 pytest tests
 ├── docs/                          # GitHub Pages (custard.chriskaschner.com)
 │   ├── index.html                 # Calendar subscription page
 │   ├── map.html                   # Multi-brand custard map
 │   ├── alerts.html                # Flavor alert signup
+│   ├── radar.html                 # Flavor Radar (7-day ML outlook)
+│   ├── siri.html                  # Siri Shortcut setup page
+│   ├── flavors.json               # Flavor catalog for client-side pickers
+│   ├── style.css                  # Shared stylesheet
 │   └── stores.json                # Store manifest (~1,000 stores)
 ├── tools/
 │   ├── build_manifest.py          # OSM → slug probing → manifest
