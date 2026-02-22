@@ -62,67 +62,246 @@ Full Python analytics layer on the 38,842-row backfill dataset (`data/backfill/f
 
 ---
 
-## Strategic Product Analysis (2026-02-22)
+## Product Strategy (2026-02-22)
 
-### The Core Insight
+### The Framing
 
-The shift from **reactive** ("what's today's flavor?") to **predictive** ("what's coming this week?") is the product unlock. Nobody else has this data or these predictions. The weather-forecast framing makes it fun and shareable.
+This is a **decision product**, not a prediction product. The question isn't "what's the probability of Turtle tomorrow?" — it's **"Where and when should I go for the flavor I care about?"** Predictions are intermediate. The end product is an action: Go today, Remind me, See nearby alternatives.
+
+Three user jobs to solve:
+1. "Tell me if my favorite is likely soon."
+2. "Tell me where nearby I can get it first."
+3. "Tell me when this is a rare opportunity."
+
+### Product Philosophy / Guardrails
+
+- **Never present low-confidence predictions as facts.** Always show confidence bucket + reason string.
+- **Always provide a fallback card.** "No strong prediction today — here's what we know."
+- **Measure actionability, not views.** Success = recommendation acceptance rate, return visits after acting, not page renders.
+- **Decision UX, not dashboard UX.** Every card has one clear CTA. Recommendations rank-ordered with one best option.
+- **Prediction failures are product inputs.** Log misses, auto-lower confidence for drifting stores, surface "forecast changed" transparency to users.
 
 ### Priority Stack Rank
 
-| Priority | Feature | Impact | Effort | Status |
-|----------|---------|--------|--------|--------|
-| **P0** | Forecast-powered weekly email | High | Low | TODO — half-built. `sendWeeklyDigestEmail()` exists, needs forecast data merged in. Weather-style prose from `forecast_writer.py`. |
-| **P1** | Per-flavor pages (`/flavor/{name}`) | High | Medium | TODO — SEO play. Each flavor = landing page. Shows: where served today, frequency, seasonal pattern, overdue stores, similar flavors. |
-| **P1** | Forecast card on map | High | Low | TODO — one `fetch('/api/v1/forecast/{slug}')` + UI panel when store clicked. Top 3 predictions + overdue list. |
-| **P2** | "What's Scooping" daily homepage | High | Medium | TODO — replace static index.html with dynamic daily view. Today's flavors, surprise scores ("most unexpected today"), overdue watch. Daily pull reason. |
-| **P2** | Flavor rarity scores in alerts | Medium | Low | TODO — add surprise score (`-log2(P)`) as "Common / Uncommon / Rare!" badge in daily alert emails. Collection/discovery mechanic. |
-| **P3** | Shareable forecast OG cards | Medium | Medium | TODO — `/v1/og/forecast/{slug}.svg` showing top 3 predictions. Social sharing for "what's coming to my store." |
-| **P3** | Public analytics dashboard | Medium | Medium | TODO — portfolio piece. Seasonal heatmaps, store diversity leaderboard, flavor recurrence clocks, cluster map. |
-| **P4** | Flavor Spotter (crowdsourced confirmation) | Very High | High | TODO — users confirm predictions ("I'm here, it's Turtle"). Closes feedback loop, creates network effect. Needs auth/moderation. |
-| **P5** | Pairwise flavor voting | Low | High | TODO — multiplayer coordination problem, no clear MVP. Deprioritized. |
+Reordered from original analysis after exec review. Trust infrastructure comes before features.
+
+| Priority | Initiative | User Value | Effort | Risk | Status |
+|----------|-----------|-----------|--------|------|--------|
+| **Now** | Confidence-aware UI + reason strings | High | Low | Low | TODO — trust layer. Confidence buckets (high/med/low), "why this prediction" tooltips, fallback cards. Must exist before any prediction surfaces in UI. |
+| **Now** | Flavor Radar | High | Medium | Medium | TODO — user picks top 3 flavors, sees "likely in next 7 days" with confidence across their stores. Flavor-first, not store-first. |
+| **Now** | Next Best Store | High | Medium | Medium | TODO — if favorite not likely at primary store, show nearest store with higher probability. Cross-store recommendation. Leverages collaborative filtering + geolocation. |
+| **Now** | Rarity + Streak badges | Medium | Low | Low | TODO — "First appearance in 45 days", "3rd time this month", "Seasonal peak". Combines surprise score with temporal pattern badges. |
+| **Next** | Weekly Custard Planner | High | Medium | Medium | TODO — 7-day personalized schedule across selected stores. Interactive (not push), cross-store. Export to calendar. |
+| **Next** | "Worth the Trip" score | Medium | Medium | Medium | TODO — composite: `utility = preference_match * p_next_7d * confidence * rarity`. Single decision metric. |
+| **Next** | Forecast-powered weekly email | High | Low | Low | TODO — half-built. Merge forecast data into `sendWeeklyDigestEmail()`. Weather-style prose. |
+| **Later** | Taste Profile Mode | High | High | High | TODO — infer preference vector from interactions (chocolate-heavy, fruity, nutty). Rank upcoming flavors by preference score. |
+| **Later** | Full personalization model | High | High | High | TODO — requires user signal data accumulation before this is viable. |
+| **Backlog** | Per-flavor SEO pages | High | Medium | Low | `/flavor/{name}` — each flavor = landing page. Where served today, frequency, seasonal pattern, overdue stores, similar flavors. |
+| **Backlog** | Public analytics dashboard | Medium | Medium | Low | Portfolio piece. Seasonal heatmaps, store diversity leaderboard. Internal forecast quality dashboard is higher priority. |
+| **Deprioritized** | Pairwise flavor voting | Low | High | High | Multiplayer coordination problem, no clear MVP. |
+
+### Data Strategy
+
+#### Feature Contract (per store/day/flavor)
+
+Every prediction payload should include:
+- `p_tomorrow` — probability for tomorrow
+- `p_next_7d` — probability within next 7 days
+- `confidence` — high / medium / low bucket
+- `confidence_reason` — "strong history" / "sparse data" / "seasonal shift" / "new store"
+- `rarity_score` — surprise bits
+- `seasonality_score` — how seasonal this flavor is (0=year-round, 1=single-month)
+- `history_depth` — how many observations back the prediction
+
+Current `batch_forecast.py` outputs only top-N probabilities. Needs enrichment to match this contract.
+
+#### User Signal Contract
+
+Capture over time to improve models:
+- Favorites (explicit)
+- Skipped suggestions (implicit — shown but not acted on)
+- Accepted alternatives (clicked "Next Best Store")
+- Interaction timestamps (recency of engagement)
+- Thumbs up/down on recommendations (explicit quality signal)
+
+None of this exists yet. Start with favorites (already in alert subscriptions) and build from there.
+
+#### Ranking Formula v1
+
+```
+utility = preference_match * p_next_7d * confidence * rarity_bonus
+```
+
+Where:
+- `preference_match` = 1.0 if in favorites, 0.5 if in same similarity group, 0.2 baseline
+- `p_next_7d` = model probability
+- `confidence` = 1.0 / 0.7 / 0.4 by bucket
+- `rarity_bonus` = 1.0 + 0.2 * min(rarity_score / 5.0, 1.0) — slight boost for rare flavors
 
 ### Key Product Decisions
 
-1. **Don't ship XGBoost to production.** FrequencyRecency is simpler, nearly as accurate, runs in ms. Keep XGBoost in the notebook for portfolio.
-2. **Forecast email is P0** because it goes to existing subscribers. Zero acquisition cost, highest signal of product value.
-3. **Per-flavor pages are the SEO engine.** "Culver's Turtle flavor of the day" is a real search query. Nobody else has historical frequency, seasonal patterns, or overdue detection for individual flavors.
-4. **Surprise scores are the engagement hook.** "Rare flavor spotted!" is inherently shareable. Pokémon Go energy for custard.
-5. **Don't build analytics dashboard before core forecast features ship.** Dashboard is a vanity metric — impressive but doesn't solve user problems.
+1. **Trust infrastructure before features.** Confidence labels, reason strings, and fallback cards ship before any prediction surfaces in the UI. Wrong predictions without context destroy trust faster than no predictions at all.
+2. **Don't ship XGBoost to production.** FrequencyRecency is simpler, nearly as accurate, runs in ms. Keep XGBoost in the notebook for portfolio.
+3. **Per-flavor pages are the SEO engine** but are backlog, not now. Core decision UX (Radar, Next Best Store) is higher leverage.
+4. **Start capturing user signals immediately.** Favorites already exist in alert subscriptions. Add lightweight interaction logging so preference models have data when we're ready to build them.
+5. **Internal forecast quality dashboard before public analytics dashboard.** Track calibration by brand/store (Brier score, top-k hit rate trend). Auto-downgrade confidence for drifting stores.
+6. **Brand-specific model tuning.** MKE brands (Kopp's, Gille's, etc.) have different cadence patterns than Culver's. Don't assume one model fits all.
 
-### Feature Detail: Forecast-Powered Weekly Email (P0)
+### Feature Detail: Confidence-Aware UI (Now)
 
-Current weekly digest shows a 7-day table of scheduled flavors. Enhance with:
-- Prediction probabilities for unscheduled days ("Strong chance of Turtle, 12%")
-- Overdue flavor alerts ("Chocolate Covered Strawberry: 45 days since last serving, avg gap is 30")
-- Weather-style prose from `format_forecast_template()`
-- "Prediction accuracy this week: 3/5 correct" (retroactive scoring)
+Every prediction surface must include:
+- **Confidence bucket**: High / Medium / Low — mapped from model certainty + history depth
+- **Reason string**: Compact explanation — "Based on 18 months of data" / "Limited history (2 months)" / "Seasonal pattern detected" / "New store, using regional average"
+- **Fallback card**: When confidence is too low or data is stale — "No strong prediction today. Here's what's popular at similar stores."
+- **Freshness indicator**: "Forecast updated 2h ago" / "Last updated yesterday" with degraded-mode UX when stale
 
-### Feature Detail: Per-Flavor Pages (P1)
+Must define freshness SLOs: prediction age < 24h, API response < 500ms, degraded-mode copy when either is violated.
 
-Route: `/flavor/{normalized-name}` (e.g., `/flavor/turtle`)
+### Feature Detail: Flavor Radar (Now)
 
-Content:
-- **Hero**: Flavor name, description, seasonal badge ("Peak: May-June")
-- **Where today**: Stores serving it today (from existing nearby-flavors data)
-- **Stats**: Total appearances, number of stores, avg recurrence interval
-- **Seasonal chart**: Month-by-month frequency sparkline
-- **Overdue at**: Stores where it's overdue vs historical avg gap
-- **Similar flavors**: From embedding similarity (Turtle → Caramel Turtle, Turtle Dove, Turtle Cheesecake)
-- **Subscribe**: "Get alerted when this flavor appears near you"
+User picks up to 3 favorite flavors. System shows 7-day outlook:
 
-### Feature Detail: Flavor Rarity Score (P2)
+> **Your Flavor Radar — Week of Feb 23**
+>
+> **Turtle** — High confidence at Mt. Horeb on Wed (12%). Also likely at Madison Todd Dr on Thu.
+> **Mint Cookie** — Low confidence this week. Last served 22 days ago (avg gap: 35 days). Getting closer.
+> **Caramel Cashew** — Likely tomorrow at Mt. Horeb (9%). *Worth the trip?*
 
-Every flavor serving gets a score: `-log2(P(flavor|store))` bits.
+Key metric: % sessions with at least one actionable hit.
 
-| Score | Label | Frequency |
-|-------|-------|-----------|
-| < 2.0 | Common | Top ~25% of servings |
-| 2.0–3.5 | Uncommon | Middle ~50% |
-| 3.5–5.0 | Rare | Bottom ~20% |
-| > 5.0 | Ultra Rare | Bottom ~5% |
+### Feature Detail: Next Best Store (Now)
 
-Display as badges in emails, map popups, and flavor pages. Creates collection/discovery mechanic.
+When a user's primary store doesn't have their favorite likely soon:
+
+> **Turtle not in the forecast for Mt. Horeb this week.**
+> But there's a **strong chance at Madison (Todd Drive)** on Thursday — 14 miles away.
+> [See on map] [Set reminder]
+
+Cross-store recommendation uses: collaborative filtering (which stores rotate similarly), per-store predictions, and haversine distance. Key metric: % sessions where alternative shown AND % return rate after alternative shown.
+
+### Feature Detail: Rarity + Streak Badges (Now)
+
+Two distinct badge types:
+
+**Rarity** (from surprise score):
+| Score | Label |
+|-------|-------|
+| < 2.0 bits | Common |
+| 2.0–3.5 | Uncommon |
+| 3.5–5.0 | Rare |
+| > 5.0 | Ultra Rare |
+
+**Streaks** (from temporal patterns):
+- "First appearance in 45 days" — overdue return
+- "3rd time this month" — hot streak
+- "Seasonal peak — only available May-June" — urgency window
+- "New flavor!" — first time at this store
+
+Display in emails, map popups, and radar. Key metric: lift in dwell time and weekly active users.
+
+### Feature Detail: Weekly Custard Planner (Next)
+
+7-day personalized schedule across user's selected stores (primary + backups). Interactive, not just a push email.
+
+> **Your Week — Feb 23–Mar 1**
+>
+> | Day | Mt. Horeb | Madison (Todd Dr) | Your Pick |
+> |-----|-----------|-------------------|-----------|
+> | Mon | Caramel Cashew | Turtle | **Turtle** @ Madison |
+> | Tue | ??? (Low confidence) | Mint Cookie (Med) | Mint Cookie @ Madison |
+> | Wed | Turtle (High) | ??? | **Turtle** @ Mt. Horeb |
+> | ... | | | |
+>
+> [Export to Calendar] [Share with household]
+
+Key metric: planner saves, recurring weekly opens.
+
+### Onboarding Flow
+
+First-run experience should ask:
+1. Favorite flavors (up to 3)
+2. Max drive radius (5 / 10 / 25 miles)
+3. Preferred stores (primary + backups)
+
+Then immediately show one actionable recommendation. Don't make them wait for a weekly email. The alert subscription flow already captures store + favorites — extend it.
+
+### Notification Strategy
+
+Two distinct alert types (beyond current daily/weekly):
+- **"Favorite likely tomorrow"** — high-confidence prediction for a favorited flavor
+- **"Rare flavor nearby"** — unusual flavor spotted at a nearby store (even if not favorited — discovery moment)
+
+Must include: quiet hours, digest mode option, and "stop suggesting this flavor" to prevent fatigue. Current alert system has daily/weekly toggle — extend with these new trigger types.
+
+### Multi-Brand Differentiation
+
+MKE brands (Kopp's, Gille's, Hefner's, Kraverz, Oscar's) have different cadence patterns than Culver's:
+- Culver's: single flavor per day, ~42 flavor pool, ~43-day rotation
+- MKE brands: may have multiple daily flavors, different pool sizes, different rotation patterns
+
+Need brand-specific model tuning and confidence calibration. Brand-aware copy and flavor taxonomy normalization in the prediction layer.
+
+### Social / Household Use Cases
+
+- Shared favorites for households ("Your household's flavors this week")
+- "Someone in your group will like this today" — cross-preference recommendations
+- Requires lightweight account/group concept — possibly just a shared link with combined favorites
+
+### Experimentation Framework
+
+For ranking weights, card formats, and notification timing:
+- Predefine success metrics per experiment (retention, recommendation acceptance rate)
+- A/B testing infrastructure needed before Taste Profile and full personalization
+- Start simple: test ranking formula weight variations on the "Worth the Trip" score
+
+### Forecast Quality Governance (Internal)
+
+- Continuous calibration tracking by store and brand
+- Automatic confidence downgrades when model drifts for a store
+- Internal dashboard: Brier score, top-k hit rate trend, prediction age distribution
+- Build this before the public analytics dashboard
+
+### Data Moat Strategy
+
+- Capture explicit thumbs up/down on recommendations
+- Use interaction data to improve preference models faster than any competitor could replicate
+- The backfill dataset (38K+ observations) is already a moat — nobody else has historical flavor rotation data
+
+### Partnership / Distribution Readiness
+
+- Lightweight API/feed for affiliates, local discovery apps, or loyalty programs
+- UTM/referral hooks if distribution expands
+- Current API is already clean enough (`/api/v1/`) — add rate limiting tiers if external consumers appear
+
+### Privacy / Compliance
+
+- Clear location and preference data policy needed before capturing user signals
+- Data retention windows (how long do we keep interaction logs?)
+- Deletion controls (GDPR-style "forget me" even if not legally required — good practice)
+- Current alert system already has one-click unsubscribe and token-gated access — extend this posture
+
+### 90-Day Execution Plan
+
+**Days 1–21: Trust + Radar**
+- Ship confidence labels, reason strings, fallback cards
+- Ship Flavor Radar v1 (favorites + 7-day outlook)
+- Add instrumentation for recommendation acceptance and return behavior
+- Enrich forecast payload to match feature contract
+
+**Days 22–45: Cross-Store + Badges**
+- Ship Next Best Store recommendations
+- Ship rarity + streak badges in emails and map
+- Add internal forecast quality dashboard (Brier score, calibration by store)
+
+**Days 46–75: Planner + Signals**
+- Ship Weekly Custard Planner with calendar export
+- Start preference scoring from implicit behavior (clicked vs skipped)
+- Forecast-powered weekly email (simpler lift, builds on planner data)
+
+**Days 76–90: Evaluate + Decide**
+- Run A/B on ranking formula weight variations
+- Evaluate retention lift from prediction features
+- Decide whether to invest in full personalization model based on data
 
 ---
 
