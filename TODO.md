@@ -6,6 +6,8 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 
 ### Product Features
 - [x] **Voice assistant integration (Siri)** — `/api/v1/today` endpoint with `spoken` field, `docs/siri.html` setup page with store picker + live preview. User builds 3-action Shortcut and shares via iCloud link.
+- [x] **Flavor Radar (Phase 1)** — 7-day personalized flavor outlook at `docs/radar.html`. Store picker, favorite flavor picker (up to 3), timeline blending confirmed data with ML predictions. Confidence-bucketed prediction bars, overdue favorites, similar flavor suggestions. Multi-day `generate_multiday_forecast_json()` in batch pipeline with `--days` flag. 5 Python tests + 1 Worker test.
+- [ ] **Flavor Radar Phase 2** — cross-store "Next Best Store" recommendations, rarity/streak badges, forecast accuracy dashboard
 - [ ] **Alexa skill** — custom Alexa skill using `/api/v1/today` endpoint (requires Amazon developer account + certification)
 - [ ] **Forecast accuracy tracking** — compare predictions vs actual flavors for WI stores; compute hit rate metrics to retrain models
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" (deprioritized per WORKLOG)

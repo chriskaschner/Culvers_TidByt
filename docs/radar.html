@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flavor Radar — Custard Calendar</title>
+  <meta name="description" content="Your 7-day personalized flavor outlook. See confirmed and predicted Flavors of the Day at your favorite shop.">
+  <meta property="og:title" content="Flavor Radar — Custard Calendar">
+  <meta property="og:description" content="Your 7-day personalized flavor outlook for frozen custard shops.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/radar.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Flavor Radar</h1>
+    <p>Your 7-day flavor outlook</p>
+    <nav class="nav-links">
+      <a href="index.html">Calendar</a>
+      <a href="map.html">Custard Map</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="siri.html">Siri</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="store-selector">
+      <h2>1. Pick your store</h2>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="state-filter">State</label>
+          <select id="state-filter">
+            <option value="">All States</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="city-search">Search</label>
+          <input type="text" id="city-search" placeholder="City or store name...">
+        </div>
+      </div>
+
+      <div id="store-selected" class="selected-badge" hidden></div>
+      <select id="store-select" size="6">
+        <option value="" disabled selected>Loading stores...</option>
+      </select>
+    </section>
+
+    <section id="flavor-section" hidden>
+      <h2>2. Pick up to 3 favorite flavors</h2>
+      <p class="hint">We'll highlight these in your forecast.</p>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="flavor-search">Search flavors</label>
+          <input type="text" id="flavor-search" placeholder="Type a flavor name...">
+        </div>
+      </div>
+
+      <div id="flavor-results" class="flavor-results" hidden></div>
+
+      <div id="selected-flavors" class="selected-badges"></div>
+    </section>
+
+    <section id="timeline-section" hidden>
+      <h2>7-Day Outlook</h2>
+      <div id="timeline" class="day-cards"></div>
+      <div id="trust-banner" class="trust-banner" hidden></div>
+    </section>
+
+    <section id="favorites-section" hidden>
+      <div id="overdue-section" class="overdue-section" hidden>
+        <h3>Overdue favorites</h3>
+        <div id="overdue-list"></div>
+      </div>
+      <div id="similar-section" class="similar-section" hidden>
+        <h3>Similar flavors in the forecast</h3>
+        <div id="similar-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites. Predictions are estimates based on historical patterns.</p>
+  </footer>
+
+  <style>
+    #store-select {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+    }
+
+    #flavor-section, #timeline-section, #favorites-section {
+      margin-top: 2rem;
+    }
+
+    #flavor-section h2, #timeline-section h2 {
+      font-size: 1rem;
+      color: #003366;
+      margin-bottom: 0.5rem;
+    }
+
+    .flavor-results {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      margin-bottom: 0.75rem;
+    }
+
+    .flavor-result-item {
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.875rem;
+    }
+
+    .flavor-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .flavor-result-item:hover {
+      background: #f0f4f8;
+    }
+
+    .flavor-result-item .flavor-name {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .flavor-result-item .flavor-desc {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.125rem;
+    }
+
+    .day-card-flavor {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .day-card-desc {
+      font-size: 0.8125rem;
+      color: #666;
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .day-card-nodata {
+      font-style: italic;
+      color: #999;
+      font-size: 0.8125rem;
+    }
+
+    .star-indicator {
+      color: #f9a825;
+      margin-right: 0.25rem;
+    }
+  </style>
+
+  <script>
+    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    const STORAGE_KEY = 'custard-radar';
+    const MAX_FAVORITES = 3;
+
+    // Similarity groups — mirrored from worker/src/flavor-matcher.js
+    const SIMILARITY_GROUPS = {
+      mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
+      chocolate: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'],
+      caramel: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'],
+      cheesecake: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'],
+      turtle: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'],
+      cookie: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'],
+      peanutButter: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'],
+      berry: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'],
+      pecan: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'],
+    };
+
+    let allStores = [];
+    let flavorCatalog = [];
+    let selectedSlug = null;
+    let selectedFlavors = new Set();
+
+    // DOM elements
+    const stateFilter = document.getElementById('state-filter');
+    const citySearch = document.getElementById('city-search');
+    const storeSelect = document.getElementById('store-select');
+    const storeSelected = document.getElementById('store-selected');
+    const flavorSection = document.getElementById('flavor-section');
+    const flavorSearch = document.getElementById('flavor-search');
+    const flavorResults = document.getElementById('flavor-results');
+    const selectedFlavorsEl = document.getElementById('selected-flavors');
+    const timelineSection = document.getElementById('timeline-section');
+    const timelineEl = document.getElementById('timeline');
+    const trustBanner = document.getElementById('trust-banner');
+    const favoritesSection = document.getElementById('favorites-section');
+    const overdueSection = document.getElementById('overdue-section');
+    const overdueList = document.getElementById('overdue-list');
+    const similarSection = document.getElementById('similar-section');
+    const similarList = document.getElementById('similar-list');
+
+    // --- Utilities ---
+    function toISODate(d) {
+      return d.toISOString().slice(0, 10);
+    }
+
+    function addDays(d, n) {
+      const r = new Date(d);
+      r.setDate(r.getDate() + n);
+      return r;
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T12:00:00');
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      const todayStr = toISODate(today);
+      const tomorrowStr = toISODate(addDays(today, 1));
+
+      let label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      if (dateStr === todayStr) label = 'Today -- ' + label;
+      else if (dateStr === tomorrowStr) label = 'Tomorrow -- ' + label;
+      return label;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function normalize(s) {
+      return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+    }
+
+    function isFavorite(flavorName) {
+      const n = normalize(flavorName);
+      for (const fav of selectedFlavors) {
+        if (normalize(fav) === n) return true;
+      }
+      return false;
+    }
+
+    function findSimilarFlavors(favorites) {
+      const favNorms = [...favorites].map(normalize);
+      const similar = new Set();
+      for (const fav of favNorms) {
+        for (const group of Object.values(SIMILARITY_GROUPS)) {
+          if (group.includes(fav)) {
+            for (const f of group) {
+              if (!favNorms.includes(f)) similar.add(f);
+            }
+          }
+        }
+      }
+      return [...similar];
+    }
+
+    // --- localStorage ---
+    function savePrefs() {
+      const data = { store: selectedSlug, favorites: [...selectedFlavors] };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function loadPrefs() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) { return null; }
+    }
+
+    // --- Store loading ---
+    async function loadStores(defaultState) {
+      try {
+        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const data = await resp.json();
+        allStores = data.stores || [];
+        populateStateFilter();
+        if (defaultState && stateFilter.querySelector('option[value="' + defaultState + '"]')) {
+          stateFilter.value = defaultState;
+        }
+        renderStoreList();
+      } catch (err) {
+        storeSelect.innerHTML = '<option disabled>Failed to load stores</option>';
+      }
+    }
+
+    async function detectState() {
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
+        const data = await resp.json();
+        return data.region || 'WI';
+      } catch (e) {
+        // Geolocate blocked (CORS / offline) -- default to WI
+        return 'WI';
+      }
+    }
+
+    async function loadCatalog() {
+      // Try local static file first (works on any origin), fall back to API
+      try {
+        const resp = await fetch('flavors.json?v=' + new Date().toISOString().slice(0, 10));
+        if (resp.ok) {
+          const data = await resp.json();
+          flavorCatalog = data.flavors || [];
+          return;
+        }
+      } catch (e) {}
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/v1/flavors/catalog');
+        const data = await resp.json();
+        flavorCatalog = data.flavors || [];
+      } catch (err) {
+        console.error('Failed to load flavor catalog:', err);
+      }
+    }
+
+    function populateStateFilter() {
+      const states = [...new Set(allStores.map(s => s.state))].sort();
+      for (const state of states) {
+        const opt = document.createElement('option');
+        opt.value = state;
+        opt.textContent = state;
+        stateFilter.appendChild(opt);
+      }
+    }
+
+    function getFilteredStores() {
+      const state = stateFilter.value;
+      const query = citySearch.value.toLowerCase().trim();
+      return allStores.filter(s => {
+        if (state && s.state !== state) return false;
+        if (query) {
+          const searchable = (s.name + ' ' + s.city + ' ' + s.address + ' ' + s.slug).toLowerCase();
+          return searchable.includes(query);
+        }
+        return true;
+      });
+    }
+
+    function renderStoreList() {
+      const filtered = getFilteredStores();
+      storeSelect.innerHTML = '';
+      if (filtered.length === 0) {
+        storeSelect.innerHTML = '<option disabled>No stores match your search</option>';
+      } else {
+        for (const store of filtered) {
+          const opt = document.createElement('option');
+          opt.value = store.slug;
+          opt.textContent = store.city + ', ' + store.state + ' \u2014 ' + store.address;
+          if (store.slug === selectedSlug) opt.selected = true;
+          storeSelect.appendChild(opt);
+        }
+      }
+    }
+
+    function selectStore(slug) {
+      selectedSlug = slug;
+      const store = allStores.find(s => s.slug === slug);
+      if (store) {
+        storeSelected.textContent = store.city + ', ' + store.state + ' \u2014 ' + store.address;
+        storeSelected.hidden = false;
+      }
+      flavorSection.hidden = false;
+      savePrefs();
+      fetchAndRenderTimeline();
+    }
+
+    // --- Flavor picker ---
+    function searchFlavors(query) {
+      if (!query || query.length < 2) {
+        flavorResults.hidden = true;
+        return;
+      }
+
+      const q = query.toLowerCase();
+      const matches = flavorCatalog.filter(f => {
+        if (selectedFlavors.has(f.title)) return false;
+        const inTitle = f.title.toLowerCase().includes(q);
+        const inDesc = f.description && f.description.toLowerCase().includes(q);
+        return inTitle || inDesc;
+      }).slice(0, 10);
+
+      flavorResults.innerHTML = '';
+      if (matches.length === 0) {
+        flavorResults.innerHTML = '<div class="flavor-result-item"><span class="flavor-desc">No matching flavors found</span></div>';
+        flavorResults.hidden = false;
+        return;
+      }
+
+      for (const f of matches) {
+        const item = document.createElement('div');
+        item.className = 'flavor-result-item';
+        item.innerHTML = '<div class="flavor-name">' + escapeHtml(f.title) + '</div><div class="flavor-desc">' + escapeHtml(f.description || '') + '</div>';
+        item.addEventListener('click', () => addFlavor(f.title));
+        flavorResults.appendChild(item);
+      }
+      flavorResults.hidden = false;
+    }
+
+    function addFlavor(title) {
+      if (selectedFlavors.size >= MAX_FAVORITES) return;
+      selectedFlavors.add(title);
+      flavorSearch.value = '';
+      flavorResults.hidden = true;
+      renderSelectedFlavors();
+      savePrefs();
+      renderTimelineHighlights();
+    }
+
+    function removeFlavor(title) {
+      selectedFlavors.delete(title);
+      renderSelectedFlavors();
+      savePrefs();
+      renderTimelineHighlights();
+    }
+
+    function renderSelectedFlavors() {
+      selectedFlavorsEl.innerHTML = '';
+      for (const title of selectedFlavors) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = title;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '\u00d7';
+        removeBtn.title = 'Remove';
+        removeBtn.onclick = () => removeFlavor(title);
+        badge.appendChild(removeBtn);
+        selectedFlavorsEl.appendChild(badge);
+      }
+    }
+
+    // --- Timeline ---
+    let cachedConfirmed = [];
+    let cachedForecast = null;
+    let cachedTimeline = [];
+
+    function findForecastDay(forecast, dateStr) {
+      if (!forecast) return null;
+      // Multi-day format
+      if (forecast.days) {
+        return forecast.days.find(d => d.date === dateStr) || null;
+      }
+      // Legacy single-day format
+      if (forecast.date === dateStr) return forecast;
+      return null;
+    }
+
+    function buildTimeline(confirmedFlavors, forecast, today) {
+      const timeline = [];
+      for (let i = 0; i < 7; i++) {
+        const date = addDays(today, i);
+        const dateStr = toISODate(date);
+
+        const confirmed = confirmedFlavors.find(f => f.date === dateStr);
+        if (confirmed) {
+          timeline.push({ date: dateStr, type: 'confirmed', flavor: confirmed.title, description: confirmed.description || '' });
+          continue;
+        }
+
+        const forecastDay = findForecastDay(forecast, dateStr);
+        if (forecastDay && forecastDay.predictions && forecastDay.predictions.length > 0) {
+          timeline.push({ date: dateStr, type: 'predicted', predictions: forecastDay.predictions.slice(0, 5), overdue: forecastDay.overdue_flavors || [] });
+          continue;
+        }
+
+        timeline.push({ date: dateStr, type: 'none' });
+      }
+      return timeline;
+    }
+
+    async function fetchAndRenderTimeline() {
+      if (!selectedSlug) return;
+      timelineSection.hidden = false;
+      timelineEl.innerHTML = '<p style="color:#666;font-size:0.875rem;">Loading forecast...</p>';
+
+      try {
+        const [confirmedResp, forecastResp] = await Promise.all([
+          fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(selectedSlug)),
+          fetch(WORKER_BASE + '/api/v1/forecast/' + encodeURIComponent(selectedSlug)),
+        ]);
+
+        cachedConfirmed = [];
+        if (confirmedResp.ok) {
+          const cData = await confirmedResp.json();
+          cachedConfirmed = (cData.flavors || []).map(f => ({
+            date: f.date,
+            title: f.title,
+            description: f.description || '',
+          }));
+        }
+
+        cachedForecast = null;
+        if (forecastResp.ok) {
+          cachedForecast = await forecastResp.json();
+        }
+
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        cachedTimeline = buildTimeline(cachedConfirmed, cachedForecast, today);
+        renderTimeline();
+        renderFavoritesIntel();
+
+        if (cachedForecast && cachedForecast.history_depth) {
+          trustBanner.textContent = 'Predictions based on ' + cachedForecast.history_depth + ' historical observations for this store.';
+          trustBanner.hidden = false;
+        } else {
+          trustBanner.hidden = true;
+        }
+
+      } catch (err) {
+        console.error('Timeline fetch error:', err);
+        timelineEl.innerHTML = '<p style="color:#c00;font-size:0.875rem;">Failed to load forecast data. Please try again.</p>';
+      }
+    }
+
+    function renderTimeline() {
+      timelineEl.innerHTML = '';
+      for (const day of cachedTimeline) {
+        const card = document.createElement('div');
+
+        if (day.type === 'confirmed') {
+          const hasFav = isFavorite(day.flavor);
+          card.className = 'day-card' + (hasFav ? ' day-card-highlight' : '');
+          card.innerHTML =
+            '<div class="day-card-header">' +
+              '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
+              '<span class="day-card-badge day-card-badge-confirmed">Confirmed</span>' +
+            '</div>' +
+            '<div class="day-card-flavor">' + (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) + '</div>' +
+            (day.description ? '<div class="day-card-desc">' + escapeHtml(day.description) + '</div>' : '');
+
+        } else if (day.type === 'predicted') {
+          const anyFav = day.predictions.some(p => isFavorite(p.flavor));
+          card.className = 'day-card day-card-predicted' + (anyFav ? ' day-card-highlight' : '');
+
+          let html =
+            '<div class="day-card-header">' +
+              '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
+              '<span class="day-card-badge day-card-badge-predicted">Predicted</span>' +
+            '</div>';
+
+          const maxProb = day.predictions[0] ? day.predictions[0].probability : 0.1;
+          for (const p of day.predictions) {
+            const pct = (p.probability * 100).toFixed(1);
+            const barWidth = Math.max(5, (p.probability / Math.max(maxProb, 0.01)) * 100);
+            const conf = p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low');
+            const fav = isFavorite(p.flavor);
+            html +=
+              '<div class="prediction-row">' +
+                '<span class="prediction-name' + (fav ? ' prediction-name-favorite' : '') + '">' +
+                  (fav ? '<span class="star-indicator">*</span>' : '') +
+                  escapeHtml(p.flavor) +
+                '</span>' +
+                '<div class="prediction-bar-wrap">' +
+                  '<div class="prediction-bar prediction-bar-' + conf + '" style="width:' + barWidth + '%"></div>' +
+                '</div>' +
+                '<span class="prediction-pct">' + pct + '%</span>' +
+              '</div>';
+          }
+          card.innerHTML = html;
+
+        } else {
+          card.className = 'day-card day-card-none';
+          card.innerHTML =
+            '<div class="day-card-header">' +
+              '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
+            '</div>' +
+            '<div class="day-card-nodata">No forecast data yet</div>';
+        }
+
+        timelineEl.appendChild(card);
+      }
+    }
+
+    function renderTimelineHighlights() {
+      // Re-render to update favorite highlights without refetching
+      if (cachedTimeline.length > 0) {
+        renderTimeline();
+        renderFavoritesIntel();
+      }
+    }
+
+    // --- Favorites intelligence ---
+    function renderFavoritesIntel() {
+      if (selectedFlavors.size === 0) {
+        favoritesSection.hidden = true;
+        return;
+      }
+
+      // Collect all overdue favorites from predicted days
+      const allOverdue = [];
+      const seenOverdue = new Set();
+      for (const day of cachedTimeline) {
+        if (day.type === 'predicted' && day.overdue) {
+          for (const o of day.overdue) {
+            if (isFavorite(o.flavor) && !seenOverdue.has(normalize(o.flavor))) {
+              seenOverdue.add(normalize(o.flavor));
+              allOverdue.push(o);
+            }
+          }
+        }
+      }
+
+      if (allOverdue.length > 0) {
+        overdueList.innerHTML = '';
+        for (const o of allOverdue) {
+          const item = document.createElement('div');
+          item.className = 'overdue-item';
+          item.innerHTML =
+            '<span class="overdue-flavor">' + escapeHtml(o.flavor) + '</span>' +
+            '<span class="overdue-detail">' + o.days_since + ' days since last (avg ' + Math.round(o.avg_gap) + ' days)</span>';
+          overdueList.appendChild(item);
+        }
+        overdueSection.hidden = false;
+      } else {
+        overdueSection.hidden = true;
+      }
+
+      // Similar flavors in forecast
+      const similarNames = findSimilarFlavors(selectedFlavors);
+      if (similarNames.length > 0) {
+        // Check which similar flavors appear in predictions
+        const forecastFlavors = new Set();
+        for (const day of cachedTimeline) {
+          if (day.type === 'predicted') {
+            for (const p of day.predictions) {
+              forecastFlavors.add(normalize(p.flavor));
+            }
+          }
+        }
+
+        const inForecast = similarNames.filter(s => forecastFlavors.has(s));
+        if (inForecast.length > 0) {
+          similarList.innerHTML = '';
+          for (const name of inForecast.slice(0, 5)) {
+            const item = document.createElement('div');
+            item.className = 'similar-item';
+            // Title-case the name
+            const display = name.replace(/\b\w/g, c => c.toUpperCase());
+            item.innerHTML = '<span>' + escapeHtml(display) + '</span>';
+            similarList.appendChild(item);
+          }
+          similarSection.hidden = false;
+        } else {
+          similarSection.hidden = true;
+        }
+      } else {
+        similarSection.hidden = true;
+      }
+
+      favoritesSection.hidden = overdueSection.hidden && similarSection.hidden;
+    }
+
+    // --- Event handlers ---
+    stateFilter.addEventListener('change', renderStoreList);
+    citySearch.addEventListener('input', renderStoreList);
+    storeSelect.addEventListener('change', () => selectStore(storeSelect.value));
+    flavorSearch.addEventListener('input', () => searchFlavors(flavorSearch.value));
+    flavorSearch.addEventListener('focus', () => searchFlavors(flavorSearch.value));
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#flavor-section')) {
+        flavorResults.hidden = true;
+      }
+    });
+
+    // --- Init ---
+    async function init() {
+      const prefs = loadPrefs();
+      // Detect state from Cloudflare geoIP, but don't block store loading on it
+      const statePromise = prefs && prefs.store ? Promise.resolve(null) : detectState();
+      const [detectedState] = await Promise.all([
+        statePromise,
+        loadCatalog(),
+      ]);
+      await loadStores(detectedState);
+
+      if (prefs) {
+        if (prefs.favorites) {
+          for (const f of prefs.favorites.slice(0, MAX_FAVORITES)) {
+            selectedFlavors.add(f);
+          }
+          renderSelectedFlavors();
+        }
+        if (prefs.store) {
+          selectStore(prefs.store);
+        }
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

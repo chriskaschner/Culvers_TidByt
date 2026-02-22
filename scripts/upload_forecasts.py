@@ -62,8 +62,14 @@ def main() -> int:
     if args.dry_run:
         for slug in list(forecasts)[:5]:
             f = forecasts[slug]
-            top = f["predictions"][0] if f.get("predictions") else {}
-            print(f"  forecast:{slug} -> top: {top.get('flavor', '?')} ({top.get('probability', 0):.1%})")
+            if "days" in f:
+                n_days = len(f["days"])
+                first_day = f["days"][0] if f["days"] else {}
+                top = first_day.get("predictions", [{}])[0] if first_day.get("predictions") else {}
+                print(f"  forecast:{slug} -> {n_days} days, day 1 top: {top.get('flavor', '?')} ({top.get('probability', 0):.1%})")
+            else:
+                top = f["predictions"][0] if f.get("predictions") else {}
+                print(f"  forecast:{slug} -> top: {top.get('flavor', '?')} ({top.get('probability', 0):.1%})")
         if len(forecasts) > 5:
             print(f"  ... and {len(forecasts) - 5} more")
         return 0

@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 from analytics.data_loader import load_clean, store_list
-from analytics.forecast_writer import generate_forecast_json
+from analytics.forecast_writer import generate_forecast_json, generate_multiday_forecast_json
 from analytics.predict import FrequencyRecencyModel
 
 
@@ -24,8 +24,13 @@ def generate_all_forecasts(
     target_date: pd.Timestamp | None = None,
     stores: list[str] | None = None,
     n_predictions: int = 10,
+    n_days: int = 7,
 ) -> dict:
-    """Generate forecasts for all (or specified) stores."""
+    """Generate forecasts for all (or specified) stores.
+
+    When n_days > 1, produces multi-day forecasts with confidence metadata.
+    When n_days == 1, falls back to single-day format for backward compat.
+    """
     if target_date is None:
         target_date = pd.Timestamp(datetime.now().date() + timedelta(days=1))
 
@@ -39,12 +44,18 @@ def generate_all_forecasts(
         store_df = df[df["store_slug"] == slug]
         if len(store_df) < 10:
             continue
-        forecast = generate_forecast_json(model, df, slug, target_date, n_predictions)
+        if n_days > 1:
+            forecast = generate_multiday_forecast_json(
+                model, df, slug, target_date, n_days, n_predictions
+            )
+        else:
+            forecast = generate_forecast_json(model, df, slug, target_date, n_predictions)
         forecasts[slug] = forecast
 
     return {
         "generated_at": datetime.now().isoformat(),
         "target_date": str(target_date.date()),
+        "n_days": n_days,
         "n_stores": len(forecasts),
         "model": "frequency_recency_v1",
         "forecasts": forecasts,
@@ -58,6 +69,8 @@ def main():
     parser.add_argument("--output", default="data/forecasts/latest.json",
                         help="Output JSON path")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
+    parser.add_argument("--days", type=int, default=7,
+                        help="Number of days to forecast (default=7)")
     args = parser.parse_args()
 
     print("Loading data...", file=sys.stderr)
@@ -68,8 +81,10 @@ def main():
     target_date = pd.Timestamp(args.date) if args.date else None
     stores = [args.store] if args.store else None
 
-    print("Generating forecasts...", file=sys.stderr)
-    result = generate_all_forecasts(df, target_date=target_date, stores=stores)
+    print(f"Generating {args.days}-day forecasts...", file=sys.stderr)
+    result = generate_all_forecasts(
+        df, target_date=target_date, stores=stores, n_days=args.days
+    )
     print(f"Generated {result['n_stores']} forecasts for {result['target_date']}",
           file=sys.stderr)
 
@@ -83,7 +98,12 @@ def main():
         sample_slug = next(iter(result["forecasts"]))
         sample = result["forecasts"][sample_slug]
         print(f"\n--- Sample: {sample_slug} ---", file=sys.stderr)
-        print(sample["prose"], file=sys.stderr)
+        if "days" in sample:
+            print(f"{len(sample['days'])} days, {sample['history_depth']} observations",
+                  file=sys.stderr)
+            print(sample["days"][0]["prose"], file=sys.stderr)
+        else:
+            print(sample["prose"], file=sys.stderr)
 
 
 if __name__ == "__main__":

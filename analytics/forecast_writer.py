@@ -5,6 +5,8 @@ Uses prediction probabilities + store context to generate forecasts like:
 Turtle (10%). Chocolate Covered Strawberry is overdue — last served 45 days ago."
 """
 
+from datetime import datetime
+
 import pandas as pd
 
 from analytics.basic_metrics import days_since_last, overdue_flavors
@@ -178,4 +180,49 @@ def generate_forecast_json(
         "total_probability": round(float(proba.sum()), 4),
         "overdue_flavors": context["overdue_flavors"],
         "prose": format_forecast_template(context),
+    }
+
+
+def generate_multiday_forecast_json(
+    model: FlavorPredictor,
+    df: pd.DataFrame,
+    store_slug: str,
+    start_date: pd.Timestamp,
+    n_days: int = 7,
+    n_predictions: int = 10,
+) -> dict:
+    """Generate multi-day forecast with confidence metadata.
+
+    Wraps generate_forecast_json() in a loop over n_days, adding a confidence
+    bucket to each prediction based on probability thresholds.
+    """
+    start_date = pd.Timestamp(start_date)
+    history_depth = len(df[df["store_slug"] == store_slug])
+
+    days = []
+    for i in range(n_days):
+        date = start_date + pd.Timedelta(days=i)
+        single = generate_forecast_json(model, df, store_slug, date, n_predictions)
+
+        for p in single["predictions"]:
+            prob = p["probability"]
+            if prob > 0.10:
+                p["confidence"] = "high"
+            elif prob >= 0.05:
+                p["confidence"] = "medium"
+            else:
+                p["confidence"] = "low"
+
+        days.append({
+            "date": single["date"],
+            "predictions": single["predictions"],
+            "overdue_flavors": single["overdue_flavors"],
+            "prose": single["prose"],
+        })
+
+    return {
+        "store_slug": store_slug,
+        "generated_at": datetime.now().isoformat(),
+        "history_depth": history_depth,
+        "days": days,
     }
