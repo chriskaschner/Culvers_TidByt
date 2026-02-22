@@ -315,11 +315,28 @@
       return results;
     }
 
+    // Flavor keywords for matching ingredients not in the name
+    const FLAVOR_KEYWORDS = {
+      'Mint Explosion': 'oreo cookie chocolate fudge',
+      'Brownie Thunder': 'brownie chocolate caramel',
+      'Crazy for Cookie Dough': 'chocolate chip vanilla',
+      'Dark Chocolate Decadence': 'cocoa fudge',
+      'Dark Chocolate PB Crunch': 'peanut butter reeses',
+      'Really Reese\'s': 'peanut butter chocolate reeses',
+      'Snickers Swirl': 'peanut caramel nougat chocolate',
+      'Turtle': 'caramel pecan chocolate fudge',
+      'Turtle Cheesecake': 'caramel pecan chocolate cheesecake',
+      'Turtle Dove': 'caramel pecan chocolate dove',
+    };
+
     // Custom flavor dropdown autocomplete
     function showFlavorDropdown() {
       const query = flavorInput.value.trim().toLowerCase();
       if (!query) { flavorDropdown.hidden = true; return; }
-      const matches = KNOWN_FLAVORS.filter(f => f.toLowerCase().includes(query));
+      const matches = KNOWN_FLAVORS.filter(f =>
+        f.toLowerCase().includes(query) ||
+        (FLAVOR_KEYWORDS[f] && FLAVOR_KEYWORDS[f].includes(query))
+      );
       if (matches.length === 0) { flavorDropdown.hidden = true; return; }
       flavorDropdown.innerHTML = matches.map(f =>
         `<div class="flavor-option">${escapeHtml(f)}</div>`
