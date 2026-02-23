@@ -61,7 +61,7 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 
 | Item | Type | Effort | Notes |
 |------|------|--------|-------|
-| HD cone topping density | Polish | Small | Toppings sparse and symmetrically mirrored; need denser asymmetric placement |
+| Map visuals v2: clustered flavor fronts | Feature | Medium | Add dynamic weather-map style clustering/grouping and category views (caramels, cookies/cakes) across map/fronts |
 | OG share image | Polish | Small | Replace placeholder tilted mint cone with pixel-art custard rain |
 | Google Calendar alerts | Known limitation | None | Google ignores VALARM in ICS subscriptions; no code fix possible |
 | Pairwise flavor voting | Deprioritized | Large | Group "where should we go tonight?" -- shelved, no clear MVP |
@@ -72,6 +72,26 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 
 - `a3ebdec` feat: flavor rarity badge on Forecast page
 - `2e2b150` fix: replace Speak Text with Show Result in Siri Shortcut instructions
+
+## Session Update (2026-02-23) -- HD Cone Topping Density
+
+### Shipped
+
+- Increased HD topping density in canonical renderer `worker/src/flavor-colors.js`:
+  - `standard` now fills 6 HD slots via topping cycling
+  - `double` now uses a weighted 7-slot primary/secondary mix
+  - `overload` now repeats dominant topping across 6 slots
+  - HD topping coordinates changed from mirrored pairs to intentionally asymmetric slots
+- Mirrored the same density + asymmetry logic into browser renderers in `docs/index.html` and `docs/radar.html` so rendered cones match Worker output.
+- Updated `worker/test/flavor-colors.test.js` expectations for HD density behavior.
+
+### Validation
+
+- `cd worker && npx vitest run test/flavor-colors.test.js test/social-card.test.js` -- 31 passed
+- `cd worker && npm run test:browser -- --workers=1` -- 6 passed
+- `.venv/bin/pytest -q tests/test_static_assets.py` -- 8 passed
+
+---
 
 ## Session Update (2026-02-23) -- Map Flavor Cone Markers
 

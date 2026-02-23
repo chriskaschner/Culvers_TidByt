@@ -80,9 +80,10 @@ describe('resolveHDToppingSlots', () => {
     expect(resolveHDToppingSlots({ toppings: ['oreo'], density: 'pure' })).toEqual([]);
   });
 
-  it('returns up to 4 for standard density', () => {
+  it('returns dense 6-slot cycle for standard density', () => {
     const slots = resolveHDToppingSlots({ toppings: ['oreo', 'andes', 'dove'], density: 'standard' });
-    expect(slots).toEqual(['oreo', 'andes', 'dove']);
+    expect(slots).toHaveLength(6);
+    expect(slots).toEqual(['oreo', 'andes', 'dove', 'oreo', 'andes', 'dove']);
   });
 
   it('returns 8 cycling slots for explosion density', () => {
@@ -93,14 +94,14 @@ describe('resolveHDToppingSlots', () => {
     expect(slots[1]).toBe('andes');
   });
 
-  it('returns 4 repeated slots for overload density', () => {
+  it('returns 6 repeated slots for overload density', () => {
     const slots = resolveHDToppingSlots({ toppings: ['oreo'], density: 'overload' });
-    expect(slots).toEqual(['oreo', 'oreo', 'oreo', 'oreo']);
+    expect(slots).toEqual(['oreo', 'oreo', 'oreo', 'oreo', 'oreo', 'oreo']);
   });
 
-  it('returns primary+secondary for double density', () => {
+  it('returns weighted 7-slot mix for double density', () => {
     const slots = resolveHDToppingSlots({ toppings: ['strawberry_bits', 'dove'], density: 'double' });
-    expect(slots).toEqual(['strawberry_bits', 'strawberry_bits', 'strawberry_bits', 'dove', 'dove']);
+    expect(slots).toEqual(['strawberry_bits', 'strawberry_bits', 'dove', 'strawberry_bits', 'dove', 'strawberry_bits', 'dove']);
   });
 });
 

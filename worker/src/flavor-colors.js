@@ -242,13 +242,15 @@ export function resolveHDToppingSlots(profile) {
   const density = profile.density || 'standard';
   if (density === 'pure') return [];
   if (density === 'double') {
-    // Primary topping in first 3 slots, secondary in next 2
-    const slots = toppings.length > 0 ? [toppings[0], toppings[0], toppings[0]] : [];
-    if (toppings.length > 1) { slots.push(toppings[1]); slots.push(toppings[1]); }
-    return slots;
+    // Denser than standard: 7 slots weighted toward primary topping.
+    if (toppings.length === 0) return [];
+    const primary = toppings[0];
+    const secondary = toppings[1] || primary;
+    return [primary, primary, secondary, primary, secondary, primary, secondary];
   }
   if (density === 'explosion') {
     // Cycle through all toppings to fill 8 slots
+    if (toppings.length === 0) return [];
     const slots = [];
     for (let i = 0; i < 8; i++) {
       slots.push(toppings[i % toppings.length]);
@@ -256,11 +258,16 @@ export function resolveHDToppingSlots(profile) {
     return slots;
   }
   if (density === 'overload') {
-    // Dominant topping repeated in first 4 slots
-    return toppings.length > 0 ? [toppings[0], toppings[0], toppings[0], toppings[0]] : [];
+    // Very dense single-topping look.
+    return toppings.length > 0 ? [toppings[0], toppings[0], toppings[0], toppings[0], toppings[0], toppings[0]] : [];
   }
-  // standard: up to 4 toppings spread across first 4 slots
-  return toppings.slice(0, 4);
+  // Standard HD: fill 6 slots by cycling available toppings.
+  if (toppings.length === 0) return [];
+  const slots = [];
+  for (let i = 0; i < 6; i++) {
+    slots.push(toppings[i % toppings.length]);
+  }
+  return slots;
 }
 
 /**
@@ -319,8 +326,8 @@ export function renderConeHDSVG(flavorName, scale = 1) {
     rects.push(`<rect x="${hx * s}" y="${hy * s}" width="${s}" height="${s}" fill="${highlightColor}"/>`);
   }
 
-  // Fixed topping slots (T1-T8, symmetric flanks)
-  const tSlots = [[4,2],[13,2],[3,4],[14,4],[5,6],[12,6],[4,8],[13,8]];
+  // Fixed topping slots (T1-T8), intentionally asymmetric for a less mirrored scoop.
+  const tSlots = [[4,2],[12,1],[6,3],[14,5],[3,6],[11,7],[5,9],[13,8]];
   for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
     const color = TOPPING_COLORS[toppingSlots[i]];
     if (!color) continue;

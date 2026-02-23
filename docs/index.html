@@ -296,17 +296,22 @@
       var density = (profile && profile.density) || 'standard';
       if (density === 'pure') return [];
       if (density === 'double') {
-        var sl = tops.length > 0 ? [tops[0], tops[0], tops[0]] : [];
-        if (tops.length > 1) { sl.push(tops[1]); sl.push(tops[1]); }
-        return sl;
+        if (tops.length === 0) return [];
+        var primary = tops[0];
+        var secondary = tops[1] || primary;
+        return [primary, primary, secondary, primary, secondary, primary, secondary];
       }
       if (density === 'explosion') {
+        if (tops.length === 0) return [];
         var slots = [];
         for (var i = 0; i < 8; i++) slots.push(tops[i % tops.length]);
         return slots;
       }
-      if (density === 'overload') return tops.length > 0 ? [tops[0], tops[0], tops[0], tops[0]] : [];
-      return tops.slice(0, 4);
+      if (density === 'overload') return tops.length > 0 ? [tops[0], tops[0], tops[0], tops[0], tops[0], tops[0]] : [];
+      if (tops.length === 0) return [];
+      var standardSlots = [];
+      for (var si = 0; si < 6; si++) standardSlots.push(tops[si % tops.length]);
+      return standardSlots;
     }
 
     function renderMiniConeHDSVG(flavorName, scale) {
@@ -341,7 +346,7 @@
         rects.push('<rect x="' + (hlSlots[hi][0]*s) + '" y="' + (hlSlots[hi][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + highlightColor + '"/>');
       }
 
-      var tSlots = [[4,2],[13,2],[3,4],[14,4],[5,6],[12,6],[4,8],[13,8]];
+      var tSlots = [[4,2],[12,1],[6,3],[14,5],[3,6],[11,7],[5,9],[13,8]];
       for (var ti = 0; ti < tSlotKeys.length && ti < tSlots.length; ti++) {
         var tColor = tc[tSlotKeys[ti]];
         if (!tColor) continue;

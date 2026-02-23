@@ -39,7 +39,7 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Clean documentation drift** — updated README test counts and synchronized status notes in WORKLOG/TODO (2026-02-23)
 
 ### Bugs / Polish
-- [ ] **HD cone topping density** — toppings are sparse and symmetrically mirrored around center axis; should be denser and asymmetric for more visual interest
+- [x] **HD cone topping density** — made HD cone topping placement denser and intentionally asymmetric across canonical renderer + web mirror renderers (`worker/src/flavor-colors.js`, `docs/index.html`, `docs/radar.html`) (2026-02-23)
 - [ ] **OG share image** — replace generic card with pixel-art cloud raining custard cones (current tilted mint cone is a placeholder)
 - [x] **Siri page broken** — `stores.json` parsed as raw object instead of extracting `.stores` array (2026-02-23)
 - [x] **Siri API URL shows workers.dev** — user-facing API URL in siri.html now uses custom domain `custard.chriskaschner.com` (2026-02-23)
