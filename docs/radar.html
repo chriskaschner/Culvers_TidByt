@@ -189,6 +189,8 @@
       font-size: 1.0625rem;
       font-weight: 700;
       color: #1a1a1a;
+      display: flex;
+      align-items: center;
     }
 
     .day-card-desc {
@@ -394,6 +396,7 @@
     let flavorCatalog = [];
     let selectedSlug = null;
     let selectedFlavors = new Set();
+    let flavorColorData = null; // cached /api/v1/flavor-colors response
 
     // DOM elements
     const stateFilter = document.getElementById('state-filter');
@@ -576,6 +579,66 @@
       } catch (err) {
         console.error('Failed to load flavor catalog:', err);
       }
+    }
+
+    async function loadFlavorColors() {
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/v1/flavor-colors');
+        if (resp.ok) {
+          flavorColorData = await resp.json();
+        }
+      } catch (err) {
+        console.debug('Flavor colors unavailable:', err);
+      }
+    }
+
+    function getFlavorBaseColor(flavorName) {
+      if (!flavorColorData || !flavorName) return null;
+      const key = flavorName.toLowerCase();
+      const profiles = flavorColorData.profiles || {};
+      const baseColors = flavorColorData.base_colors || {};
+      // Exact match
+      if (profiles[key]) return baseColors[profiles[key].base] || null;
+      // Unicode normalize
+      const normalized = key.replace(/\u2019/g, "'").replace(/\u2018/g, "'");
+      if (profiles[normalized]) return baseColors[profiles[normalized].base] || null;
+      // Keyword fallback
+      if (key.includes('mint')) return baseColors.mint;
+      if (key.includes('dark choc')) return baseColors.dark_chocolate;
+      if (key.includes('chocolate') || key.includes('cocoa')) return baseColors.chocolate;
+      if (key.includes('strawberry')) return baseColors.strawberry;
+      if (key.includes('cheesecake')) return baseColors.cheesecake;
+      if (key.includes('caramel')) return baseColors.caramel;
+      if (key.includes('peach')) return baseColors.peach;
+      if (key.includes('butter pecan')) return baseColors.butter_pecan;
+      return baseColors.vanilla || null;
+    }
+
+    function renderMiniConeSVG(flavorName) {
+      if (!flavorColorData) return '';
+      const baseColor = getFlavorBaseColor(flavorName) || '#F5DEB3';
+      const coneColors = flavorColorData.cone_colors || { waffle: '#D4A574', waffle_dark: '#A0784C' };
+      const s = 3; // scale factor -> 27x33 px
+      const rects = [];
+
+      // Scoop rows (0-5)
+      const scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
+      for (let row = 0; row < scoopRows.length; row++) {
+        const [sc, ec] = scoopRows[row];
+        for (let col = sc; col <= ec; col++) {
+          rects.push('<rect x="' + (col*s) + '" y="' + (row*s) + '" width="' + s + '" height="' + s + '" fill="' + baseColor + '"/>');
+        }
+      }
+      // Cone rows (6-10)
+      const coneRows = [[2,6],[3,5],[3,5],[4,4],[4,4]];
+      for (let row = 0; row < coneRows.length; row++) {
+        const [sc, ec] = coneRows[row];
+        for (let col = sc; col <= ec; col++) {
+          const c = ((row + col) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
+          rects.push('<rect x="' + (col*s) + '" y="' + ((row+6)*s) + '" width="' + s + '" height="' + s + '" fill="' + c + '"/>');
+        }
+      }
+      return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (11*s) + '" width="' + (9*s) + '" height="' + (11*s) + '">' + rects.join('') + '</svg>';
     }
 
     function populateStateFilter() {
@@ -1221,6 +1284,19 @@
       }
     }
 
+    function confidenceStripClass(day) {
+      if (day.type === 'confirmed') return 'confidence-strip confidence-strip-confirmed';
+      if (day.type === 'predicted') {
+        const top = day.predictions[0];
+        if (!top) return 'confidence-strip confidence-strip-low';
+        const prob = top.probability || 0;
+        if (prob > 0.10) return 'confidence-strip confidence-strip-high';
+        if (prob >= 0.05) return 'confidence-strip confidence-strip-medium';
+        return 'confidence-strip confidence-strip-low';
+      }
+      return 'confidence-strip confidence-strip-none';
+    }
+
     function renderTimeline() {
       timelineEl.innerHTML = '';
       for (const day of cachedTimeline) {
@@ -1230,11 +1306,15 @@
           const hasFav = isFavorite(day.flavor);
           card.className = 'day-card' + (hasFav ? ' day-card-highlight' : '');
           card.innerHTML =
+            '<div class="' + confidenceStripClass(day) + '"></div>' +
             '<div class="day-card-header">' +
               '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
               '<span class="day-card-badge day-card-badge-confirmed">Confirmed</span>' +
             '</div>' +
-            '<div class="day-card-flavor">' + (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) + '</div>' +
+            '<div class="day-card-flavor">' +
+              renderMiniConeSVG(day.flavor) +
+              (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) +
+            '</div>' +
             renderFlavorBadges(day.flavor, day) +
             (day.description ? '<div class="day-card-desc">' + escapeHtml(day.description) + '</div>' : '');
 
@@ -1243,6 +1323,7 @@
           card.className = 'day-card day-card-predicted' + (anyFav ? ' day-card-highlight' : '');
 
           let html =
+            '<div class="' + confidenceStripClass(day) + '"></div>' +
             '<div class="day-card-header">' +
               '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
               '<span class="day-card-badge day-card-badge-predicted">Predicted</span>' +
@@ -1254,15 +1335,23 @@
             const barWidth = Math.max(5, (p.probability / Math.max(maxProb, 0.01)) * 100);
             const conf = p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low');
             const fav = isFavorite(p.flavor);
+            // Use flavor base color for bar if available, with confidence-based opacity
+            const flavorBase = getFlavorBaseColor(p.flavor);
+            const opacity = conf === 'high' ? 1.0 : conf === 'medium' ? 0.65 : 0.35;
+            const barStyle = flavorBase
+              ? 'width:' + barWidth + '%;background:' + flavorBase + ';opacity:' + opacity
+              : 'width:' + barWidth + '%';
+            const barClass = flavorBase ? 'prediction-bar' : 'prediction-bar prediction-bar-' + conf;
             html +=
               '<div class="prediction-row">' +
                 '<span class="prediction-name' + (fav ? ' prediction-name-favorite' : '') + '">' +
+                  renderMiniConeSVG(p.flavor) +
                   (fav ? '<span class="star-indicator">*</span>' : '') +
                   escapeHtml(p.flavor) +
                 '</span>' +
                 renderFlavorBadges(p.flavor, day, true) +
                 '<div class="prediction-bar-wrap">' +
-                  '<div class="prediction-bar prediction-bar-' + conf + '" style="width:' + barWidth + '%"></div>' +
+                  '<div class="' + barClass + '" style="' + barStyle + '"></div>' +
                 '</div>' +
                 '<span class="prediction-pct">' + pct + '%</span>' +
               '</div>';
@@ -1272,6 +1361,7 @@
         } else {
           card.className = 'day-card day-card-none';
           card.innerHTML =
+            '<div class="confidence-strip confidence-strip-none"></div>' +
             '<div class="day-card-header">' +
               '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
             '</div>' +
@@ -1386,6 +1476,7 @@
       const [detectedState] = await Promise.all([
         statePromise,
         loadCatalog(),
+        loadFlavorColors(),
       ]);
       await loadStores(detectedState);
 
