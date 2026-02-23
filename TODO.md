@@ -18,6 +18,8 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Forecast pipeline reliability** — coverage gate hard-fails on D1 errors, backfill filters closed-day sentinels, upload guards (per-store >=3 days + global 10% floor), coverage metrics endpoint (2026-02-23)
 
 ### Bugs / Polish
+- [ ] **HD cone topping density** — toppings are sparse and symmetrically mirrored around center axis; should be denser and asymmetric for more visual interest
+- [ ] **OG share image** — replace generic card with pixel-art cloud raining custard cones (current tilted mint cone is a placeholder)
 - [x] **Siri page broken** — `stores.json` parsed as raw object instead of extracting `.stores` array (2026-02-23)
 - [ ] **Google Calendar subscription alerts** — ICS events trigger default reminders; added `X-APPLE-DEFAULT-ALARM:FALSE` for Apple Calendar, but Google Calendar subscriptions require user to manually disable notifications in calendar settings
 - [x] **Google Calendar event color** — calendar events use Blueberry colorId 9, closest to Culver's #005696 (2026-02-23)
