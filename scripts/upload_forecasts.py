@@ -32,8 +32,12 @@ def sql_quote(value: str) -> str:
 
 
 def build_batch_sql(rows: list[tuple[str, str, str]]) -> str:
-    """Build transactional upsert SQL for a batch of forecast rows."""
-    lines = ["BEGIN TRANSACTION;"]
+    """Build upsert SQL for a batch of forecast rows.
+
+    D1 manages transactions internally -- explicit BEGIN/COMMIT is not
+    supported via the wrangler CLI file execution path.
+    """
+    lines = []
     for slug, data_json, generated_at in rows:
         lines.append(
             "INSERT INTO forecasts (slug, data, generated_at, updated_at) "
@@ -43,7 +47,6 @@ def build_batch_sql(rows: list[tuple[str, str, str]]) -> str:
             "generated_at = excluded.generated_at, "
             "updated_at = CURRENT_TIMESTAMP;"
         )
-    lines.append("COMMIT;")
     return "\n".join(lines) + "\n"
 
 

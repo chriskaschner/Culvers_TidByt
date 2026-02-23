@@ -21,6 +21,11 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+# Ensure project root is on sys.path when run as a script
+_project_root = str(Path(__file__).resolve().parents[1])
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 from analytics.accuracy import (
     evaluate_store_forecasts,
     generate_accuracy_report,
@@ -95,7 +100,7 @@ def sql_quote(value: str) -> str:
 def upload_accuracy(results: dict[str, dict], window: str) -> bool:
     """Upload accuracy metrics to D1 accuracy_metrics table."""
     computed_at = datetime.utcnow().isoformat() + "Z"
-    lines = ["BEGIN TRANSACTION;"]
+    lines = []
 
     for slug, metrics in results.items():
         if metrics["n_samples"] == 0:
@@ -113,8 +118,6 @@ def upload_accuracy(results: dict[str, dict], window: str) -> bool:
             "n_samples = excluded.n_samples, "
             "computed_at = excluded.computed_at;"
         )
-
-    lines.append("COMMIT;")
     sql = "\n".join(lines) + "\n"
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as tmp:
