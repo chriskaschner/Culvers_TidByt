@@ -862,7 +862,7 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors);
+    const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors, false, env);
     const start = Date.now();
 
     // Sunday 2 PM UTC cron → weekly digest for weekly subscribers

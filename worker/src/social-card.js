@@ -8,6 +8,8 @@
  * Endpoint: GET /v1/og/{slug}/{date}.svg
  */
 
+import { normalize } from './flavor-matcher.js';
+
 /**
  * Route handler for social card requests.
  * @param {string} path - Canonical path (already normalized from /api/ prefix)
@@ -44,9 +46,7 @@ export async function handleSocialCard(path, env, corsHeaders) {
   let appearances = 0;
   let storeCount = 0;
   if (db && flavor) {
-    const normalized = flavor.toLowerCase()
-      .replace(/\u00ae/g, '').replace(/\u2122/g, '').replace(/\u00a9/g, '')
-      .replace(/\s+/g, ' ').trim();
+    const normalized = normalize(flavor);
     try {
       const [freqResult, storeResult] = await Promise.all([
         db.prepare('SELECT COUNT(*) as n FROM snapshots WHERE normalized_flavor = ?')

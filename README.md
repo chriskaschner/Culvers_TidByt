@@ -141,7 +141,7 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 ## Testing
 
 ```bash
-# Worker (Vitest) -- 291 tests across 16 suites
+# Worker (Vitest) -- 292 tests across 17 suites
 cd worker && npm test
 
 # Browser smoke suite (Playwright: nav + Radar Phase 2)
