@@ -623,7 +623,12 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
     }
 
     const flavorName = todayFlavor.title;
-    let spoken = `Today the flavor of the day at ${data.name} is ${flavorName}`;
+    // Build a short spoken store name: "Culver's of Mt. Horeb" instead of the
+    // verbose upstream name ("Culver's of Mt. Horeb, WI - Springdale St").
+    const storeIndex = env._storeIndexOverride || DEFAULT_STORE_INDEX;
+    const storeEntry = storeIndex.find(s => s.slug === slug);
+    const spokenStore = storeEntry ? `${brand} of ${storeEntry.city}` : data.name;
+    let spoken = `Today the flavor of the day at ${spokenStore} is ${flavorName}`;
     if (todayFlavor.description) {
       const desc = todayFlavor.description.replace(/\.+$/, '');
       spoken += ' - ' + desc;

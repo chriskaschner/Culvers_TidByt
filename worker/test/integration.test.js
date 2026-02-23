@@ -904,7 +904,7 @@ describe('/api/today endpoint', () => {
   beforeEach(() => {
     mockKV = createMockKV();
     mockFetchFlavors = createMockFetchFlavors();
-    env = { FLAVOR_CACHE: mockKV, _validSlugsOverride: TEST_VALID_SLUGS };
+    env = { FLAVOR_CACHE: mockKV, _validSlugsOverride: TEST_VALID_SLUGS, _storeIndexOverride: TEST_STORE_INDEX };
   });
 
   it('64: returns today\'s flavor with spoken field', async () => {
@@ -919,8 +919,8 @@ describe('/api/today endpoint', () => {
     expect(body.brand).toBe("Culver's");
     expect(body.flavor).toBeTruthy();
     expect(body.spoken).toMatch(/Today the flavor of the day at/);
-    expect(body.spoken).toContain("Mt. Horeb");
-    expect(body.spoken).not.toMatch(/culvers/i);
+    expect(body.spoken).toContain("Culver's of Mt. Horeb");
+    expect(body.spoken).not.toContain("WI - ");
     expect(body.spoken).toContain(body.description);
   });
 
