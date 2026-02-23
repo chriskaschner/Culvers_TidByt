@@ -86,6 +86,8 @@ export const FLAVOR_PROFILES = {
   'chocolate heath crunch': { base: 'chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
 };
 
+export const CONE_TIP_COLOR = '#8B5A2B';
+
 const DEFAULT_PROFILE = { base: 'vanilla', ribbon: null, toppings: [], density: 'standard' };
 
 /**
@@ -213,6 +215,148 @@ export function renderConeSVG(flavorName, scale = 1) {
   }
   // Tip at (4, 10)
   rects.push(`<rect x="${4 * s}" y="${10 * s}" width="${s}" height="${s}" fill="${CONE_COLORS.waffle_dark}"/>`);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
+}
+
+/**
+ * Blend a hex color toward white by the given amount (0..1).
+ * lightenHex('#000000', 0.5) -> '#808080'
+ */
+export function lightenHex(hex, amount) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lr = Math.round(r + (255 - r) * amount);
+  const lg = Math.round(g + (255 - g) * amount);
+  const lb = Math.round(b + (255 - b) * amount);
+  return '#' + [lr, lg, lb].map(c => c.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+/**
+ * Resolve HD topping slots (8 slots) based on density encoding.
+ * Same density logic as the 9x11 version, scaled to 8 slots.
+ */
+export function resolveHDToppingSlots(profile) {
+  const toppings = profile.toppings || [];
+  const density = profile.density || 'standard';
+  if (density === 'pure') return [];
+  if (density === 'double') {
+    // Primary topping in first 3 slots, secondary in next 2
+    const slots = toppings.length > 0 ? [toppings[0], toppings[0], toppings[0]] : [];
+    if (toppings.length > 1) { slots.push(toppings[1]); slots.push(toppings[1]); }
+    return slots;
+  }
+  if (density === 'explosion') {
+    // Cycle through all toppings to fill 8 slots
+    const slots = [];
+    for (let i = 0; i < 8; i++) {
+      slots.push(toppings[i % toppings.length]);
+    }
+    return slots;
+  }
+  if (density === 'overload') {
+    // Dominant topping repeated in first 4 slots
+    return toppings.length > 0 ? [toppings[0], toppings[0], toppings[0], toppings[0]] : [];
+  }
+  // standard: up to 4 toppings spread across first 4 slots
+  return toppings.slice(0, 4);
+}
+
+/**
+ * Render an HD SVG cone for a flavor at the given scale.
+ *
+ * Grid: 18x22 pixels -- doubled resolution for smoother curves, more
+ * topping/ribbon detail, and a specular highlight on the scoop.
+ *
+ * @param {string} flavorName
+ * @param {number} [scale=1]
+ * @returns {string} SVG markup
+ */
+export function renderConeHDSVG(flavorName, scale = 1) {
+  const profile = getFlavorProfile(flavorName);
+  const baseColor = BASE_COLORS[profile.base] || BASE_COLORS.vanilla;
+  const ribbonKey = profile.ribbon;
+  const hasRibbon = ribbonKey && profile.density !== 'pure';
+  const ribbonColor = hasRibbon ? (RIBBON_COLORS[ribbonKey] || null) : null;
+  const toppingSlots = resolveHDToppingSlots(profile);
+  const highlightColor = lightenHex(baseColor, 0.3);
+
+  const w = 18 * scale;
+  const h = 22 * scale;
+  const s = scale;
+  const rects = [];
+
+  // Scoop (rows 0-11, smooth oval with 4-stage width progression)
+  // Each entry: [startCol, endCol]
+  const scoopRows = [
+    [5, 12],   // row 0:  8px (top)
+    [4, 13],   // row 1: 10px
+    [3, 14],   // row 2: 12px
+    [2, 15],   // row 3: 14px (widest)
+    [2, 15],   // row 4: 14px
+    [2, 15],   // row 5: 14px
+    [2, 15],   // row 6: 14px
+    [2, 15],   // row 7: 14px
+    [2, 15],   // row 8: 14px
+    [3, 14],   // row 9: 12px
+    [4, 13],   // row 10: 10px
+    [5, 12],   // row 11:  8px (bottom)
+  ];
+
+  // Base fill
+  for (let row = 0; row < scoopRows.length; row++) {
+    const [sc, ec] = scoopRows[row];
+    for (let col = sc; col <= ec; col++) {
+      rects.push(`<rect x="${col * s}" y="${row * s}" width="${s}" height="${s}" fill="${baseColor}"/>`);
+    }
+  }
+
+  // Highlight slots (upper-left specular shine)
+  const hlSlots = [[5, 0], [4, 1]];
+  for (const [hx, hy] of hlSlots) {
+    rects.push(`<rect x="${hx * s}" y="${hy * s}" width="${s}" height="${s}" fill="${highlightColor}"/>`);
+  }
+
+  // Fixed topping slots (T1-T8, symmetric flanks)
+  const tSlots = [[4,2],[13,2],[3,4],[14,4],[5,6],[12,6],[4,8],[13,8]];
+  for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
+    const color = TOPPING_COLORS[toppingSlots[i]];
+    if (!color) continue;
+    const [tx, ty] = tSlots[i];
+    rects.push(`<rect x="${tx * s}" y="${ty * s}" width="${s}" height="${s}" fill="${color}"/>`);
+  }
+
+  // Fixed ribbon slots (R1-R6, S-curve through center)
+  if (ribbonColor) {
+    const rSlots = [[7,1],[8,3],[9,4],[10,5],[9,7],[8,9]];
+    for (const [rx, ry] of rSlots) {
+      rects.push(`<rect x="${rx * s}" y="${ry * s}" width="${s}" height="${s}" fill="${ribbonColor}"/>`);
+    }
+  }
+
+  // Cone (rows 12-21: checkerboard taper + 2px tip)
+  const coneRows = [
+    [4, 13],  // row 12: 10px
+    [4, 13],  // row 13: 10px
+    [5, 12],  // row 14:  8px
+    [5, 12],  // row 15:  8px
+    [6, 11],  // row 16:  6px
+    [6, 11],  // row 17:  6px
+    [7, 10],  // row 18:  4px
+    [7, 10],  // row 19:  4px
+    [8, 9],   // row 20:  2px
+  ];
+  for (let row = 0; row < coneRows.length; row++) {
+    const [sc, ec] = coneRows[row];
+    for (let col = sc; col <= ec; col++) {
+      const color = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
+      rects.push(`<rect x="${col * s}" y="${(row + 12) * s}" width="${s}" height="${s}" fill="${color}"/>`);
+    }
+  }
+  // Tip row 21: 2px dark
+  rects.push(`<rect x="${8 * s}" y="${21 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
+  rects.push(`<rect x="${9 * s}" y="${21 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }

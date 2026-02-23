@@ -10,7 +10,7 @@
  */
 
 import { normalize } from './flavor-matcher.js';
-import { getFlavorProfile, renderConeSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
+import { getFlavorProfile, renderConeHDSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
 
 /**
  * Route handler for social card requests.
@@ -95,7 +95,7 @@ export async function handleSocialCard(path, env, corsHeaders) {
  * Extracts the inner SVG content from renderConeSVG and wraps it in a <g>.
  */
 function renderConeGroup(flavorName, x, y, scale) {
-  const svg = renderConeSVG(flavorName, scale);
+  const svg = renderConeHDSVG(flavorName, scale);
   // Extract inner content between <svg...> and </svg>
   const inner = svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
   return `<g transform="translate(${x},${y})">${inner}</g>`;
@@ -129,8 +129,8 @@ function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount })
   const profile = getFlavorProfile(flavor);
   const accentColor = BASE_COLORS[profile.base] || '#e94560';
 
-  // Render pixel-art cone (scale=10 -> 90x110 pixels)
-  const coneGroup = renderConeGroup(flavor, 80, 170, 10);
+  // Render HD pixel-art cone (scale=6 -> 108x132 pixels)
+  const coneGroup = renderConeGroup(flavor, 70, 160, 6);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
