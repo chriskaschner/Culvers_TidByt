@@ -315,6 +315,20 @@
       border-bottom-color: #003366;
     }
 
+    .next-best-badge {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-left: 0.3rem;
+    }
+    .next-best-badge-confirmed {
+      background: #005696;
+      color: #fff;
+    }
+
     .accuracy-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -413,6 +427,7 @@
 
     // Phase 2 caches
     const forecastCacheBySlug = new Map();
+    const confirmedCacheBySlug = new Map();
     const flavorMetricsCache = new Map();
     const flavorMetricsInflight = new Map();
     let cachedStoreMetrics = null;
@@ -694,6 +709,17 @@
       return p;
     }
 
+    async function fetchConfirmedFlavors(slug) {
+      if (confirmedCacheBySlug.has(slug)) {
+        return confirmedCacheBySlug.get(slug);
+      }
+      const p = fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug))
+        .then((resp) => resp.ok ? resp.json() : null)
+        .catch(() => null);
+      confirmedCacheBySlug.set(slug, p);
+      return p;
+    }
+
     async function loadStoreMetrics(slug) {
       if (!slug) return;
       if (cachedStoreMetricsSlug === slug) return;
@@ -946,49 +972,104 @@
         return;
       }
 
+      // Build primary store's flavor set for comparison
       const primaryScores = computePrimaryFavoriteScores();
+      const primaryConfirmedFlavors = new Set();
+      for (const day of cachedTimeline) {
+        if (day.type === 'confirmed') {
+          primaryConfirmedFlavors.add(normalize(day.flavor));
+        }
+      }
+
       const favorites = [...selectedFlavors];
-      const recs = [];
+      const predictedRecs = [];
+      const confirmedRecs = [];
+      let forecastCount = 0;
+      let confirmedOnlyCount = 0;
 
       await Promise.all(candidates.map(async (store) => {
+        // Try forecast first
         const forecast = await fetchForecastForSlug(store.slug);
-        if (!forecast) return;
+        if (forecast) {
+          forecastCount++;
+          for (const fav of favorites) {
+            const best = findBestPredictionForFlavor(forecast, fav);
+            if (!best) continue;
 
-        for (const fav of favorites) {
-          const best = findBestPredictionForFlavor(forecast, fav);
-          if (!best) continue;
+            const primaryScore = primaryScores.get(normalize(fav)) || 0;
+            const minLift = primaryScore < 0.05 ? 0.04 : 0.02;
+            if (best.probability < primaryScore + minLift) continue;
 
-          const primaryScore = primaryScores.get(normalize(fav)) || 0;
-          const minLift = primaryScore < 0.05 ? 0.04 : 0.02;
-          if (best.probability < primaryScore + minLift) continue;
+            predictedRecs.push({
+              store,
+              sourceType: 'predicted',
+              flavor: fav,
+              date: best.date,
+              probability: best.probability,
+              confidence: best.confidence,
+              primaryScore,
+              delta: best.probability - primaryScore,
+            });
+          }
+          return;
+        }
 
-          recs.push({
-            store,
-            flavor: fav,
-            date: best.date,
-            probability: best.probability,
-            confidence: best.confidence,
-            primaryScore,
-            delta: best.probability - primaryScore,
-          });
+        // Fallback: confirmed schedule for non-forecast stores
+        const confirmed = await fetchConfirmedFlavors(store.slug);
+        if (confirmed && confirmed.flavors && confirmed.flavors.length > 0) {
+          confirmedOnlyCount++;
+          for (const fav of favorites) {
+            const favKey = normalize(fav);
+            // Only recommend if flavor appears in candidate's confirmed schedule
+            // but NOT in primary store's confirmed schedule
+            const match = confirmed.flavors.find(f => normalize(f.title) === favKey);
+            if (!match) continue;
+            if (primaryConfirmedFlavors.has(favKey)) continue;
+
+            confirmedRecs.push({
+              store,
+              sourceType: 'confirmed',
+              flavor: fav,
+              date: match.date,
+            });
+          }
         }
       }));
 
-      if (recs.length === 0) {
-        nextBestStatus.textContent = 'No stronger nearby alternatives found this week for your selected favorites.';
+      // Display order: confirmed first (certainty > probability), predicted second
+      const allRecs = [];
+
+      // Confirmed recs: sort by distance
+      confirmedRecs.sort((a, b) => ((a.store._distanceMiles || 999) - (b.store._distanceMiles || 999)));
+      for (const rec of confirmedRecs) allRecs.push(rec);
+
+      // Predicted recs: sort by lift delta
+      predictedRecs.sort((a, b) => (b.delta - a.delta) || (b.probability - a.probability) || ((a.store._distanceMiles || 999) - (b.store._distanceMiles || 999)));
+      for (const rec of predictedRecs) allRecs.push(rec);
+
+      if (allRecs.length === 0) {
+        const checkedCount = forecastCount + confirmedOnlyCount;
+        if (checkedCount === 0) {
+          nextBestStatus.textContent = candidates.length + ' nearby stores checked -- no flavor data available yet.';
+        } else {
+          nextBestStatus.textContent = 'No stronger nearby alternatives found this week.';
+        }
         return;
       }
 
-      recs.sort((a, b) => (b.delta - a.delta) || (b.probability - a.probability) || ((a.store._distanceMiles || 999) - (b.store._distanceMiles || 999)));
-
+      // Dedupe by flavor, keeping first (confirmed wins over predicted due to sort order)
       const byFlavor = new Map();
-      for (const rec of recs) {
+      for (const rec of allRecs) {
         const key = normalize(rec.flavor);
         if (!byFlavor.has(key)) byFlavor.set(key, rec);
       }
       const picks = [...byFlavor.values()].slice(0, 3);
 
-      nextBestStatus.textContent = 'Found ' + picks.length + ' stronger alternative' + (picks.length === 1 ? '' : 's') + '.';
+      const statusParts = ['Checked ' + candidates.length + ' nearby stores'];
+      if (forecastCount > 0) statusParts.push(forecastCount + ' forecast-enabled');
+      if (confirmedOnlyCount > 0) statusParts.push(confirmedOnlyCount + ' confirmed-only');
+      nextBestStatus.textContent = statusParts.join(', ') + '.';
+
       nextBestList.innerHTML = picks.map((rec) => {
         const locationQ = rec.store.city && rec.store.state
           ? rec.store.city + ', ' + rec.store.state
@@ -998,6 +1079,23 @@
         const distText = Number.isFinite(rec.store._distanceMiles)
           ? rec.store._distanceMiles.toFixed(1) + ' mi'
           : 'distance unknown';
+
+        if (rec.sourceType === 'confirmed') {
+          return (
+            '<div class="next-best-card">' +
+              '<div class="next-best-title">' + escapeHtml(rec.flavor) + ': confirmed at ' + escapeHtml(rec.store.name) + '</div>' +
+              '<div class="next-best-detail">' +
+                escapeHtml(formatDate(rec.date)) +
+                ' <span class="next-best-badge next-best-badge-confirmed">Confirmed</span>' +
+              '</div>' +
+              '<div class="next-best-detail">' +
+                escapeHtml(rec.store.address || locationQ) + ' -- ' + distText +
+              '</div>' +
+              '<div class="next-best-links"><a href="' + mapHref + '">See on map</a></div>' +
+            '</div>'
+          );
+        }
+
         return (
           '<div class="next-best-card">' +
             '<div class="next-best-title">' + escapeHtml(rec.flavor) + ': better odds at ' + escapeHtml(rec.store.name) + '</div>' +

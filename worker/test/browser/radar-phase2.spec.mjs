@@ -182,4 +182,157 @@ test("radar phase 2 shows next best store, badges, and accuracy dashboard", asyn
   await expect(page.locator("#next-best-list .next-best-card").first()).toBeVisible({ timeout: 15000 });
   await expect(page.locator("#acc-top1")).not.toHaveText("--");
   await expect(page.locator(".intel-badge").first()).toBeVisible();
+
+  // Status line should show forecast-enabled count
+  const statusText = await page.locator("#next-best-status").textContent();
+  expect(statusText).toMatch(/forecast-enabled/);
+});
+
+test("candidate with confirmed schedule shows Confirmed badge, not probability", async ({ page }) => {
+  let primarySlug = null;
+
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+
+    if (path === "/api/v1/geolocate") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ state: "WI", stateName: "Wisconsin", city: "Madison", country: "US" }),
+      });
+      return;
+    }
+
+    if (path === "/api/v1/flavors") {
+      const slug = url.searchParams.get("slug") || "unknown";
+      // Primary store: does NOT have Turtle confirmed
+      if (!primarySlug || slug === primarySlug) {
+        if (!primarySlug) primarySlug = slug;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            slug,
+            name: "Primary Store",
+            address: "100 Main St",
+            flavors: [
+              { date: isoDateOffset(0), title: "Vanilla", description: "Classic" },
+              { date: isoDateOffset(1), title: "Butter Pecan", description: "Nutty" },
+            ],
+          }),
+        });
+      } else {
+        // Candidate store: has Turtle confirmed
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            slug,
+            name: "Nearby Custard",
+            address: "200 Elm St",
+            flavors: [
+              { date: isoDateOffset(0), title: "Turtle", description: "Rich" },
+              { date: isoDateOffset(1), title: "Chocolate Eclair", description: "Creamy" },
+            ],
+          }),
+        });
+      }
+      return;
+    }
+
+    // No forecasts available for any store -- forces confirmed fallback path
+    if (path.startsWith("/api/v1/forecast/")) {
+      await route.fulfill({ status: 404, contentType: "application/json", body: '{"error":"not found"}' });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/metrics/store/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          slug: "test",
+          unique_flavors: 50,
+          total_days: 800,
+          recent_history: [],
+          active_streaks: [],
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/metrics/flavor/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          normalized_flavor: decodeURIComponent(path.replace("/api/v1/metrics/flavor/", "")),
+          total_appearances: 120,
+          store_count: 35,
+          recent: [],
+        }),
+      });
+      return;
+    }
+
+    if (path === "/api/v1/flavors/catalog") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ flavors: [
+          { normalized: "turtle", display: "Turtle" },
+          { normalized: "vanilla", display: "Vanilla" },
+          { normalized: "butter pecan", display: "Butter Pecan" },
+        ]}),
+      });
+      return;
+    }
+
+    await route.fallback();
+  });
+
+  await page.goto("/radar.html");
+  await page.waitForSelector("#store-select option:not([disabled])[value]");
+
+  const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
+  const selected = await page.selectOption("#store-select", firstValue);
+  primarySlug = selected[0];
+
+  await page.waitForSelector("#timeline-section:not([hidden])");
+  await page.fill("#flavor-search", "turtle");
+  await page.waitForSelector("#flavor-results .flavor-result-item .flavor-name");
+  const exactTurtle = page.locator("#flavor-results .flavor-result-item", {
+    has: page.locator(".flavor-name", { hasText: /^Turtle$/ }),
+  });
+  if (await exactTurtle.count()) {
+    await exactTurtle.first().click();
+  } else {
+    await page.click("#flavor-results .flavor-result-item");
+  }
+
+  // Wait for next-best section to finish scanning (status text changes from "Scanning...")
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById("next-best-status");
+      return el && el.textContent && !el.textContent.includes("Scanning");
+    },
+    { timeout: 15000 }
+  );
+
+  // Status should mention confirmed-only count
+  const statusText = await page.locator("#next-best-status").textContent();
+  expect(statusText).toMatch(/confirmed-only/);
+
+  // Check for Confirmed badge in recommendations (not probability text)
+  const cardCount = await page.locator("#next-best-list .next-best-card").count();
+
+  if (cardCount > 0) {
+    const confirmedBadge = page.locator(".next-best-badge-confirmed");
+    await expect(confirmedBadge.first()).toBeVisible({ timeout: 5000 });
+    // Should NOT show percentage for confirmed recs
+    const cardText = await page.locator("#next-best-list .next-best-card").first().textContent();
+    expect(cardText).toContain("confirmed at");
+    expect(cardText).not.toMatch(/\d+\.\d+%.*vs/);
+  }
 });
