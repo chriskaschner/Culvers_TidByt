@@ -8,6 +8,8 @@
  * Endpoint: GET /v1/og/{slug}/{date}.svg
  */
 
+import { normalize } from './flavor-matcher.js';
+
 /**
  * Route handler for social card requests.
  * @param {string} path - Canonical path (already normalized from /api/ prefix)
@@ -21,18 +23,22 @@ export async function handleSocialCard(path, env, corsHeaders) {
   if (!match) return null;
 
   const [, slug, date] = match;
-  const kv = env.FLAVOR_CACHE;
   const db = env.DB;
 
-  // Look up flavor from KV snapshot
+  // Look up flavor from D1 snapshot.
   let flavor = null;
   let description = '';
-  if (kv) {
-    const raw = await kv.get(`snap:${slug}:${date}`);
-    if (raw) {
-      const snap = JSON.parse(raw);
-      flavor = snap.flavor || null;
-      description = snap.description || '';
+  if (db) {
+    try {
+      const snap = await db.prepare(
+        'SELECT flavor, description FROM snapshots WHERE slug = ? AND date = ? LIMIT 1'
+      ).bind(slug, date).first();
+      if (snap) {
+        flavor = snap.flavor || null;
+        description = snap.description || '';
+      }
+    } catch {
+      // Snapshot lookup is best-effort; render fallback card on query failure.
     }
   }
 
@@ -40,9 +46,7 @@ export async function handleSocialCard(path, env, corsHeaders) {
   let appearances = 0;
   let storeCount = 0;
   if (db && flavor) {
-    const normalized = flavor.toLowerCase()
-      .replace(/\u00ae/g, '').replace(/\u2122/g, '').replace(/\u00a9/g, '')
-      .replace(/\s+/g, ' ').trim();
+    const normalized = normalize(flavor);
     try {
       const [freqResult, storeResult] = await Promise.all([
         db.prepare('SELECT COUNT(*) as n FROM snapshots WHERE normalized_flavor = ?')

@@ -10,12 +10,14 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Flavor Radar Phase 2** — cross-store "Next Best Store" recommendations, rarity/streak badges, forecast accuracy dashboard (2026-02-22)
 - [ ] **Alexa skill** — custom Alexa skill using `/api/v1/today` endpoint (requires Amazon developer account + certification)
 - [ ] **Flavor chatbot assistant** — conversational Q&A for flavor info (e.g., today's flavor, upcoming week, nearby stores with a flavor) via web chat UI and `/api/v1` endpoints
-- [ ] **Forecast accuracy tracking** — compare predictions vs actual flavors for WI stores; compute hit rate metrics to retrain models
+- [x] **Forecast accuracy tracking** — compare predictions vs actual flavors for WI stores; compute hit rate metrics to retrain models (2026-02-23)
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" (deprioritized per WORKLOG)
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
-- [ ] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose (Worker code done, needs batch_forecast run + KV upload)
+- [x] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose (Worker code done, batch pipeline + D1 upload wired) (2026-02-23)
+- [x] **Accuracy + snapshot hardening** -- future-date guard, snapshot upsert, cron harvest with D1 cursor, KV 429 resilience, trending date bound, backfill script, coverage gate (2026-02-23)
+
 ### Bugs / Polish
-- [ ] **Google Calendar event color** — calendar events should use Culver's dark blue (`#005696`); current sync doesn't set color correctly
+- [x] **Google Calendar event color** — calendar events use Blueberry colorId 9, closest to Culver's #005696 (2026-02-23)
 
 ### Docs
 (none)
@@ -29,16 +31,16 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] Create D1 database — `custard-snapshots` created, migration applied (2026-02-22)
 
 - [x] API v1 versioning + Bearer auth — `/api/v1/` prefix, `Authorization: Bearer` header, legacy aliases preserved (2026-02-22)
-- [x] Per-slug fetch budget — replaced global MAX_DAILY_FETCHES=50 with per-slug (3/day) + global circuit breaker (200/day) (2026-02-22)
+- [x] KV write hardening — removed KV fetch counters, made cache writes best-effort, and added cache-integrity checks for slug-scoped records (2026-02-22)
 - [x] DTSTAMP determinism — ICS calendar events use event date instead of current time (2026-02-22)
 - [x] Kill dual scrapers — Python `flavor_service.py` calls Worker API instead of scraping (2026-02-22)
 - [x] Strip "culvers" naming — brand-neutral variable names in `map.html` (2026-02-22)
 - [x] Multi-brand config — `config.yaml` restructured with `stores:` array and `worker_base:` (2026-02-22)
-- [x] D1 snapshots + metrics — dual-write KV+D1, metrics endpoints for frequency/recency/trending (2026-02-22)
+- [x] D1 snapshots + metrics — D1-backed metrics endpoints for frequency/recency/trending (2026-02-22)
 - [x] Weekly digest emails — `sendWeeklyDigestEmail()` with full week forecast, star badges, frequency toggle in alerts UI (2026-02-22)
 - [x] Fun email copy — rotating quips in daily + weekly alert emails (2026-02-22)
 - [x] OG meta tags — `og:title`, `og:description`, `og:image`, `twitter:card` on all 3 HTML pages (2026-02-22)
-- [x] Daily snapshot persistence — append-only triple-write in KV (2026-02-22)
+- [x] Daily snapshot persistence — D1-backed snapshot storage (KV snapshot writes removed) (2026-02-22)
 - [x] Tidbyt brand-agnostic theming — config-driven brand colors/labels (2026-02-22)
 - [x] Language & voice guidelines — documented in CLAUDE.md (2026-02-22)
 - [x] Tidbyt community app — `apps/culversforecast/` (2026-02-22)

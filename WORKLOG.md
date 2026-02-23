@@ -1,5 +1,114 @@
 # Worklog
 
+## Session Update (2026-02-23) -- Accuracy Correctness, Snapshot Coverage, Backfill
+
+### Shipped
+
+Eight commits on `codex/kv-d1-hardening` hardening the D1 snapshot pipeline:
+
+1. **Accuracy correctness** -- `evaluate_store_forecasts()` now rejects future dates (was only lower-bounded, so forecasts matched themselves). Adds `n_forecasted` and `n_orphaned` counters. `evaluate_forecasts.py` SQL uses proper date bounds instead of row LIMIT. 4 new Python tests + 1 script test.
+
+2. **Snapshot upsert** -- `INSERT OR IGNORE` made wrong first-writes permanent. Changed to `ON CONFLICT DO UPDATE` with 7-day recency guard so fresh fetches correct stale data while older rows stay immutable.
+
+3. **Cron snapshot harvest** -- Coverage was subscription-only and cache-hit-blind. The cron now resolves `forecast UNION subscription` slugs, skips already-fetched stores, and processes batches of 50 per run with a D1-persisted cursor (`cron_state` table, migration 005). `getFlavorsCached` gains `recordOnHit` option. 8 new Worker tests.
+
+4. **KV 429 resilience** -- Dedup key, run metadata, and flavor catalog KV writes wrapped in try/catch. 3 new Worker tests.
+
+5. **Trending date guard** -- `handleTrending()` this_week query now uses `date <= today`. 1 new Worker test.
+
+6. **Backfill script** -- `scripts/backfill_snapshots.py` reads from `data/backfill/flavors.sqlite` (38K+ rows), normalizes flavors matching `flavor-matcher.js`, derives brand from slug patterns, and uploads in batches of 200 with `ON CONFLICT DO NOTHING`.
+
+7. **Coverage gate** -- `scripts/check_forecast_coverage.py` verifies each forecast slug has at least one snapshot from today/yesterday with `fetched_at` within 48h. Exits non-zero on gaps.
+
+### Validation
+
+- `uv run pytest analytics/tests/test_accuracy.py scripts/tests/ -v` -- 16 passed
+- `cd worker && npm test` -- 308 passed (19 suites, up from 296/17)
+
+### Follow-up Ops
+
+1. Apply D1 migration `005_cron_state.sql` in production.
+2. Deploy Worker.
+3. Run `uv run python scripts/backfill_snapshots.py --store mt-horeb` to seed D1 from SQLite.
+4. Run `uv run python scripts/check_forecast_coverage.py` to verify coverage.
+5. Run `uv run python scripts/evaluate_forecasts.py --store mt-horeb` to verify accuracy with real data.
+
+---
+
+## Session Update (2026-02-23) -- Accuracy + Email + Calendar Color
+
+### Shipped
+
+Three features on `codex/kv-d1-hardening` building on D1-primary infrastructure:
+
+1. **Google Calendar event color** -- events now use colorId `"9"` (Blueberry, closest to Culver's #005696). Threaded from `config.yaml` -> `main.py` -> `sync_from_cache` -> `sync_calendar` -> `create_or_update_event`. 6 Python tests.
+
+2. **Forecast accuracy tracking** -- compare ML predictions against actual D1 snapshots.
+   - `analytics/accuracy.py`: pure-function evaluation (top-1, top-5, log-loss) against forecast JSON + actual snapshots.
+   - `scripts/evaluate_forecasts.py`: CLI to query D1 forecasts + snapshots, compute metrics, optionally upload to `accuracy_metrics` table.
+   - `worker/src/migrations/004_accuracy.sql`: `accuracy_metrics` table (slug, window, hit rates, log loss, sample count).
+   - Worker endpoints: `GET /api/metrics/accuracy` (all stores, grouped) and `GET /api/metrics/accuracy/{slug}` (per-store).
+   - 11 Python tests + 4 Worker tests.
+
+3. **Forecast weekly email pipeline** -- the Worker email code was already built. Added `scripts/refresh_forecasts.sh` convenience script to generate + upload forecasts in one command.
+
+### Validation
+
+- `uv run pytest tests/test_calendar_sync.py` -- 6 passed
+- `uv run pytest analytics/tests/test_accuracy.py` -- 11 passed
+- `cd worker && npm test` -- 296 passed (17 suites)
+
+### Follow-up Ops
+
+1. Apply D1 migration `004_accuracy.sql` in production.
+2. Deploy Worker.
+3. Run `./scripts/refresh_forecasts.sh --store mt-horeb` to seed forecasts.
+4. Run `uv run python scripts/evaluate_forecasts.py --store mt-horeb --upload` to compute + upload accuracy.
+5. Verify: `curl https://custard.chriskaschner.com/api/v1/metrics/accuracy/mt-horeb`
+
+---
+
+## Session Update (2026-02-23)
+
+### Shipped In This Session
+
+- KV write budget hardening in Worker runtime:
+  - removed KV fetch-counter writes from flavor-cache miss path
+  - wrapped flavor and locator cache `kv.put()` calls in best-effort error handling (429-safe)
+  - added slug-scoped cache integrity metadata + mismatch rejection for poisoned entries
+- Snapshot persistence migrated to D1-only write path:
+  - removed KV `snap:*` writes from `snapshot-writer.js`
+  - social card flavor lookup now reads snapshot rows from D1 (no KV snapshot dependency)
+- Forecast data path moved to D1-primary reads:
+  - `forecast.js` now resolves forecasts from D1 first, KV fallback second
+  - weekly digest forecast enrichment now uses same D1/KV resolution path
+  - added D1 migration `worker/src/migrations/003_forecasts.sql`
+  - updated `scripts/upload_forecasts.py` to batch upserts into D1 forecasts table via Wrangler
+- Domain configuration updated:
+  - `worker/wrangler.toml` `WORKER_BASE_URL` set to `https://custard.chriskaschner.com` (primary)
+  - workers.dev remains compatible as runtime fallback endpoint where needed
+- Test harness cleanup:
+  - `worker/vitest.config.js` now excludes Playwright browser specs so `cd worker && npm test` is reliable
+  - refreshed tests for snapshot writer, social card, forecast endpoint, and integration cache hardening cases
+
+### Validation Status
+
+- `cd worker && npm test` passes (291 tests).
+- `cd worker && npx vitest run test/*.test.js` passes (291 tests).
+- `cd worker && npm run test:browser -- --workers=1` passes (2 Playwright browser tests).
+
+### Follow-up Ops Checklist
+
+1. Apply D1 migration in production (`003_forecasts.sql`).
+2. Deploy Worker.
+3. Run `uv run python scripts/upload_forecasts.py` to seed D1 forecasts.
+4. Verify production endpoints:
+   - `/api/v1/flavors?slug=mt-horeb`
+   - `/api/v1/flavors?slug=madison-wi-mineral-point-rd`
+   - `/api/v1/forecast/mt-horeb`
+   - `/v1/og/{slug}/{date}.svg`
+5. Monitor Cloudflare KV write usage for 24h (target: well below 1,000/day).
+
 ## Session Update (2026-02-22)
 
 ### Shipped In This Session

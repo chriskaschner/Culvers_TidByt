@@ -20,6 +20,7 @@ import { handleMetricsRoute } from './metrics.js';
 import { handleForecast } from './forecast.js';
 import { handleSocialCard } from './social-card.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
+import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
 import { fetchGillesFlavors } from './gilles-fetcher.js';
@@ -30,8 +31,7 @@ import { fetchOscarsFlavors } from './oscars-fetcher.js';
 const KV_TTL_SECONDS = 86400; // 24 hours
 const CACHE_MAX_AGE = 3600;   // 1 hour (browser + edge cache)
 const MAX_SECONDARY = 3;
-const MAX_DAILY_FETCHES_GLOBAL = 200;  // Global circuit breaker (safety net)
-const MAX_DAILY_FETCHES_PER_SLUG = 3;  // Per-slug budget (cache miss + retry + edge case)
+const FLAVOR_CACHE_RECORD_VERSION = 1;
 
 // Reject slugs with invalid characters before checking allowlist (defense-in-depth)
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]{1,59}$/;
@@ -168,47 +168,98 @@ export function isValidSlug(slug, validSlugs) {
 }
 
 /**
- * Check if a slug is within its daily fetch budget.
- * Two-tier system: per-slug limit prevents any single store from hogging
- * the budget, global circuit breaker prevents runaway total fetches.
- * @param {Object} kv - KV namespace
- * @param {string} slug - Store slug
- * @returns {Promise<boolean>} true if under budget, false if exhausted
+ * KV writes should be best-effort only. Caller correctness cannot depend on put success.
+ * @param {Object|null} kv - KV namespace binding
+ * @param {string} key - KV key
+ * @param {string} value - serialized payload
+ * @param {Object} [options] - KV put options (expirationTtl, etc)
+ * @returns {Promise<boolean>} true when write succeeded, false otherwise
  */
-async function checkFetchBudget(kv, slug) {
-  // Check per-slug budget first
-  const slugRaw = await kv.get(`meta:fetch-count:${slug}`);
-  const slugCount = slugRaw ? parseInt(slugRaw, 10) : 0;
-  if (slugCount >= MAX_DAILY_FETCHES_PER_SLUG) return false;
-
-  // Check global circuit breaker
-  const globalRaw = await kv.get('meta:fetch-count');
-  const globalCount = globalRaw ? parseInt(globalRaw, 10) : 0;
-  if (globalCount >= MAX_DAILY_FETCHES_GLOBAL) return false;
-
-  return true;
+async function safeKvPut(kv, key, value, options = {}) {
+  if (!kv) return false;
+  try {
+    await kv.put(key, value, options);
+    return true;
+  } catch (err) {
+    console.error(`KV write failed for ${key}: ${err.message}`);
+    return false;
+  }
 }
 
 /**
- * Increment both per-slug and global fetch counters after a successful fetch.
- * @param {Object} kv - KV namespace
- * @param {string} slug - Store slug
+ * Serialize a flavor-cache record with metadata for integrity checking.
+ * Shared cache keys (e.g., Kopp's) do not embed a slug because one key serves many slugs.
+ * @param {Object} data - Flavor payload
+ * @param {string} slug - Requested slug
+ * @param {boolean} isShared - true when a shared KV cache key is used
  */
-async function incrementFetchCount(kv, slug) {
-  // Increment per-slug counter
-  const slugKey = `meta:fetch-count:${slug}`;
-  const slugRaw = await kv.get(slugKey);
-  const slugCount = slugRaw ? parseInt(slugRaw, 10) : 0;
-  await kv.put(slugKey, String(slugCount + 1), {
-    expirationTtl: KV_TTL_SECONDS,
+function makeFlavorCacheRecord(data, slug, isShared) {
+  return JSON.stringify({
+    _meta: {
+      v: FLAVOR_CACHE_RECORD_VERSION,
+      shared: isShared,
+      slug: isShared ? null : slug,
+      cachedAt: new Date().toISOString(),
+    },
+    data,
   });
+}
 
-  // Increment global counter
-  const globalRaw = await kv.get('meta:fetch-count');
-  const globalCount = globalRaw ? parseInt(globalRaw, 10) : 0;
-  await kv.put('meta:fetch-count', String(globalCount + 1), {
-    expirationTtl: KV_TTL_SECONDS,
-  });
+/**
+ * Parse and validate flavor cache records. Returns null on corruption/mismatch.
+ * For non-shared keys, legacy records are rejected so stale/bad entries self-heal.
+ * @param {string} raw
+ * @param {Object} options
+ * @param {string} options.slug
+ * @param {string} options.cacheKey
+ * @param {boolean} options.isShared
+ * @returns {Object|null}
+ */
+function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared }) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    console.error(`Invalid JSON in cache key ${cacheKey}: ${err.message}`);
+    return null;
+  }
+
+  const meta = parsed?._meta;
+  if (meta && parsed.data && typeof meta === 'object') {
+    if (meta.v !== FLAVOR_CACHE_RECORD_VERSION) {
+      console.warn(`Ignoring unsupported cache record version for ${cacheKey}: ${meta.v}`);
+      return null;
+    }
+
+    if (isShared) {
+      if (!meta.shared) {
+        console.error(`Cache metadata mismatch for ${cacheKey}: expected shared record`);
+        return null;
+      }
+      return parsed.data;
+    }
+
+    if (meta.shared) {
+      console.error(`Cache metadata mismatch for ${cacheKey}: expected slug-scoped record`);
+      return null;
+    }
+    if (meta.slug !== slug) {
+      console.error(`Cache mismatch for ${cacheKey}: expected slug=${slug}, got slug=${meta.slug}`);
+      return null;
+    }
+    return parsed.data;
+  }
+
+  // Backward compatibility:
+  // - Shared keys: accept legacy payloads temporarily to avoid cold misses.
+  // - Slug-scoped keys: reject legacy payloads so old stale/corrupt values are refreshed.
+  if (parsed && typeof parsed === 'object' && Array.isArray(parsed.flavors)) {
+    if (isShared) return parsed;
+    console.warn(`Rejecting legacy slug-scoped cache record for ${cacheKey}; refreshing from upstream`);
+    return null;
+  }
+
+  return null;
 }
 
 /**
@@ -222,37 +273,36 @@ async function incrementFetchCount(kv, slug) {
  * @param {Object} [env] - Full env for D1 access (optional)
  * @returns {Promise<{name: string, flavors: Array}>}
  */
-export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false, env = {}) {
+export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false, env = {}, { recordOnHit = false } = {}) {
   const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
   const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
+  const isShared = Boolean(brandInfo.kvPrefix);
   // When isOverride is true, use the provided fetcher for all brands (testing)
   const fetcher = isOverride ? fetchFlavorsFn : brandInfo.fetcher;
 
   // Check KV cache
-  const cached = await kv.get(cacheKey);
+  const cached = kv ? await kv.get(cacheKey) : null;
   if (cached) {
-    return JSON.parse(cached);
-  }
-
-  // Check daily fetch budget before making upstream request
-  const withinBudget = await checkFetchBudget(kv, slug);
-  if (!withinBudget) {
-    throw new Error('Daily upstream fetch limit reached. Try again later.');
+    const parsed = parseFlavorCacheRecord(cached, { slug, cacheKey, isShared });
+    if (parsed) {
+      if (recordOnHit && env.DB) {
+        await recordSnapshots(null, slug, parsed, { db: env.DB, brand: brandInfo.brand });
+      }
+      return parsed;
+    }
   }
 
   // Cache miss: fetch from upstream
   const data = await fetcher(slug);
 
-  // Store in KV with TTL
-  await kv.put(cacheKey, JSON.stringify(data), {
+  // Store in KV with TTL (best-effort)
+  const cacheRecord = makeFlavorCacheRecord(data, slug, isShared);
+  await safeKvPut(kv, cacheKey, cacheRecord, {
     expirationTtl: KV_TTL_SECONDS,
   });
 
-  // Persist flavor observations for historical analysis (KV + D1)
-  await recordSnapshots(kv, slug, data, { db: env.DB || null, brand: brandInfo.brand });
-
-  // Increment fetch counter after successful fetch
-  await incrementFetchCount(kv, slug);
+  // Persist flavor observations to D1 (durable historical source of truth)
+  await recordSnapshots(null, slug, data, { db: env.DB || null, brand: brandInfo.brand });
 
   return data;
 }
@@ -691,12 +741,10 @@ async function handleApiNearbyFlavors(url, env, corsHeaders) {
 
     locatorData = await resp.json();
 
-    // Cache in KV
-    if (kv) {
-      await kv.put(cacheKey, JSON.stringify(locatorData), {
-        expirationTtl: LOCATOR_CACHE_TTL,
-      });
-    }
+    // Cache in KV (best-effort)
+    await safeKvPut(kv, cacheKey, JSON.stringify(locatorData), {
+      expirationTtl: LOCATOR_CACHE_TTL,
+    });
   }
 
   // Transform locator response into our format
@@ -820,7 +868,7 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors);
+    const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors, false, env);
     const start = Date.now();
 
     // Sunday 2 PM UTC cron → weekly digest for weekly subscribers
@@ -831,6 +879,30 @@ export default {
       const result = isWeekly
         ? await checkWeeklyDigests(env, fetchFn)
         : await checkAlerts(env, fetchFn);
+
+      // Phase 2: Snapshot harvest (independent of email config)
+      try {
+        const targets = await resolveSnapshotTargets(env.DB, env.FLAVOR_CACHE);
+        const alreadyFetched = result?.fetchedSlugs || new Set();
+        const toHarvest = targets.filter(s => !alreadyFetched.has(s));
+
+        const BATCH_SIZE = 50;
+        const cursor = await getCronCursor(env.DB, 'snapshot_harvest');
+        const batch = toHarvest.slice(cursor, cursor + BATCH_SIZE);
+
+        for (const slug of batch) {
+          try {
+            await getFlavorsCached(slug, env.FLAVOR_CACHE, defaultFetchFlavors, false, env, { recordOnHit: true });
+          } catch (err) {
+            console.error(`Snapshot harvest failed for ${slug}: ${err.message}`);
+          }
+        }
+
+        const next = cursor + batch.length >= toHarvest.length ? 0 : cursor + batch.length;
+        await setCronCursor(env.DB, 'snapshot_harvest', next);
+      } catch (err) {
+        console.error(`Snapshot harvest phase failed: ${err.message}`);
+      }
 
       // Persist cron results to D1 for observability (O1)
       if (env.DB) {

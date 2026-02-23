@@ -40,6 +40,17 @@ export async function handleMetricsRoute(path, env, corsHeaders) {
     return handleTrending(db, corsHeaders);
   }
 
+  // /api/metrics/accuracy/{slug}
+  const accuracyStoreMatch = path.match(/^\/api\/metrics\/accuracy\/(.+)$/);
+  if (accuracyStoreMatch) {
+    return handleAccuracyByStore(db, decodeURIComponent(accuracyStoreMatch[1]), corsHeaders);
+  }
+
+  // /api/metrics/accuracy
+  if (path === '/api/metrics/accuracy') {
+    return handleAccuracy(db, corsHeaders);
+  }
+
   return null;
 }
 
@@ -111,19 +122,21 @@ async function handleStoreMetrics(db, slug, corsHeaders) {
  * Trending: most and least common flavors this week vs overall.
  */
 async function handleTrending(db, corsHeaders) {
-  // This week = last 7 days
-  const weekAgo = new Date();
+  // This week = last 7 days, capped at today
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekAgo = new Date(today);
   weekAgo.setDate(weekAgo.getDate() - 7);
   const weekAgoStr = weekAgo.toISOString().slice(0, 10);
 
   const [thisWeekResult, allTimeResult] = await Promise.all([
     db.prepare(
       `SELECT normalized_flavor, flavor, COUNT(*) as count
-       FROM snapshots WHERE date >= ?
+       FROM snapshots WHERE date >= ? AND date <= ?
        GROUP BY normalized_flavor
        ORDER BY count DESC
        LIMIT 10`
-    ).bind(weekAgoStr).all(),
+    ).bind(weekAgoStr, todayStr).all(),
     db.prepare(
       `SELECT normalized_flavor, flavor, COUNT(*) as count
        FROM snapshots
@@ -145,6 +158,60 @@ async function handleTrending(db, corsHeaders) {
       count: r.count,
     })),
   }, {
+    headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+/**
+ * Accuracy metrics: all stores or grouped overview.
+ */
+async function handleAccuracy(db, corsHeaders) {
+  const result = await db.prepare(
+    `SELECT slug, window, top_1_hit_rate, top_5_hit_rate, avg_log_loss, n_samples, computed_at
+     FROM accuracy_metrics ORDER BY slug, window`
+  ).all();
+
+  const rows = result?.results || [];
+  // Group by slug
+  const grouped = {};
+  for (const row of rows) {
+    if (!grouped[row.slug]) grouped[row.slug] = {};
+    grouped[row.slug][row.window] = {
+      top_1_hit_rate: row.top_1_hit_rate,
+      top_5_hit_rate: row.top_5_hit_rate,
+      avg_log_loss: row.avg_log_loss,
+      n_samples: row.n_samples,
+      computed_at: row.computed_at,
+    };
+  }
+
+  return Response.json(grouped, {
+    headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+/**
+ * Accuracy metrics for a single store.
+ */
+async function handleAccuracyByStore(db, slug, corsHeaders) {
+  const result = await db.prepare(
+    `SELECT window, top_1_hit_rate, top_5_hit_rate, avg_log_loss, n_samples, computed_at
+     FROM accuracy_metrics WHERE slug = ? ORDER BY window`
+  ).bind(slug).all();
+
+  const rows = result?.results || [];
+  const metrics = {};
+  for (const row of rows) {
+    metrics[row.window] = {
+      top_1_hit_rate: row.top_1_hit_rate,
+      top_5_hit_rate: row.top_5_hit_rate,
+      avg_log_loss: row.avg_log_loss,
+      n_samples: row.n_samples,
+      computed_at: row.computed_at,
+    };
+  }
+
+  return Response.json({ slug, metrics }, {
     headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
   });
 }

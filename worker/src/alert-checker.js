@@ -12,6 +12,7 @@
 import { normalize, matchesFlavor } from './flavor-matcher.js';
 import { sendAlertEmail, sendWeeklyDigestEmail } from './email-sender.js';
 import { accumulateFlavors } from './flavor-catalog.js';
+import { getForecastData } from './forecast.js';
 
 /**
  * Main scheduled handler — called by Cloudflare Worker cron trigger.
@@ -22,7 +23,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
   const kv = env.FLAVOR_CACHE;
   const apiKey = env.RESEND_API_KEY;
   const fromAddress = env.ALERT_FROM_EMAIL || 'alerts@custard-calendar.com';
-  const baseUrl = env.WORKER_BASE_URL || 'https://custard-calendar.chris-kaschner.workers.dev';
+  const baseUrl = env.WORKER_BASE_URL || 'https://custard.chriskaschner.com';
 
   if (!apiKey) {
     console.log('RESEND_API_KEY not configured, skipping alert check');
@@ -93,8 +94,12 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
           const alreadySent = await kv.get(dedupKey);
           if (!alreadySent) {
             matches.push(flavor);
-            // Write dedup key with 7-day TTL
-            await kv.put(dedupKey, '1', { expirationTtl: 604800 });
+            // Write dedup key with 7-day TTL (best-effort)
+            try {
+              await kv.put(dedupKey, '1', { expirationTtl: 604800 });
+            } catch (err) {
+              console.error(`Dedup key write failed for ${dedupKey}: ${err.message}`);
+            }
           }
           break; // Don't double-match same flavor against multiple favorites
         }
@@ -138,7 +143,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
   // Write run metadata
   await writeRunMetadata(kv, subscriptions.length, sent);
 
-  return { sent, checked: subscriptions.length, errors };
+  return { sent, checked: subscriptions.length, errors, fetchedSlugs: new Set(flavorsBySlug.keys()) };
 }
 
 /**
@@ -151,7 +156,7 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
   const kv = env.FLAVOR_CACHE;
   const apiKey = env.RESEND_API_KEY;
   const fromAddress = env.ALERT_FROM_EMAIL || 'alerts@custard-calendar.com';
-  const baseUrl = env.WORKER_BASE_URL || 'https://custard-calendar.chris-kaschner.workers.dev';
+  const baseUrl = env.WORKER_BASE_URL || 'https://custard.chriskaschner.com';
 
   if (!apiKey) {
     console.log('RESEND_API_KEY not configured, skipping weekly digest');
@@ -186,8 +191,8 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
     }
     // Pull pre-computed forecast (best-effort, non-blocking)
     try {
-      const raw = await kv.get(`forecast:${slug}`);
-      if (raw) forecastBySlug.set(slug, JSON.parse(raw));
+      const { forecast } = await getForecastData(slug, env);
+      if (forecast) forecastBySlug.set(slug, forecast);
     } catch {
       // Forecast data is optional -- degrade gracefully
     }
@@ -299,9 +304,13 @@ async function listAllSubscriptions(kv) {
  * Write metadata about the latest alert run for health monitoring.
  */
 async function writeRunMetadata(kv, checked, sent) {
-  await kv.put('meta:last-alert-run', JSON.stringify({
-    timestamp: new Date().toISOString(),
-    checked,
-    sent,
-  }));
+  try {
+    await kv.put('meta:last-alert-run', JSON.stringify({
+      timestamp: new Date().toISOString(),
+      checked,
+      sent,
+    }));
+  } catch (err) {
+    console.error(`Run metadata write failed: ${err.message}`);
+  }
 }
