@@ -15,9 +15,14 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
 - [x] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose (Worker code done, batch pipeline + D1 upload wired) (2026-02-23)
 - [x] **Accuracy + snapshot hardening** -- future-date guard, snapshot upsert, cron harvest with D1 cursor, KV 429 resilience, trending date bound, backfill script, coverage gate (2026-02-23)
+- [x] **Forecast pipeline reliability** — coverage gate hard-fails on D1 errors, backfill filters closed-day sentinels, upload guards (per-store >=3 days + global 10% floor), coverage metrics endpoint (2026-02-23)
 
 ### Bugs / Polish
 - [x] **Google Calendar event color** — calendar events use Blueberry colorId 9, closest to Culver's #005696 (2026-02-23)
+- [x] **Radar rarity badges all "Rare"** — replaced absolute thresholds with percentile-based ranking (bottom 10% = Ultra Rare, 25% = Rare, 50% = Uncommon) with 10-flavor sample floor (2026-02-23)
+- [x] **Radar next-best-store empty** — added confirmed-schedule fallback: checks `/api/v1/flavors` when forecast unavailable, separate ranking path, "Confirmed" badge (2026-02-23)
+- [x] **Forecast weather graphic** — confidence strips at top of each day card (blue=confirmed, green=high, amber=medium, grey=low) + mini pixel-art cones next to flavor names (2026-02-23)
+- [x] **Flavor-of-the-day pixel art** — canonical flavor color system at `/api/v1/flavor-colors` (29 profiles), social card cones replace emoji, Radar mini-cones with flavor-colored prediction bars (2026-02-23)
 
 ### Docs
 (none)
