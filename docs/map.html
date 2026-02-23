@@ -347,17 +347,15 @@
       ].join('|');
       if (flavorIconCache.has(cacheKey)) return flavorIconCache.get(cacheKey);
 
-      const markerFill = rgbaFromHex(accentColor, 0.92);
       const markerGlow = rgbaFromHex(accentColor, 0.5);
       const icon = L.divIcon({
         className: 'flavor-map-marker-wrap',
-        iconSize: [44, 58],
-        iconAnchor: [22, 56],
-        popupAnchor: [0, -46],
+        iconSize: [48, 60],
+        iconAnchor: [24, 58],
+        popupAnchor: [0, -52],
         html:
-          '<div class="flavor-map-marker ' + stateClass + '" style="--marker-fill:' + markerFill + ';--marker-ring:' + brandColor + ';--marker-glow:' + markerGlow + ';">' +
-            '<div class="flavor-map-marker-inner">' + renderMiniConeSVG(flavor, 2.8) + '</div>' +
-            '<span class="flavor-map-marker-pip"></span>' +
+          '<div class="flavor-map-marker ' + stateClass + '" style="--marker-ring:' + brandColor + ';--marker-glow:' + markerGlow + ';">' +
+            renderMiniConeSVG(flavor, 4) +
           '</div>',
       });
       flavorIconCache.set(cacheKey, icon);
