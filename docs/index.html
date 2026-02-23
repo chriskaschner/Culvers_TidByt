@@ -55,9 +55,26 @@
     <!-- Empty state: no store selected -->
     <section id="empty-state">
       <div class="hero-empty">
-        <h2>What's scooping today?</h2>
-        <p>Pick your store to see today's flavor and the week ahead.</p>
-        <button class="btn-primary" id="find-store-btn">Find your store</button>
+        <p class="hero-kicker">New here?</p>
+        <h2>Forecast frozen custard flavors before you go.</h2>
+        <p class="hero-subtitle">Custard Calendar tracks daily flavor schedules across 1,000+ stores so you can check today's scoop and the week ahead in one place.</p>
+        <div class="hero-cta-row">
+          <button class="btn-primary" id="find-store-btn">Find your store</button>
+          <a href="map.html" class="btn-secondary">Browse coverage map</a>
+        </div>
+        <p class="hero-coverage">Coverage is strongest across Culver's locations nationwide plus Milwaukee-area independents: Kopp's, Gille's, Hefner's, Kraverz, and Oscar's.</p>
+      </div>
+      <div class="first-visit-guide">
+        <h3>Start in 3 steps</h3>
+        <ol>
+          <li>Pick a store above, or use one of the quick start stores below.</li>
+          <li>Check today's confirmed flavor and your week-ahead forecast.</li>
+          <li>Use Calendar or Alerts so you do not miss favorite flavors.</li>
+        </ol>
+        <div id="quick-start-wrap" class="quick-start-wrap" hidden>
+          <span class="quick-start-label">Quick start stores:</span>
+          <div id="quick-start-stores" class="quick-start-stores"></div>
+        </div>
       </div>
     </section>
 
@@ -406,6 +423,8 @@
     const weekSection = document.getElementById('week-section');
     const weekStrip = document.getElementById('week-strip');
     const weekFreshness = document.getElementById('week-freshness');
+    const quickStartWrap = document.getElementById('quick-start-wrap');
+    const quickStartStores = document.getElementById('quick-start-stores');
 
     // --- Utility ---
     function escapeHtml(str) {
@@ -443,6 +462,75 @@
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLng / 2) ** 2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function firstStoreMatching(predicate, usedSlugs) {
+      for (const store of allStores) {
+        if (usedSlugs.has(store.slug)) continue;
+        if (predicate(store)) return store;
+      }
+      return null;
+    }
+
+    function buildQuickStartStores() {
+      if (!allStores.length) return [];
+      const picks = [];
+      const used = new Set();
+
+      function addPick(store) {
+        if (!store || used.has(store.slug)) return;
+        picks.push(store);
+        used.add(store.slug);
+      }
+
+      const cityTargets = ['Madison', 'Milwaukee', 'Chicago', 'Minneapolis', 'Indianapolis'];
+      for (const city of cityTargets) {
+        addPick(firstStoreMatching(
+          (s) => (s.city || '').toLowerCase() === city.toLowerCase(),
+          used,
+        ));
+        if (picks.length >= 5) break;
+      }
+
+      if (picks.length < 5) {
+        const wiStores = allStores
+          .filter((s) => s.state === 'WI')
+          .sort((a, b) => (a.city || '').localeCompare(b.city || ''));
+        for (const store of wiStores) {
+          addPick(store);
+          if (picks.length >= 5) break;
+        }
+      }
+
+      if (picks.length < 5) {
+        const fallback = [...allStores].sort((a, b) => (a.city || '').localeCompare(b.city || ''));
+        for (const store of fallback) {
+          addPick(store);
+          if (picks.length >= 5) break;
+        }
+      }
+
+      return picks;
+    }
+
+    function renderQuickStartStores() {
+      if (!quickStartWrap || !quickStartStores) return;
+      const picks = buildQuickStartStores();
+      if (picks.length === 0) {
+        quickStartWrap.hidden = true;
+        return;
+      }
+      quickStartStores.innerHTML = '';
+      for (const store of picks) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quick-start-chip';
+        const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ' : '';
+        btn.textContent = brand + store.city + ', ' + store.state;
+        btn.addEventListener('click', () => selectStore(store.slug));
+        quickStartStores.appendChild(btn);
+      }
+      quickStartWrap.hidden = false;
     }
 
     // --- Store loading ---
@@ -844,6 +932,7 @@
     changeStoreBtn.addEventListener('click', showStorePicker);
 
     findStoreBtn.addEventListener('click', () => {
+      document.querySelector('.location-bar').scrollIntoView({ behavior: 'smooth', block: 'center' });
       storeSearch.focus();
     });
 
@@ -859,6 +948,7 @@
     // --- Init ---
     async function init() {
       await Promise.all([loadStores(), loadFlavorColors()]);
+      renderQuickStartStores();
 
       // Check localStorage for a saved store
       let savedSlug = null;

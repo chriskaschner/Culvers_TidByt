@@ -981,6 +981,15 @@ footer a {
   padding: 3rem 1rem;
 }
 
+.hero-empty .hero-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #005696;
+  margin-bottom: 0.5rem;
+}
+
 .hero-empty h2 {
   font-size: 1.5rem;
   color: #003366;
@@ -989,7 +998,20 @@ footer a {
 
 .hero-empty p {
   color: #666;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+}
+
+.hero-empty .hero-subtitle {
+  max-width: 42rem;
+  margin: 0 auto 1.25rem;
+  line-height: 1.5;
+}
+
+.hero-cta-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .btn-primary {
@@ -1007,6 +1029,104 @@ footer a {
 
 .btn-primary:hover {
   background: #004488;
+}
+
+.btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #003366;
+  color: #003366;
+  background: white;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: #f0f4f8;
+}
+
+.hero-empty .hero-coverage {
+  max-width: 44rem;
+  margin: 1rem auto 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #7a7a7a;
+}
+
+.first-visit-guide {
+  margin: 0 auto 1.75rem;
+  max-width: 44rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #d8e5f2;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.first-visit-guide h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #003366;
+}
+
+.first-visit-guide ol {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #3f4a56;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.quick-start-wrap {
+  margin-top: 0.75rem;
+}
+
+.quick-start-label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: #667085;
+  font-weight: 600;
+}
+
+.quick-start-stores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quick-start-chip {
+  border: 1px solid #bfd3e8;
+  background: #f7fbff;
+  color: #003366;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.quick-start-chip:hover {
+  border-color: #8eb4d8;
+  background: #eef6ff;
+}
+
+@media (max-width: 600px) {
+  .hero-empty {
+    padding: 2rem 0.5rem 1.25rem;
+  }
+
+  .hero-cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* Today's card */

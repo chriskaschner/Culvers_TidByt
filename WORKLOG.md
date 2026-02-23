@@ -63,7 +63,6 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 | HD cone topping density | Polish | Small | Toppings sparse and symmetrically mirrored; need denser asymmetric placement |
 | OG share image | Polish | Small | Replace placeholder tilted mint cone with pixel-art custard rain |
 | Forecast weather-map page | Feature | Medium | Build weather-map-esque forecast visualization page to fill white space and improve at-a-glance decision UX |
-| First-visit homepage onboarding | UX | Small | Clarify value proposition and coverage on `index.html` so non-local first-time visitors quickly understand what to do |
 | Google Calendar alerts | Known limitation | None | Google ignores VALARM in ICS subscriptions; no code fix possible |
 | Pairwise flavor voting | Deprioritized | Large | Group "where should we go tonight?" -- shelved, no clear MVP |
 | Alexa skill | Feature | Medium | Custom skill using `/api/v1/today`, needs Amazon dev account + certification |
