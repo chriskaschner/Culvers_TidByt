@@ -26,6 +26,10 @@ SQLITE_PATH = Path(__file__).resolve().parents[1] / "data" / "backfill" / "flavo
 
 BATCH_SIZE = 200
 
+# Sentinel titles for days the restaurant was closed -- these should not pollute
+# snapshot data or downstream accuracy metrics.
+CLOSED_MARKERS = {"z *Restaurant Closed Today", "z *Closed Today for Remodel!"}
+
 # Brand detection patterns mirroring BRAND_REGISTRY in worker/src/index.js
 BRAND_PATTERNS = [
     (re.compile(r"^kopps-"), "Kopp's"),
@@ -89,7 +93,13 @@ def read_sqlite(store: str | None = None) -> list[dict]:
         ).fetchall()
 
     conn.close()
-    return [dict(r) for r in rows]
+    all_rows = [dict(r) for r in rows]
+    before = len(all_rows)
+    filtered = [r for r in all_rows if r.get("title") not in CLOSED_MARKERS]
+    excluded = before - len(filtered)
+    if excluded:
+        print(f"Filtered {excluded} closed-day sentinel row(s)")
+    return filtered
 
 
 def build_sql_batch(rows: list[dict]) -> str:

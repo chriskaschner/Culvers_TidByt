@@ -23,8 +23,11 @@ D1_DATABASE_NAME = "custard-snapshots"
 WORKER_DIR = Path(__file__).resolve().parents[1] / "worker"
 
 
-def d1_query(sql: str) -> list[dict]:
-    """Execute a SQL query against remote D1 and return rows."""
+def d1_query(sql: str) -> list[dict] | None:
+    """Execute a SQL query against remote D1 and return rows.
+
+    Returns None on subprocess/parse failure (distinguishes from empty results).
+    """
     result = subprocess.run(
         [
             "npx", "wrangler", "d1", "execute", D1_DATABASE_NAME,
@@ -38,21 +41,24 @@ def d1_query(sql: str) -> list[dict]:
     )
     if result.returncode != 0:
         print(f"D1 query failed: {result.stderr}", file=sys.stderr)
-        return []
+        return None
     try:
         payload = json.loads(result.stdout)
         if isinstance(payload, list) and payload:
             return payload[0].get("results", [])
         return []
     except (json.JSONDecodeError, IndexError):
-        return []
+        return None
 
 
 def main() -> int:
     # Get all forecast slugs
     forecast_rows = d1_query("SELECT DISTINCT slug FROM forecasts")
+    if forecast_rows is None:
+        print("FAILED: D1 query error -- cannot verify coverage.", file=sys.stderr)
+        return 1
     if not forecast_rows:
-        print("No forecast slugs found in D1.")
+        print("WARNING: No forecast slugs found in D1 (empty table).")
         return 0
 
     slugs = sorted(r["slug"] for r in forecast_rows)
