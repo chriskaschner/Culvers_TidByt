@@ -10,7 +10,7 @@ Custard Calendar is a full-stack custard observability platform that ingests, no
 
 | Surface | What it does |
 |---------|-------------|
-| [Calendar](https://custard.chriskaschner.com) | Subscribe to .ics flavor forecasts for any store |
+| [Forecast](https://custard.chriskaschner.com) | Today's confirmed flavor + week-ahead outlook with pixel-art cones and confidence strips |
 | [Custard Map](https://custard.chriskaschner.com/map.html) | Search nearby flavors across all brands, filter by flavor or location |
 | [Flavor Alerts](https://custard.chriskaschner.com/alerts.html) | Email notifications when your favorite flavor is coming up (daily or weekly digest) |
 | [Flavor Radar](https://custard.chriskaschner.com/radar.html) | 7-day personalized flavor outlook blending confirmed data with ML predictions |
@@ -18,6 +18,16 @@ Custard Calendar is a full-stack custard observability platform that ingests, no
 | API v1 | Versioned REST API with flavor data, store search, geolocation, metrics, and social cards |
 | Tidbyt | Pixel-art ice cream cones on a 64x32 LED display |
 | Google Calendar | Event sync with emoji and backup-store options |
+
+### Screenshots
+
+| Forecast | Radar |
+|----------|-------|
+| ![Forecast](docs/screenshots/forecast.png) | ![Radar](docs/screenshots/radar.png) |
+
+| Map | Alerts |
+|-----|--------|
+| ![Map](docs/screenshots/map.png) | ![Alerts](docs/screenshots/alerts.png) |
 
 ### Supported Brands
 
@@ -70,9 +80,11 @@ GET /api/v1/nearby-flavors?location=53705&flavor=turtle
 GET /api/v1/geolocate
 GET /api/v1/flavors/catalog
 GET /api/v1/alerts/subscribe          (POST)
+GET /api/v1/flavor-colors
 GET /api/v1/metrics/flavor/{name}
 GET /api/v1/metrics/store/{slug}
 GET /api/v1/metrics/trending
+GET /api/v1/forecast/coverage
 GET /v1/og/{slug}/{date}.svg
 GET /health
 ```
@@ -114,7 +126,7 @@ uv run python main.py --skip-tidbyt      # Fetch + calendar
 ```bash
 cd worker
 npm install
-npm test              # 294 tests
+npm test              # 333 tests
 npx wrangler dev      # Local dev server
 ```
 
@@ -141,16 +153,16 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 ## Testing
 
 ```bash
-# Worker (Vitest) -- 292 tests across 17 suites
+# Worker (Vitest) -- 333 tests across 20 suites
 cd worker && npm test
 
 # Browser smoke suite (Playwright: nav + Radar Phase 2)
 cd worker && npm run test:browser -- --workers=1
 
-# All Python tests (~142 tests)
+# All Python tests (~176 tests)
 uv run pytest
 
-# Analytics only (84 tests)
+# Analytics only (99 tests)
 uv run pytest analytics/tests/ -v
 
 # Pipeline + static assets + browser nav click-through
@@ -230,9 +242,10 @@ custard-calendar/
 │   │   ├── valid-slugs.js         # Generated allowlist (~1,079 slugs)
 │   │   ├── store-index.js         # Generated store search index
 │   │   ├── forecast.js            # ML forecast endpoint (D1 primary + KV fallback)
+│   │   ├── flavor-colors.js       # 29 flavor profiles, pixel-art cone SVG renderer
 │   │   └── migrations/            # D1 schema migrations
-│   └── test/                      # Vitest (294 tests, 16 suites)
-├── analytics/                     # ML prediction pipeline (84 tests)
+│   └── test/                      # Vitest (333 tests, 20 suites)
+├── analytics/                     # ML prediction pipeline (99 tests)
 │   ├── data_loader.py             # SQLite -> DataFrame
 │   ├── basic_metrics.py           # Frequency, recency, entropy, surprise
 │   ├── patterns.py                # DOW bias, recurrence, seasonality
@@ -245,7 +258,8 @@ custard-calendar/
 │   ├── evaluate.py                # Train/test split, accuracy metrics
 │   └── tests/                     # 84 pytest tests
 ├── docs/                          # GitHub Pages (custard.chriskaschner.com)
-│   ├── index.html                 # Calendar subscription page
+│   ├── index.html                 # Forecast homepage (today's flavor + week ahead)
+│   ├── calendar.html              # .ics calendar subscription page
 │   ├── map.html                   # Multi-brand custard map
 │   ├── alerts.html                # Flavor alert signup
 │   ├── radar.html                 # Flavor Radar (7-day ML outlook)

@@ -918,9 +918,10 @@ describe('/api/today endpoint', () => {
     expect(body.slug).toBe('mt-horeb');
     expect(body.brand).toBe("Culver's");
     expect(body.flavor).toBeTruthy();
-    expect(body.spoken).toMatch(/Today's flavor of the day at/);
+    expect(body.spoken).toMatch(/Today the flavor of the day at/);
     expect(body.spoken).toContain("Mt. Horeb");
-    expect(body.spoken).toContain("Culver's");
+    expect(body.spoken).not.toMatch(/culvers/i);
+    expect(body.spoken).toContain(body.description);
   });
 
   it('65: returns 400 when slug is missing', async () => {

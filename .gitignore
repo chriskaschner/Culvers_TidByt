@@ -43,6 +43,8 @@ Thumbs.db
 *.png
 # Exception: OG social preview images served by GitHub Pages
 !docs/og-*.png
+# Exception: README screenshots
+!docs/screenshots/*.png
 
 # Status and cache
 status.json

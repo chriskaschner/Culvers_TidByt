@@ -623,7 +623,11 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
     }
 
     const flavorName = todayFlavor.title;
-    const spoken = `Today's flavor of the day at ${data.name} ${brand} is ${flavorName}.`;
+    let spoken = `Today the flavor of the day at ${data.name} is ${flavorName}`;
+    if (todayFlavor.description) {
+      spoken += ' - ' + todayFlavor.description;
+    }
+    spoken += '.';
 
     return Response.json({
       store: data.name,

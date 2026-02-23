@@ -222,6 +222,7 @@
 
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    const SIRI_API_BASE = 'https://custard.chriskaschner.com';
 
     const BRAND_DISPLAY = {
       kopps: "Kopp's",
@@ -299,10 +300,10 @@
       document.getElementById('try-section').hidden = false;
       document.getElementById('setup-section').hidden = false;
 
-      const apiUrl = `${WORKER_BASE}/api/v1/today?slug=${slug}`;
+      const apiUrl = `${SIRI_API_BASE}/api/v1/today?slug=${slug}`;
       document.getElementById('api-url').value = apiUrl;
 
-      fetchToday(apiUrl);
+      fetchToday(`${WORKER_BASE}/api/v1/today?slug=${slug}`);
     }
 
     async function fetchToday(url) {

@@ -21,6 +21,9 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [ ] **HD cone topping density** — toppings are sparse and symmetrically mirrored around center axis; should be denser and asymmetric for more visual interest
 - [ ] **OG share image** — replace generic card with pixel-art cloud raining custard cones (current tilted mint cone is a placeholder)
 - [x] **Siri page broken** — `stores.json` parsed as raw object instead of extracting `.stores` array (2026-02-23)
+- [x] **Siri API URL shows workers.dev** — user-facing API URL in siri.html now uses custom domain `custard.chriskaschner.com` (2026-02-23)
+- [x] **Siri spoken text reads awkwardly** — removed raw brand slug, changed to natural phrasing "Today the flavor of the day at..." (2026-02-23)
+- [x] **Siri spoken text missing description** — spoken field now includes flavor description after dash separator (2026-02-23)
 - [ ] **Google Calendar subscription alerts** — ICS events trigger default reminders; added `X-APPLE-DEFAULT-ALARM:FALSE` for Apple Calendar, but Google Calendar subscriptions require user to manually disable notifications in calendar settings
 - [x] **Google Calendar event color** — calendar events use Blueberry colorId 9, closest to Culver's #005696 (2026-02-23)
 - [x] **Radar rarity badges all "Rare"** — replaced absolute thresholds with percentile-based ranking (bottom 10% = Ultra Rare, 25% = Rare, 50% = Uncommon) with 10-flavor sample floor (2026-02-23)
