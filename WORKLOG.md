@@ -42,7 +42,7 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 |------|-----|-------------|
 | Forecast | `index.html` | Today card with rarity badge, 7-day strip, confidence strips, mini pixel-art cones |
 | Calendar | `calendar.html` | .ics subscription with Google/Apple buttons, live event preview |
-| Map | `map.html` | 1,012 geocoded stores, brand chips, flavor search, distance sorting |
+| Map | `map.html` | 1,012 geocoded stores, brand chips, flavor search, distance sorting, flavor-matched cone markers |
 | Radar | `radar.html` | 7-day personalized outlook, next-best-store, rarity/streak badges, accuracy dashboard |
 | Fronts | `forecast-map.html` | Weather-map style flavor-intensity forecast with day slider and hotspot panel |
 | Alerts | `alerts.html` | Email subscriptions, daily + weekly digest, double opt-in |
@@ -72,6 +72,19 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 
 - `a3ebdec` feat: flavor rarity badge on Forecast page
 - `2e2b150` fix: replace Speak Text with Show Result in Siri Shortcut instructions
+
+## Session Update (2026-02-23) -- Map Flavor Cone Markers
+
+### Shipped
+
+- `docs/map.html` now renders cone-style `divIcon` markers for all stores (including non-Culver's), with marker colors driven by each location's flavor of the day.
+- Marker rendering uses canonical `/api/v1/flavor-colors` profiles when available, with local fallback palettes for resilient offline rendering.
+- `docs/style.css` adds a custom marker shell/pointer style plus match/filter glow states and brand-accent rings.
+
+### Validation
+
+- `.venv/bin/pytest -q tests/test_static_assets.py` -- 8 passed
+- `cd worker && npm run test:browser -- --workers=1` -- 6 passed
 
 ---
 

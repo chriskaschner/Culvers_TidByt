@@ -436,6 +436,77 @@ details ol {
   border: 1px solid #ddd;
 }
 
+.flavor-map-marker-wrap {
+  background: transparent;
+  border: none;
+}
+
+.flavor-map-marker {
+  position: relative;
+  width: 44px;
+  height: 58px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.flavor-map-marker-inner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--marker-ring, #003366);
+  background: var(--marker-fill, rgba(0, 54, 102, 0.92));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 10px 18px -10px rgba(0, 0, 0, 0.75),
+    0 0 0 3px rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(1px);
+}
+
+.flavor-map-marker-pip {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  width: 14px;
+  height: 14px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--marker-fill, rgba(0, 54, 102, 0.92));
+  border-right: 2px solid var(--marker-ring, #003366);
+  border-bottom: 2px solid var(--marker-ring, #003366);
+  border-radius: 0 0 3px 0;
+}
+
+.flavor-map-marker .mini-cone {
+  margin: 0;
+  width: 22px;
+  height: 27px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+}
+
+.flavor-map-marker-match .flavor-map-marker-inner {
+  box-shadow:
+    0 10px 18px -10px rgba(0, 0, 0, 0.75),
+    0 0 0 3px rgba(255, 255, 255, 0.75),
+    0 0 0 7px rgba(46, 125, 50, 0.32);
+}
+
+.flavor-map-marker-filtered .flavor-map-marker-inner {
+  box-shadow:
+    0 10px 18px -10px rgba(0, 0, 0, 0.75),
+    0 0 0 3px rgba(255, 255, 255, 0.75),
+    0 0 0 7px rgba(21, 101, 192, 0.28);
+}
+
+.flavor-map-marker-default .flavor-map-marker-inner {
+  box-shadow:
+    0 10px 18px -10px rgba(0, 0, 0, 0.75),
+    0 0 0 3px rgba(255, 255, 255, 0.75),
+    0 0 0 6px var(--marker-glow, rgba(0, 54, 102, 0.24));
+}
+
 .location-row {
   display: flex;
   gap: 0.5rem;

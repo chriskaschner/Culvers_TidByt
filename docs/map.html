@@ -106,6 +106,43 @@
       oscars: "Oscar's",
     };
 
+    const FALLBACK_BASE_COLORS = {
+      vanilla: '#F5DEB3',
+      chocolate: '#7B4A2E',
+      dark_chocolate: '#4B2E2E',
+      mint: '#8FD9A8',
+      strawberry: '#E88AAE',
+      caramel: '#C58A45',
+      cheesecake: '#F3E7CB',
+      butter_pecan: '#C9A46D',
+      peach: '#F1B37C',
+    };
+    const FALLBACK_CONE_COLORS = { waffle: '#D2691E', waffle_dark: '#B8860B' };
+    const FALLBACK_TOPPING_COLORS = {
+      oreo: '#3A2E2A',
+      andes: '#7FAF7F',
+      cookie_dough: '#C48A5A',
+      brownie: '#4B2E2E',
+      peanut_butter_cup: '#7B4A2E',
+      pecan: '#A56A43',
+      caramel_bits: '#C58A45',
+      heath: '#C58A45',
+      raspberry: '#B24A64',
+      reeses: '#A56A43',
+    };
+    const FALLBACK_RIBBON_COLORS = {
+      caramel: '#C58A45',
+      fudge: '#4B2E2E',
+      peanut_butter: '#9B6A3A',
+      marshmallow: '#EDE3D1',
+      strawberry: '#B24A64',
+      lemon: '#F2D14C',
+      blackberry: '#5A3D6E',
+    };
+
+    let flavorColorData = null;
+    const flavorIconCache = new Map();
+
     // Known flavors for autocomplete
     const KNOWN_FLAVORS = [
       'Andes Mint Avalanche', 'Blackberry Cobbler', 'Brownie Thunder',
@@ -144,6 +181,7 @@
     let markers = L.layerGroup().addTo(map);
     let brandStores = []; // loaded from stores.json
     let skipMoveHandler = false; // flag to skip moveend during programmatic fitBounds
+    const flavorColorsReady = loadFlavorColors();
 
     // Brand chip state
     const BRAND_CHIP_COLORS = { culvers: '#003366', ...BRAND_COLORS };
@@ -160,6 +198,170 @@
       const a = Math.sin(dLat / 2) ** 2 +
                 Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    async function loadFlavorColors() {
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/v1/flavor-colors');
+        if (!resp.ok) return;
+        flavorColorData = await resp.json();
+        flavorIconCache.clear();
+      } catch (err) {
+        console.debug('Flavor colors unavailable:', err);
+      }
+    }
+
+    function normalizeFlavorKey(flavorName) {
+      return String(flavorName || '')
+        .toLowerCase()
+        .replace(/[\u00ae\u2122]/g, '')
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function getFlavorProfileLocal(flavorName) {
+      if (!flavorColorData || !flavorName) return null;
+      const profiles = flavorColorData.profiles || {};
+      const key = normalizeFlavorKey(flavorName);
+      return profiles[key] || null;
+    }
+
+    function getFlavorBaseColor(flavorName) {
+      if (!flavorName) return FALLBACK_BASE_COLORS.vanilla;
+
+      const key = normalizeFlavorKey(flavorName);
+      const profiles = flavorColorData ? (flavorColorData.profiles || {}) : {};
+      const baseColors = flavorColorData ? (flavorColorData.base_colors || {}) : {};
+      const profile = profiles[key];
+      if (profile && baseColors[profile.base]) return baseColors[profile.base];
+
+      if (key.includes('mint')) return FALLBACK_BASE_COLORS.mint;
+      if (key.includes('dark choc')) return FALLBACK_BASE_COLORS.dark_chocolate;
+      if (key.includes('chocolate') || key.includes('cocoa')) return FALLBACK_BASE_COLORS.chocolate;
+      if (key.includes('strawberry')) return FALLBACK_BASE_COLORS.strawberry;
+      if (key.includes('cheesecake')) return FALLBACK_BASE_COLORS.cheesecake;
+      if (key.includes('caramel')) return FALLBACK_BASE_COLORS.caramel;
+      if (key.includes('peach')) return FALLBACK_BASE_COLORS.peach;
+      if (key.includes('butter pecan')) return FALLBACK_BASE_COLORS.butter_pecan;
+      return FALLBACK_BASE_COLORS.vanilla;
+    }
+
+    function resolveToppingSlots(profile) {
+      const tops = (profile && profile.toppings) || [];
+      const density = (profile && profile.density) || 'standard';
+      if (density === 'pure') return [];
+      if (density === 'double') {
+        const slots = tops.length > 0 ? [tops[0], tops[0]] : [];
+        if (tops.length > 1) slots.push(tops[1]);
+        return slots;
+      }
+      if (density === 'explosion') return tops.slice(0, 4);
+      if (density === 'overload') return tops.length > 0 ? [tops[0], tops[0]] : [];
+      return tops.slice(0, 4);
+    }
+
+    function renderMiniConeSVG(flavorName, scale = 3) {
+      const baseColors = flavorColorData ? (flavorColorData.base_colors || {}) : {};
+      const ribbonColors = flavorColorData ? (flavorColorData.ribbon_colors || {}) : {};
+      const toppingColors = flavorColorData ? (flavorColorData.topping_colors || {}) : {};
+      const coneColors = flavorColorData ? (flavorColorData.cone_colors || FALLBACK_CONE_COLORS) : FALLBACK_CONE_COLORS;
+
+      const profile = getFlavorProfileLocal(flavorName);
+      const baseColor = (profile ? baseColors[profile.base] : null) || getFlavorBaseColor(flavorName);
+      const ribbonKey = profile ? profile.ribbon : null;
+      const hasRibbon = ribbonKey && (!profile || profile.density !== 'pure');
+      const ribbonColor = hasRibbon ? ((ribbonColors[ribbonKey] || FALLBACK_RIBBON_COLORS[ribbonKey]) || null) : null;
+      const tSlotKeys = resolveToppingSlots(profile);
+
+      const s = scale;
+      const rects = [];
+      const scoopRows = [[2, 6], [1, 7], [1, 7], [1, 7], [1, 7], [2, 6]];
+      for (let row = 0; row < scoopRows.length; row++) {
+        const [startCol, endCol] = scoopRows[row];
+        for (let col = startCol; col <= endCol; col++) {
+          rects.push('<rect x="' + (col * s) + '" y="' + (row * s) + '" width="' + s + '" height="' + s + '" fill="' + baseColor + '"/>');
+        }
+      }
+
+      const tSlots = [[2, 1], [6, 1], [3, 3], [5, 2]];
+      for (let i = 0; i < tSlotKeys.length && i < tSlots.length; i++) {
+        if (i === 3 && hasRibbon) continue;
+        const key = tSlotKeys[i];
+        const color = toppingColors[key] || FALLBACK_TOPPING_COLORS[key];
+        if (!color) continue;
+        rects.push('<rect x="' + (tSlots[i][0] * s) + '" y="' + (tSlots[i][1] * s) + '" width="' + s + '" height="' + s + '" fill="' + color + '"/>');
+      }
+
+      if (ribbonColor) {
+        const ribbonSlots = [[3, 0], [4, 1], [5, 2]];
+        for (const [col, row] of ribbonSlots) {
+          rects.push('<rect x="' + (col * s) + '" y="' + (row * s) + '" width="' + s + '" height="' + s + '" fill="' + ribbonColor + '"/>');
+        }
+      }
+
+      const coneRows = [[2, 6], [2, 6], [3, 5], [3, 5]];
+      for (let row = 0; row < coneRows.length; row++) {
+        const [startCol, endCol] = coneRows[row];
+        for (let col = startCol; col <= endCol; col++) {
+          const waffle = ((row + col) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
+          rects.push('<rect x="' + (col * s) + '" y="' + ((row + 6) * s) + '" width="' + s + '" height="' + s + '" fill="' + waffle + '"/>');
+        }
+      }
+      rects.push('<rect x="' + (4 * s) + '" y="' + (10 * s) + '" width="' + s + '" height="' + s + '" fill="' + coneColors.waffle_dark + '"/>');
+
+      return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9 * s) + ' ' + (11 * s) + '" width="' + (9 * s) + '" height="' + (11 * s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
+    }
+
+    function rgbaFromHex(hex, alpha) {
+      const normalized = String(hex || '').trim();
+      const m = normalized.match(/^#([0-9a-fA-F]{6})$/);
+      if (!m) return 'rgba(0, 54, 102, ' + alpha + ')';
+      const value = m[1];
+      const r = parseInt(value.slice(0, 2), 16);
+      const g = parseInt(value.slice(2, 4), 16);
+      const b = parseInt(value.slice(4, 6), 16);
+      return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+    }
+
+    function iconStateClass(isMatch, hasFlavorFilter) {
+      if (isMatch) return 'flavor-map-marker-match';
+      if (hasFlavorFilter) return 'flavor-map-marker-filtered';
+      return 'flavor-map-marker-default';
+    }
+
+    function markerBrandColor(brand) {
+      if (!brand || brand === 'culvers') return '#003366';
+      return BRAND_COLORS[brand] || '#003366';
+    }
+
+    function buildConeMarkerIcon(store, hasFlavorFilter) {
+      const flavor = store.flavor || 'Vanilla';
+      const accentColor = getFlavorBaseColor(flavor);
+      const brandColor = markerBrandColor(store._brand || store.brand);
+      const stateClass = iconStateClass(Boolean(store._match), hasFlavorFilter);
+      const cacheKey = [
+        normalizeFlavorKey(flavor),
+        store._brand || store.brand || 'culvers',
+        stateClass,
+      ].join('|');
+      if (flavorIconCache.has(cacheKey)) return flavorIconCache.get(cacheKey);
+
+      const markerFill = rgbaFromHex(accentColor, 0.92);
+      const markerGlow = rgbaFromHex(accentColor, 0.5);
+      const icon = L.divIcon({
+        className: 'flavor-map-marker-wrap',
+        iconSize: [44, 58],
+        iconAnchor: [22, 56],
+        popupAnchor: [0, -46],
+        html:
+          '<div class="flavor-map-marker ' + stateClass + '" style="--marker-fill:' + markerFill + ';--marker-ring:' + brandColor + ';--marker-glow:' + markerGlow + ';">' +
+            '<div class="flavor-map-marker-inner">' + renderMiniConeSVG(flavor, 2.8) + '</div>' +
+            '<span class="flavor-map-marker-pip"></span>' +
+          '</div>',
+      });
+      flavorIconCache.set(cacheKey, icon);
+      return icon;
     }
 
     function syncChipStyles() {
@@ -204,6 +406,8 @@
     let cachedSecondaryKey = '';    // tracks which brands are cached
 
     async function refreshResults(skipFitBounds = false) {
+      await flavorColorsReady;
+
       const hasPrimary = activeBrands.has('culvers');
       const secondaryBrands = [...activeBrands].filter(b => b !== 'culvers');
 
@@ -269,17 +473,9 @@
 
       for (const store of allStores) {
         allBounds.extend([store._lat, store._lon]);
-        if (store._brand === 'culvers') {
-          const icon = store._match ? greenIcon : (hasFlavorFilter ? blueIcon : defaultIcon);
-          const marker = L.marker([store._lat, store._lon], { icon }).bindPopup(storePopup(store, store._match));
-          markers.addLayer(marker);
-        } else {
-          const color = BRAND_COLORS[store._brand] || '#003366';
-          const marker = L.circleMarker([store._lat, store._lon], {
-            radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
-          }).bindPopup(storePopup(store, store._match));
-          markers.addLayer(marker);
-        }
+        const icon = buildConeMarkerIcon(store, hasFlavorFilter);
+        const marker = L.marker([store._lat, store._lon], { icon }).bindPopup(storePopup(store, store._match));
+        markers.addLayer(marker);
       }
 
       // Suggestions
@@ -614,25 +810,6 @@
         });
       });
     }
-
-    // Custom map icons
-    const greenIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
-    });
-
-    const blueIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
-    });
-
-    const defaultIcon = L.icon({
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
-    });
 
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';

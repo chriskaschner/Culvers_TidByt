@@ -11,7 +11,7 @@ Custard Calendar is a full-stack custard observability platform that ingests, no
 | Surface | What it does |
 |---------|-------------|
 | [Forecast](https://custard.chriskaschner.com) | Today's confirmed flavor + week-ahead outlook with pixel-art cones and confidence strips |
-| [Custard Map](https://custard.chriskaschner.com/map.html) | Search nearby flavors across all brands, filter by flavor or location |
+| [Custard Map](https://custard.chriskaschner.com/map.html) | Search nearby flavors across all brands with flavor-matched cone map markers |
 | [Flavor Alerts](https://custard.chriskaschner.com/alerts.html) | Email notifications when your favorite flavor is coming up (daily or weekly digest) |
 | [Flavor Radar](https://custard.chriskaschner.com/radar.html) | 7-day personalized flavor outlook blending confirmed data with ML predictions |
 | [Flavor Fronts](https://custard.chriskaschner.com/forecast-map.html) | Weather-map style forecast view with flavor-intensity hotspots and day slider |
