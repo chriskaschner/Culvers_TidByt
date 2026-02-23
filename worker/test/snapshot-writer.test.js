@@ -16,7 +16,7 @@ function createMockDb() {
 }
 
 describe('recordSnapshot (D1-only)', () => {
-  it('writes one row to D1 with normalized flavor', async () => {
+  it('writes one row to D1 with normalized flavor via upsert', async () => {
     const kv = createMockKV();
     const { db, prepare, bind, run } = createMockDb();
 
@@ -26,6 +26,9 @@ describe('recordSnapshot (D1-only)', () => {
     });
 
     expect(prepare).toHaveBeenCalledOnce();
+    const sql = prepare.mock.calls[0][0];
+    expect(sql).toContain('ON CONFLICT');
+    expect(sql).not.toContain('INSERT OR IGNORE');
     expect(bind).toHaveBeenCalledWith(
       "Culver's",
       'mt-horeb',

@@ -82,7 +82,7 @@ describe('scheduled cron integration', () => {
     expect(mocks.checkAlerts).toHaveBeenCalledTimes(1);
     expect(mocks.fetchFlavors).toHaveBeenCalledTimes(1);
 
-    const wroteSnapshot = db.writes.some(entry => entry.sql.includes('INSERT OR IGNORE INTO snapshots'));
+    const wroteSnapshot = db.writes.some(entry => entry.sql.includes('INTO snapshots') && entry.sql.includes('ON CONFLICT'));
     expect(wroteSnapshot).toBe(true);
 
     const wroteCronRun = db.writes.some(entry => entry.sql.includes('INSERT INTO cron_runs'));

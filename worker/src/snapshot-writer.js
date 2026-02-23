@@ -29,8 +29,12 @@ export async function recordSnapshot(kv, slug, date, flavor, description, option
 
   try {
     await db.prepare(
-      `INSERT OR IGNORE INTO snapshots (brand, slug, date, flavor, normalized_flavor, description, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO snapshots (brand, slug, date, flavor, normalized_flavor, description, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(slug, date) DO UPDATE SET
+         flavor = excluded.flavor, normalized_flavor = excluded.normalized_flavor,
+         description = excluded.description, fetched_at = excluded.fetched_at
+       WHERE excluded.date >= date('now', '-7 days')`
     ).bind(
       options.brand || 'unknown',
       slug,
