@@ -1161,11 +1161,12 @@
         const confirmed = await fetchConfirmedFlavors(store.slug);
         if (confirmed && confirmed.flavors && confirmed.flavors.length > 0) {
           confirmedOnlyCount++;
+          const todayStr = new Date().toISOString().slice(0, 10);
           for (const fav of favorites) {
             const favKey = normalize(fav);
             // Only recommend if flavor appears in candidate's confirmed schedule
-            // but NOT in primary store's confirmed schedule
-            const match = confirmed.flavors.find(f => normalize(f.title) === favKey);
+            // on today or a future date, and NOT in primary store's confirmed schedule
+            const match = confirmed.flavors.find(f => normalize(f.title) === favKey && f.date >= todayStr);
             if (!match) continue;
             if (primaryConfirmedFlavors.has(favKey)) continue;
 
