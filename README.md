@@ -126,7 +126,7 @@ uv run python main.py --skip-tidbyt      # Fetch + calendar
 ```bash
 cd worker
 npm install
-npm test              # 333 tests
+npm test              # 343 tests
 npx wrangler dev      # Local dev server
 ```
 
@@ -153,7 +153,7 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 ## Testing
 
 ```bash
-# Worker (Vitest) -- 333 tests across 20 suites
+# Worker (Vitest) -- 343 tests across 21 suites
 cd worker && npm test
 
 # Browser smoke suite (Playwright: nav + Radar Phase 2)
@@ -244,7 +244,7 @@ custard-calendar/
 │   │   ├── forecast.js            # ML forecast endpoint (D1 primary + KV fallback)
 │   │   ├── flavor-colors.js       # 29 flavor profiles, pixel-art cone SVG renderer
 │   │   └── migrations/            # D1 schema migrations
-│   └── test/                      # Vitest (333 tests, 20 suites)
+│   └── test/                      # Vitest (343 tests, 21 suites)
 ├── analytics/                     # ML prediction pipeline (99 tests)
 │   ├── data_loader.py             # SQLite -> DataFrame
 │   ├── basic_metrics.py           # Frequency, recency, entropy, surprise
@@ -256,7 +256,7 @@ custard-calendar/
 │   ├── forecast_writer.py         # Weather-style prose generation
 │   ├── batch_forecast.py          # CLI batch forecast generation
 │   ├── evaluate.py                # Train/test split, accuracy metrics
-│   └── tests/                     # 84 pytest tests
+│   └── tests/                     # 99 pytest tests
 ├── docs/                          # GitHub Pages (custard.chriskaschner.com)
 │   ├── index.html                 # Forecast homepage (today's flavor + week ahead)
 │   ├── calendar.html              # .ics calendar subscription page

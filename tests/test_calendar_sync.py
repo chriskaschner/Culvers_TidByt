@@ -67,6 +67,17 @@ class TestSyncCalendarThreadsColor:
         body = service.events.return_value.insert.call_args[1]['body']
         assert 'colorId' not in body
 
+    def test_sync_calendar_per_flavor_checks_existing_event_once(self):
+        service = _mock_service()
+        flavors = [
+            {'date': '2026-03-01', 'name': 'Turtle', 'description': 'Good'},
+        ]
+
+        sync_calendar(service, flavors)
+
+        # Regression guard: avoid duplicate list() calls per flavor.
+        assert service.events.return_value.list.call_count == 1
+
 
 class TestSyncFromCacheThreadsColor:
     @patch('src.calendar_sync.sync_calendar')

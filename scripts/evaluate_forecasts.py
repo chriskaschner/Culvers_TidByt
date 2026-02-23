@@ -64,7 +64,7 @@ def d1_query(sql: str) -> list[dict]:
 def fetch_forecasts(store: str | None = None) -> dict[str, dict]:
     """Fetch forecast JSON from D1 forecasts table."""
     if store:
-        sql = f"SELECT slug, data FROM forecasts WHERE slug = '{store}'"
+        sql = f"SELECT slug, data FROM forecasts WHERE slug = {sql_quote(store)}"
     else:
         sql = "SELECT slug, data FROM forecasts"
 
@@ -80,7 +80,10 @@ def fetch_forecasts(store: str | None = None) -> dict[str, dict]:
 def fetch_snapshots(store: str | None = None, days: int = 30) -> dict[str, dict[str, str]]:
     """Fetch actual flavor snapshots from D1, keyed by slug then date."""
     if store:
-        where = f"WHERE slug = '{store}' AND date >= date('now', '-{days} days') AND date <= date('now')"
+        where = (
+            f"WHERE slug = {sql_quote(store)} "
+            f"AND date >= date('now', '-{days} days') AND date <= date('now')"
+        )
     else:
         where = f"WHERE date >= date('now', '-{days} days') AND date <= date('now')"
     sql = (

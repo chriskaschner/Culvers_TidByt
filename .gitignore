@@ -22,6 +22,7 @@ ENV/
 
 # Claude Code
 CLAUDE.md
+.claude/worktrees/
 
 # Credentials and secrets
 credentials/
@@ -51,6 +52,10 @@ status.json
 __cache__/
 flavor_cache.json
 tools/osm_cache.json
+test-results/
+analytics/executed_review.html
+analytics/executed_review.ipynb
+data/forecasts/
 
 # Cloudflare Worker
 worker/node_modules/

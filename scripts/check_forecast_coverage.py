@@ -23,6 +23,11 @@ D1_DATABASE_NAME = "custard-snapshots"
 WORKER_DIR = Path(__file__).resolve().parents[1] / "worker"
 
 
+def sql_quote(value: str) -> str:
+    """SQL-quote a string for inline VALUES clauses."""
+    return "'" + value.replace("'", "''") + "'"
+
+
 def d1_query(sql: str) -> list[dict] | None:
     """Execute a SQL query against remote D1 and return rows.
 
@@ -69,7 +74,7 @@ def main() -> int:
     for slug in slugs:
         sql = (
             f"SELECT COUNT(*) as cnt FROM snapshots "
-            f"WHERE slug = '{slug}' "
+            f"WHERE slug = {sql_quote(slug)} "
             f"AND date IN (date('now'), date('now', '-1 day')) "
             f"AND fetched_at >= datetime('now', '-48 hours')"
         )

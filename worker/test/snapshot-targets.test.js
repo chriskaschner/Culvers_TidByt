@@ -49,6 +49,7 @@ function createMockKV(subscriptions = {}) {
   const store = new Map(Object.entries(subscriptions));
   return {
     get: vi.fn(async (key) => store.get(key) || null),
+    put: vi.fn(async (key, value) => store.set(key, value)),
     list: vi.fn(async (opts) => {
       const prefix = opts?.prefix || '';
       const keys = [];
@@ -66,8 +67,20 @@ describe('resolveSnapshotTargets', () => {
   it('returns union of forecast + subscription slugs, deduplicated and sorted', async () => {
     const db = createMockDb(['mt-horeb', 'madison-todd-drive']);
     const kv = createMockKV({
-      'alert:sub:abc': JSON.stringify({ slug: 'mt-horeb', email: 'a@b.com', favorites: [] }),
-      'alert:sub:def': JSON.stringify({ slug: 'middleton', email: 'c@d.com', favorites: [] }),
+      'alert:sub:abc': JSON.stringify({
+        slug: 'mt-horeb',
+        email: 'a@b.com',
+        favorites: [],
+        unsubToken: 'tok-1',
+        createdAt: '2026-02-23T00:00:00.000Z',
+      }),
+      'alert:sub:def': JSON.stringify({
+        slug: 'middleton',
+        email: 'c@d.com',
+        favorites: [],
+        unsubToken: 'tok-2',
+        createdAt: '2026-02-23T00:00:00.000Z',
+      }),
     });
 
     const targets = await resolveSnapshotTargets(db, kv);
@@ -85,7 +98,33 @@ describe('resolveSnapshotTargets', () => {
   it('returns subscription slugs only when no forecasts', async () => {
     const db = createMockDb([]);
     const kv = createMockKV({
-      'alert:sub:abc': JSON.stringify({ slug: 'middleton', email: 'a@b.com', favorites: [] }),
+      'alert:sub:abc': JSON.stringify({
+        slug: 'middleton',
+        email: 'a@b.com',
+        favorites: [],
+        unsubToken: 'tok-1',
+        createdAt: '2026-02-23T00:00:00.000Z',
+      }),
+    });
+
+    const targets = await resolveSnapshotTargets(db, kv);
+    expect(targets).toEqual(['middleton']);
+  });
+
+  it('reads subscription slugs from materialized index when available', async () => {
+    const db = createMockDb([]);
+    const kv = createMockKV({
+      'alert:index:subscriptions:v1': JSON.stringify([
+        {
+          id: 'abc',
+          email: 'a@b.com',
+          slug: 'middleton',
+          favorites: ['Turtle'],
+          frequency: 'daily',
+          unsubToken: 'tok-1',
+          createdAt: '2026-02-23T00:00:00.000Z',
+        },
+      ]),
     });
 
     const targets = await resolveSnapshotTargets(db, kv);

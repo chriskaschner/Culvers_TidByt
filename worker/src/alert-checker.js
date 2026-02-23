@@ -13,6 +13,7 @@ import { normalize, matchesFlavor } from './flavor-matcher.js';
 import { sendAlertEmail, sendWeeklyDigestEmail } from './email-sender.js';
 import { accumulateFlavors } from './flavor-catalog.js';
 import { getForecastData } from './forecast.js';
+import { listSubscriptions } from './subscription-store.js';
 
 /**
  * Main scheduled handler — called by Cloudflare Worker cron trigger.
@@ -31,7 +32,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
   }
 
   // List all active subscriptions, filtering to daily-only
-  const allSubscriptions = await listAllSubscriptions(kv);
+  const allSubscriptions = await listSubscriptions(kv);
   const subscriptions = allSubscriptions.filter(sub => (sub.frequency || 'daily') !== 'weekly');
   if (subscriptions.length === 0) {
     await writeRunMetadata(kv, 0, 0);
@@ -86,6 +87,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
 
     // Find matches against favorites
     const matches = [];
+    const dedupKeysToWrite = [];
     for (const flavor of upcomingFlavors) {
       for (const fav of sub.favorites) {
         if (matchesFlavor(flavor.title, fav, flavor.description)) {
@@ -94,12 +96,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
           const alreadySent = await kv.get(dedupKey);
           if (!alreadySent) {
             matches.push(flavor);
-            // Write dedup key with 7-day TTL (best-effort)
-            try {
-              await kv.put(dedupKey, '1', { expirationTtl: 604800 });
-            } catch (err) {
-              console.error(`Dedup key write failed for ${dedupKey}: ${err.message}`);
-            }
+            dedupKeysToWrite.push(dedupKey);
           }
           break; // Don't double-match same flavor against multiple favorites
         }
@@ -128,6 +125,14 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
       );
 
       if (result.ok) {
+        for (const dedupKey of dedupKeysToWrite) {
+          // Write dedup key with 7-day TTL (best-effort), only after a successful send.
+          try {
+            await kv.put(dedupKey, '1', { expirationTtl: 604800 });
+          } catch (err) {
+            console.error(`Dedup key write failed for ${dedupKey}: ${err.message}`);
+          }
+        }
         sent++;
       } else {
         errors.push(`${sub.email}/${sub.slug}: ${result.error}`);
@@ -164,7 +169,7 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
   }
 
   // List all active subscriptions, filtering to weekly-only
-  const allSubscriptions = await listAllSubscriptions(kv);
+  const allSubscriptions = await listSubscriptions(kv);
   const subscriptions = allSubscriptions.filter(sub => sub.frequency === 'weekly');
   if (subscriptions.length === 0) {
     return { sent: 0, checked: 0, errors: [] };
@@ -263,41 +268,6 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
   }
 
   return { sent, checked: subscriptions.length, errors };
-}
-
-/**
- * List all active subscriptions from KV.
- * Uses KV list with prefix and paginates with cursor.
- * @param {Object} kv
- * @returns {Promise<Array<{id: string, email: string, slug: string, favorites: string[], unsubToken: string}>>}
- */
-async function listAllSubscriptions(kv) {
-  const subs = [];
-  let cursor = undefined;
-
-  do {
-    const opts = { prefix: 'alert:sub:', limit: 1000 };
-    if (cursor) opts.cursor = cursor;
-
-    const list = await kv.list(opts);
-
-    for (const key of list.keys) {
-      const raw = await kv.get(key.name);
-      if (raw) {
-        try {
-          const sub = JSON.parse(raw);
-          sub.id = key.name.replace('alert:sub:', '');
-          subs.push(sub);
-        } catch {
-          // Skip corrupted entries
-        }
-      }
-    }
-
-    cursor = list.list_complete ? undefined : list.cursor;
-  } while (cursor);
-
-  return subs;
 }
 
 /**

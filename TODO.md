@@ -8,6 +8,8 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Voice assistant integration (Siri)** — `/api/v1/today` endpoint with `spoken` field, `docs/siri.html` setup page with store picker + live preview. User builds 3-action Shortcut and shares via iCloud link.
 - [x] **Flavor Radar (Phase 1)** — 7-day personalized flavor outlook at `docs/radar.html`. Store picker, favorite flavor picker (up to 3), timeline blending confirmed data with ML predictions. Confidence-bucketed prediction bars, overdue favorites, similar flavor suggestions. Multi-day `generate_multiday_forecast_json()` in batch pipeline with `--days` flag. 5 Python tests + 1 Worker test.
 - [x] **Flavor Radar Phase 2** — cross-store "Next Best Store" recommendations, rarity/streak badges, forecast accuracy dashboard (2026-02-22)
+- [ ] **Forecast weather-map page** — build `docs/forecast-map.html` with a weather-map-style visual forecast (at-a-glance regional flavor activity + 7-day movement) to reduce white space and improve scanability
+- [ ] **First-visit homepage onboarding** — update `docs/index.html` so new/non-local users immediately understand what Custard Calendar does, where coverage applies, and the top 2-3 actions to start
 - [ ] **Alexa skill** — custom Alexa skill using `/api/v1/today` endpoint (requires Amazon developer account + certification)
 - [ ] **Flavor chatbot assistant** — conversational Q&A for flavor info (e.g., today's flavor, upcoming week, nearby stores with a flavor) via web chat UI and `/api/v1` endpoints
 - [x] **Forecast accuracy tracking** — compare predictions vs actual flavors for WI stores; compute hit rate metrics to retrain models (2026-02-23)
@@ -17,6 +19,23 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Accuracy + snapshot hardening** -- future-date guard, snapshot upsert, cron harvest with D1 cursor, KV 429 resilience, trending date bound, backfill script, coverage gate (2026-02-23)
 - [x] **Forecast pipeline reliability** — coverage gate hard-fails on D1 errors, backfill filters closed-day sentinels, upload guards (per-store >=3 days + global 10% floor), coverage metrics endpoint (2026-02-23)
 - [x] **Flavor rarity badge on Forecast page** — `/api/v1/today` computes rarity from D1 snapshots (appearances, avg gap, percentile label), Siri spoken text includes gap for rare flavors, homepage renders rarity badge + gap text below today's flavor (2026-02-23)
+
+### Engineering Backlog (2026-02-23 review)
+
+#### Now (P1/P2)
+- [x] **Fix alert dedup ordering** — write `alert:sent:*` only after successful email send so transient provider failures do not suppress future alerts for 7 days (2026-02-23)
+- [x] **Keep `/health` public when auth is enabled** — move health routing before token gate or explicitly split `/health` and `/api/health` policies (2026-02-23)
+- [x] **Fail fast when email is disabled** — if `RESEND_API_KEY` is unset, `/api/v1/alerts/subscribe` should not create unconfirmable pending records (2026-02-23)
+- [x] **Remove duplicate Google Calendar existence lookups** — avoid calling `find_event_by_date_and_title()` twice per flavor sync (2026-02-23)
+- [x] **Eliminate KV N+1 subscription scans** — introduced materialized subscription index with scan fallback for alert + snapshot-target iteration (2026-02-23)
+- [x] **Break Worker circular dependency** — moved shared slug-validation helpers out of `worker/src/index.js` so `alert-routes` no longer imports router internals (2026-02-23)
+- [x] **Correct API error semantics** — return `5xx` (not `400`) for upstream/internal failures in `/api/v1/flavors` and `/api/v1/today` (2026-02-23)
+
+#### Next (P2/P3)
+- [ ] **Decompose large modules** — split `worker/src/index.js` and large inline scripts in `docs/index.html` + `docs/radar.html` into focused modules (started: extracted slug validation + subscription store modules)
+- [x] **Harden local D1 scripts against SQL injection** — replaced unsafe string interpolation in forecast evaluation/coverage scripts (2026-02-23)
+- [x] **Add regression tests for missing behavior** — added tests for dedup-after-send, `/health` behavior under `ACCESS_TOKEN`, and subscription index behavior (2026-02-23)
+- [x] **Clean documentation drift** — updated README test counts and synchronized status notes in WORKLOG/TODO (2026-02-23)
 
 ### Bugs / Polish
 - [ ] **HD cone topping density** — toppings are sparse and symmetrically mirrored around center axis; should be denser and asymmetric for more visual interest

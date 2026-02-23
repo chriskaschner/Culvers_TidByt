@@ -60,13 +60,14 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 
 | Item | Type | Effort | Notes |
 |------|------|--------|-------|
-| Alexa skill | Feature | Medium | Custom skill using `/api/v1/today`, needs Amazon dev account + certification |
-| Flavor chatbot | Feature | Large | Conversational Q&A via web chat UI over `/api/v1` endpoints |
-| Madison brand expansion | Feature | Research | Methodology for adding new brands outside MKE geo |
 | HD cone topping density | Polish | Small | Toppings sparse and symmetrically mirrored; need denser asymmetric placement |
 | OG share image | Polish | Small | Replace placeholder tilted mint cone with pixel-art custard rain |
+| Forecast weather-map page | Feature | Medium | Build weather-map-esque forecast visualization page to fill white space and improve at-a-glance decision UX |
+| First-visit homepage onboarding | UX | Small | Clarify value proposition and coverage on `index.html` so non-local first-time visitors quickly understand what to do |
 | Google Calendar alerts | Known limitation | None | Google ignores VALARM in ICS subscriptions; no code fix possible |
 | Pairwise flavor voting | Deprioritized | Large | Group "where should we go tonight?" -- shelved, no clear MVP |
+| Alexa skill | Feature | Medium | Custom skill using `/api/v1/today`, needs Amazon dev account + certification |
+| Flavor chatbot | Feature | Large | Conversational Q&A via web chat UI over `/api/v1` endpoints |
 
 ### Session Commits
 
@@ -208,11 +209,11 @@ Three features on `codex/kv-d1-hardening` building on D1-primary infrastructure:
 - `cd worker && npm run test:browser -- --workers=1` passes (nav + Radar Phase 2 browser tests).
 - `.venv/bin/pytest tests/ -v` passes (25 tests, includes browser suite wrapper).
 
-### Next Session Start Point
+### Next Session Start Point (Historical, superseded)
 
-1. TODO #3: Forecast accuracy tracking (prediction vs actual for WI stores; hit-rate metrics and retraining loop).
-2. TODO #2: Alexa skill integration after accuracy tracking baseline is in place.
-3. Keep TODO #1 as done; no remaining Phase 2 UI blockers.
+1. TODO #3 (forecast accuracy tracking) was completed on 2026-02-23.
+2. TODO #2 (Alexa skill integration) is still pending.
+3. Active source of truth is `TODO.md`.
 
 ## Analytics Pipeline (2026-02-22)
 
@@ -298,16 +299,17 @@ Three user jobs to solve:
 ### Priority Stack Rank
 
 Reordered from original analysis after exec review. Trust infrastructure comes before features.
+Status notes below were updated on 2026-02-23 to reflect shipped work; `TODO.md` remains canonical.
 
 | Priority | Initiative | User Value | Effort | Risk | Status |
 |----------|-----------|-----------|--------|------|--------|
-| **Now** | Confidence-aware UI + reason strings | High | Low | Low | TODO — trust layer. Confidence buckets (high/med/low), "why this prediction" tooltips, fallback cards. Must exist before any prediction surfaces in UI. |
-| **Now** | Flavor Radar | High | Medium | Medium | TODO — user picks top 3 flavors, sees "likely in next 7 days" with confidence across their stores. Flavor-first, not store-first. |
-| **Now** | Next Best Store | High | Medium | Medium | TODO — if favorite not likely at primary store, show nearest store with higher probability. Cross-store recommendation. Leverages collaborative filtering + geolocation. |
-| **Now** | Rarity + Streak badges | Medium | Low | Low | TODO — "First appearance in 45 days", "3rd time this month", "Seasonal peak". Combines surprise score with temporal pattern badges. |
+| **Now** | Confidence-aware UI + reason strings | High | Low | Low | DONE (2026-02-23) — confidence strips/buckets shipped in Forecast and Radar; continue iterating reason-string UX. |
+| **Now** | Flavor Radar | High | Medium | Medium | DONE (2026-02-22) — user favorites + 7-day outlook shipped at `docs/radar.html`. |
+| **Now** | Next Best Store | High | Medium | Medium | DONE (2026-02-22) — cross-store recommendation shipped in Radar Phase 2. |
+| **Now** | Rarity + Streak badges | Medium | Low | Low | DONE (2026-02-22) — rarity/streak/overdue badges shipped with Phase 2. |
 | **Next** | Weekly Custard Planner | High | Medium | Medium | TODO — 7-day personalized schedule across selected stores. Interactive (not push), cross-store. Export to calendar. |
 | **Next** | "Worth the Trip" score | Medium | Medium | Medium | TODO — composite: `utility = preference_match * p_next_7d * confidence * rarity`. Single decision metric. |
-| **Next** | Forecast-powered weekly email | High | Low | Low | TODO — half-built. Merge forecast data into `sendWeeklyDigestEmail()`. Weather-style prose. |
+| **Next** | Forecast-powered weekly email | High | Low | Low | DONE (2026-02-23) — weekly digest now includes forecast narrative + prediction block in `sendWeeklyDigestEmail()`. |
 | **Later** | Taste Profile Mode | High | High | High | TODO — infer preference vector from interactions (chocolate-heavy, fruity, nutty). Rank upcoming flavors by preference score. |
 | **Later** | Full personalization model | High | High | High | TODO — requires user signal data accumulation before this is viable. |
 | **Backlog** | Per-flavor SEO pages | High | Medium | Low | `/flavor/{name}` — each flavor = landing page. Where served today, frequency, seasonal pattern, overdue stores, similar flavors. |
@@ -494,23 +496,25 @@ For ranking weights, card formats, and notification timing:
 - Deletion controls (GDPR-style "forget me" even if not legally required — good practice)
 - Current alert system already has one-click unsubscribe and token-gated access — extend this posture
 
-### 90-Day Execution Plan
+### 90-Day Execution Plan (Historical planning snapshot)
+
+Planned on 2026-02-22. Several milestones below shipped on 2026-02-22/2026-02-23.
 
 **Days 1–21: Trust + Radar**
-- Ship confidence labels, reason strings, fallback cards
-- Ship Flavor Radar v1 (favorites + 7-day outlook)
+- DONE: confidence labels, reason strings, fallback cards
+- DONE: Flavor Radar v1 (favorites + 7-day outlook)
 - Add instrumentation for recommendation acceptance and return behavior
 - Enrich forecast payload to match feature contract
 
 **Days 22–45: Cross-Store + Badges**
-- Ship Next Best Store recommendations
-- Ship rarity + streak badges in emails and map
+- DONE: Next Best Store recommendations
+- DONE: rarity + streak badges in emails and map
 - Add internal forecast quality dashboard (Brier score, calibration by store)
 
 **Days 46–75: Planner + Signals**
 - Ship Weekly Custard Planner with calendar export
 - Start preference scoring from implicit behavior (clicked vs skipped)
-- Forecast-powered weekly email (simpler lift, builds on planner data)
+- DONE: Forecast-powered weekly email (simpler lift, built from planner/forecast data)
 
 **Days 76–90: Evaluate + Decide**
 - Run A/B on ranking formula weight variations

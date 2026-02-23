@@ -279,6 +279,10 @@ describe('Alert checker (cron handler)', () => {
     expect(result.sent).toBe(0);
     expect(result.errors.length).toBe(1);
     expect(result.errors[0]).toContain('Rate limited');
+
+    // Dedup key should NOT be written when send fails.
+    const dedupKey = `alert:sent:abc123:${TOMORROW}:turtle`;
+    expect(mockKV._store.has(dedupKey)).toBe(false);
   });
 
   it('11: matches via description (ingredient search)', async () => {

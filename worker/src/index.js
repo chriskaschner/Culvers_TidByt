@@ -22,6 +22,7 @@ import { handleSocialCard } from './social-card.js';
 import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
+import { isValidSlug } from './slug-validation.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
 import { fetchGillesFlavors } from './gilles-fetcher.js';
@@ -33,9 +34,6 @@ const KV_TTL_SECONDS = 86400; // 24 hours
 const CACHE_MAX_AGE = 3600;   // 1 hour (browser + edge cache)
 const MAX_SECONDARY = 3;
 const FLAVOR_CACHE_RECORD_VERSION = 1;
-
-// Reject slugs with invalid characters before checking allowlist (defense-in-depth)
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9_-]{1,59}$/;
 
 /**
  * Brand registry — maps slug patterns to fetcher functions + metadata.
@@ -149,24 +147,7 @@ function addVersionHeaders(response, isVersioned) {
   });
 }
 
-/**
- * Validate a slug against the regex pattern and the allowlist.
- * @param {string} slug
- * @param {Set<string>} validSlugs
- * @returns {{ valid: boolean, reason?: string }}
- */
-export function isValidSlug(slug, validSlugs) {
-  if (!slug) {
-    return { valid: false, reason: 'Slug is empty' };
-  }
-  if (!SLUG_PATTERN.test(slug)) {
-    return { valid: false, reason: 'Slug contains invalid characters' };
-  }
-  if (!validSlugs.has(slug)) {
-    return { valid: false, reason: 'Unknown store slug' };
-  }
-  return { valid: true };
-}
+export { isValidSlug } from './slug-validation.js';
 
 /**
  * KV writes should be best-effort only. Caller correctness cannot depend on put success.
@@ -337,14 +318,6 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   // Normalize versioned paths: /api/v1/X → /api/X, /v1/X → /X
   const { canonical, isVersioned } = normalizePath(url.pathname);
 
-  // Access control (supports both Bearer header and ?token= query param)
-  if (!checkAccess(request, url, env)) {
-    return Response.json(
-      { error: 'Invalid or missing access token' },
-      { status: 403, headers: corsHeaders }
-    );
-  }
-
   // Health check (unversioned — always public)
   if (canonical === '/health') {
     const checks = {};
@@ -380,6 +353,14 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     return Response.json(
       { status: degraded ? 'degraded' : 'ok', timestamp: new Date().toISOString(), checks },
       { headers: corsHeaders }
+    );
+  }
+
+  // Access control (supports both Bearer header and ?token= query param)
+  if (!checkAccess(request, url, env)) {
+    return Response.json(
+      { error: 'Invalid or missing access token' },
+      { status: 403, headers: corsHeaders }
     );
   }
 
@@ -570,7 +551,7 @@ async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
   } catch (err) {
     return Response.json(
       { error: 'Failed to fetch flavor data. Please try again later.' },
-      { status: 400, headers: corsHeaders }
+      { status: 502, headers: corsHeaders }
     );
   }
 }
@@ -704,7 +685,7 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
   } catch (err) {
     return Response.json(
       { error: 'Failed to fetch flavor data. Please try again later.' },
-      { status: 400, headers: corsHeaders }
+      { status: 502, headers: corsHeaders }
     );
   }
 }

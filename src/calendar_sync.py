@@ -19,6 +19,8 @@ from googleapiclient.errors import HttpError
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_EVENT_LOOKUP_NOT_PROVIDED = object()
+
 # Scopes required for calendar access
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
@@ -87,6 +89,7 @@ def create_or_update_event(
     calendar_id: str = 'primary',
     backup_option: Dict[str, str] = None,
     color_id: str = '',
+    existing_event=_EVENT_LOOKUP_NOT_PROVIDED,
 ) -> Dict:
     """
     Create or update a calendar event for a flavor of the day.
@@ -147,10 +150,12 @@ def create_or_update_event(
         if color_id:
             event_body['colorId'] = color_id
         
-        # Check if event already exists for this date
-        existing_event = find_event_by_date_and_title(
-            service, calendar_id, start_date, summary
-        )
+        # Check if event already exists for this date.
+        # sync_calendar() can pass existing_event to avoid duplicate API lookups.
+        if existing_event is _EVENT_LOOKUP_NOT_PROVIDED:
+            existing_event = find_event_by_date_and_title(
+                service, calendar_id, start_date, summary
+            )
         
         if existing_event:
             # Update existing event
@@ -287,6 +292,7 @@ def sync_calendar(
                 restaurant_url, restaurant_location, calendar_id,
                 backup_option=backup_option,
                 color_id=color_id,
+                existing_event=existing,
             )
 
             if existing:

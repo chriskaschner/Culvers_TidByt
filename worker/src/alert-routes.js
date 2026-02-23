@@ -11,9 +11,10 @@
  */
 
 import { sendConfirmationEmail } from './email-sender.js';
-import { isValidSlug } from './index.js';
+import { isValidSlug } from './slug-validation.js';
 import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
 import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
+import { removeSubscriptionIndex, upsertSubscriptionIndex } from './subscription-store.js';
 
 // Validation constants
 const MAX_FAVORITES = 10;
@@ -122,6 +123,13 @@ async function handleSubscribe(request, env, corsHeaders) {
   }
 
   const kv = env.FLAVOR_CACHE;
+  const apiKey = env.RESEND_API_KEY;
+  if (!apiKey) {
+    return Response.json(
+      { error: 'Alert email service is currently unavailable.' },
+      { status: 503, headers: corsHeaders },
+    );
+  }
 
   // Per-IP rate limiting: max 10 subscribe attempts per IP per hour
   const clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
@@ -182,26 +190,23 @@ async function handleSubscribe(request, env, corsHeaders) {
   await kv.put(emailRateKey, String(emailPendingCount + 1), { expirationTtl: 3600 });
 
   // Send confirmation email
-  const apiKey = env.RESEND_API_KEY;
   const fromAddress = env.ALERT_FROM_EMAIL || 'alerts@custard-calendar.com';
   const baseUrl = env.WORKER_BASE_URL || new URL(request.url).origin;
   const confirmUrl = `${baseUrl}/api/v1/alerts/confirm?token=${confirmToken}`;
   const storeName = getStoreName(slug, env);
 
-  if (apiKey) {
-    const result = await sendConfirmationEmail(
-      { email: email.toLowerCase(), storeName, favorites, confirmUrl },
-      apiKey,
-      fromAddress,
+  const result = await sendConfirmationEmail(
+    { email: email.toLowerCase(), storeName, favorites, confirmUrl },
+    apiKey,
+    fromAddress,
+  );
+  if (!result.ok) {
+    // Clean up pending record on email failure
+    await kv.delete(`alert:pending:${confirmToken}`);
+    return Response.json(
+      { error: 'Failed to send confirmation email. Please try again.' },
+      { status: 500, headers: corsHeaders },
     );
-    if (!result.ok) {
-      // Clean up pending record on email failure
-      await kv.delete(`alert:pending:${confirmToken}`);
-      return Response.json(
-        { error: 'Failed to send confirmation email. Please try again.' },
-        { status: 500, headers: corsHeaders },
-      );
-    }
   }
 
   return Response.json(
@@ -236,6 +241,11 @@ async function handleConfirm(url, env, corsHeaders) {
   // Check if already activated (idempotent)
   const existing = await kv.get(`alert:sub:${subId}`);
   if (existing) {
+    try {
+      await upsertSubscriptionIndex(kv, subId, JSON.parse(existing));
+    } catch {
+      // index write is best-effort
+    }
     await kv.delete(`alert:pending:${token}`);
     return htmlResponse('Your subscription is already active!', 200, corsHeaders);
   }
@@ -244,20 +254,22 @@ async function handleConfirm(url, env, corsHeaders) {
   const unsubToken = crypto.randomUUID();
 
   // Write active subscription (with frequency from pending record)
-  await kv.put(`alert:sub:${subId}`, JSON.stringify({
+  const subscription = {
     email,
     slug,
     favorites,
     frequency: pending.frequency || 'daily',
     unsubToken,
     createdAt: new Date().toISOString(),
-  }));
+  };
+  await kv.put(`alert:sub:${subId}`, JSON.stringify(subscription));
 
   // Write unsubscribe token reverse lookup
   await kv.put(`alert:unsub:${unsubToken}`, subId);
 
   // Increment email subscription count
   await incrementEmailCount(kv, email);
+  await upsertSubscriptionIndex(kv, subId, subscription);
 
   // Delete pending record
   await kv.delete(`alert:pending:${token}`);
@@ -301,6 +313,7 @@ async function handleUnsubscribe(url, env, corsHeaders) {
   // Delete subscription and reverse lookup
   await kv.delete(`alert:sub:${subId}`);
   await kv.delete(`alert:unsub:${token}`);
+  await removeSubscriptionIndex(kv, subId);
 
   return htmlResponse(
     `<h2>Unsubscribed</h2>
@@ -357,13 +370,9 @@ async function handleStatus(url, env, corsHeaders) {
 
 /**
  * Count active subscriptions for an email address.
- * Scans KV keys with alert:sub: prefix — in production this uses KV list.
- * Limited to avoid abuse scanning.
+ * Uses a dedicated per-email counter key.
  */
 async function countActiveSubscriptions(kv, email) {
-  // KV list with prefix to find all subscriptions
-  // We can't directly query by email, so we check known subscription IDs
-  // For efficiency, we use a counter key
   const counterKey = `alert:email-count:${email.toLowerCase()}`;
   const raw = await kv.get(counterKey);
   return raw ? parseInt(raw, 10) : 0;

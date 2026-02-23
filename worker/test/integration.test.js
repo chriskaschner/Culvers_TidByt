@@ -348,6 +348,16 @@ describe('/api/flavors endpoint', () => {
     expect(body.name).toBe('Mt. Horeb');
     expect(mockFetchFlavors).toHaveBeenCalledTimes(1);
   });
+
+  it('22d: returns 502 when upstream fetch fails for valid slug', async () => {
+    const failingFetch = vi.fn(async () => {
+      throw new Error('Upstream unavailable');
+    });
+
+    const req = makeRequest('/api/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, failingFetch);
+    expect(res.status).toBe(502);
+  });
 });
 
 // --- /api/stores endpoint ---
@@ -892,6 +902,12 @@ describe('Bearer token auth', () => {
     const res = await handleRequest(req, env, mockFetchFlavors);
     expect(res.status).toBe(403);
   });
+
+  it('60b: /health remains public even when ACCESS_TOKEN is set', async () => {
+    const req = makeRequest('/health');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+  });
 });
 
 // --- /api/today endpoint ---
@@ -1004,6 +1020,16 @@ describe('/api/today endpoint', () => {
     const body = await res.json();
     expect(body.description).toBeTruthy();
     expect(body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('68b: returns 502 when upstream fetch fails for valid slug', async () => {
+    const failingFetch = vi.fn(async () => {
+      throw new Error('Upstream unavailable');
+    });
+
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, env, failingFetch);
+    expect(res.status).toBe(502);
   });
 
   it('69: returns graceful response when no flavors available', async () => {

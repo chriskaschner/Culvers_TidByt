@@ -6,6 +6,8 @@
  * deterministic cursor-based iteration.
  */
 
+import { listSubscriptions } from './subscription-store.js';
+
 /**
  * Get all slugs that have forecasts stored in D1.
  * @param {Object} db - D1 database binding
@@ -30,33 +32,13 @@ export async function getForecastSlugs(db) {
  */
 export async function getSubscriptionSlugs(kv) {
   if (!kv) return [];
-  const slugs = new Set();
-  let cursor;
-
   try {
-    do {
-      const opts = { prefix: 'alert:sub:', limit: 1000 };
-      if (cursor) opts.cursor = cursor;
-
-      const list = await kv.list(opts);
-      for (const key of list.keys) {
-        const raw = await kv.get(key.name);
-        if (raw) {
-          try {
-            const sub = JSON.parse(raw);
-            if (sub.slug) slugs.add(sub.slug);
-          } catch {
-            // Skip corrupted entries
-          }
-        }
-      }
-      cursor = list.list_complete ? undefined : list.cursor;
-    } while (cursor);
+    const subscriptions = await listSubscriptions(kv);
+    return [...new Set(subscriptions.map(sub => sub.slug).filter(Boolean))];
   } catch {
     // KV failures are non-fatal
+    return [];
   }
-
-  return [...slugs];
 }
 
 /**

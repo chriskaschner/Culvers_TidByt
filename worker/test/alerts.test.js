@@ -240,6 +240,13 @@ describe('Alert routes', () => {
       expect(sub.favorites).toEqual(['Turtle', 'Mint Explosion']);
       expect(sub.unsubToken).toBeDefined();
 
+      // Verify materialized subscription index updated
+      const indexRaw = mockKV._store.get('alert:index:subscriptions:v1');
+      expect(indexRaw).toBeDefined();
+      const index = JSON.parse(indexRaw);
+      expect(index).toHaveLength(1);
+      expect(index[0].slug).toBe('mt-horeb');
+
       // Verify unsub token reverse lookup was created
       const unsubKey = [...mockKV._store.keys()].find(k => k.startsWith('alert:unsub:'));
       expect(unsubKey).toBeDefined();
@@ -316,6 +323,13 @@ describe('Alert routes', () => {
       // Verify records deleted
       expect(mockKV._store.has(`alert:sub:${subId}`)).toBe(false);
       expect(mockKV._store.has(`alert:unsub:${unsubToken}`)).toBe(false);
+
+      // Verify materialized subscription index cleaned up
+      const indexRaw = mockKV._store.get('alert:index:subscriptions:v1');
+      if (indexRaw) {
+        const index = JSON.parse(indexRaw);
+        expect(index.find(s => s.id === subId)).toBeUndefined();
+      }
     });
 
     it('14: returns 404 for invalid unsubscribe token', async () => {
@@ -461,7 +475,7 @@ describe('Alert routes', () => {
   });
 
   describe('No API key configured', () => {
-    it('26: subscribe works without sending email when no RESEND_API_KEY', async () => {
+    it('26: subscribe fails fast when no RESEND_API_KEY', async () => {
       delete env.RESEND_API_KEY;
 
       const req = makeRequest('/api/alerts/subscribe', {
@@ -470,12 +484,12 @@ describe('Alert routes', () => {
       });
 
       const res = await handleRequest(req, env, mockFetchFlavors);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(503);
       expect(sendConfirmationEmail).not.toHaveBeenCalled();
 
-      // Pending should still be created
+      // Pending should NOT be created
       const pendingKeys = [...mockKV._store.keys()].filter(k => k.startsWith('alert:pending:'));
-      expect(pendingKeys.length).toBe(1);
+      expect(pendingKeys.length).toBe(0);
     });
   });
 
