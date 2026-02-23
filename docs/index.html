@@ -150,6 +150,78 @@
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
 
+    let flavorColorData = null;
+
+    async function loadFlavorColors() {
+      try {
+        var resp = await fetch(WORKER_BASE + '/api/v1/flavor-colors');
+        if (resp.ok) flavorColorData = await resp.json();
+      } catch (e) {}
+    }
+
+    function getFlavorProfileLocal(flavorName) {
+      if (!flavorColorData || !flavorName) return null;
+      var key = flavorName.toLowerCase();
+      var profiles = flavorColorData.profiles || {};
+      if (profiles[key]) return profiles[key];
+      var norm = key.replace(/\u2019/g, "'").replace(/\u2018/g, "'");
+      if (profiles[norm]) return profiles[norm];
+      return null;
+    }
+
+    function getFlavorBaseColor(flavorName) {
+      if (!flavorColorData || !flavorName) return null;
+      var key = flavorName.toLowerCase();
+      var profiles = flavorColorData.profiles || {};
+      var bc = flavorColorData.base_colors || {};
+      if (profiles[key]) return bc[profiles[key].base] || null;
+      var norm = key.replace(/\u2019/g, "'").replace(/\u2018/g, "'");
+      if (profiles[norm]) return bc[profiles[norm].base] || null;
+      if (key.includes('mint')) return bc.mint;
+      if (key.includes('dark choc')) return bc.dark_chocolate;
+      if (key.includes('chocolate') || key.includes('cocoa')) return bc.chocolate;
+      if (key.includes('strawberry')) return bc.strawberry;
+      if (key.includes('cheesecake')) return bc.cheesecake;
+      if (key.includes('caramel')) return bc.caramel;
+      if (key.includes('peach')) return bc.peach;
+      if (key.includes('butter pecan')) return bc.butter_pecan;
+      return bc.vanilla || null;
+    }
+
+    function renderMiniConeSVG(flavorName) {
+      if (!flavorColorData || !flavorName) return '';
+      var bc = flavorColorData.base_colors || {};
+      var rc = flavorColorData.ribbon_colors || {};
+      var tc = flavorColorData.topping_colors || {};
+      var cc = flavorColorData.cone_colors || { waffle: '#D4A574', waffle_dark: '#A0784C' };
+      var profile = getFlavorProfileLocal(flavorName);
+      var baseColor = (profile ? bc[profile.base] : null) || getFlavorBaseColor(flavorName) || '#F5DEB3';
+      var ribbonColor = (profile && profile.ribbon) ? (rc[profile.ribbon] || null) : null;
+      var toppingColor = (profile && profile.toppings && profile.toppings.length > 0)
+        ? (tc[profile.toppings[0]] || null) : null;
+      var s = 5;
+      var rects = [];
+      var scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
+      for (var row = 0; row < scoopRows.length; row++) {
+        var sc = scoopRows[row][0], ec = scoopRows[row][1];
+        for (var col = sc; col <= ec; col++) {
+          var color = baseColor;
+          if (ribbonColor && (row === 2 || row === 3) && col >= 2 && col <= 5 && ((row + col) % 3 === 0)) color = ribbonColor;
+          if (toppingColor && row <= 1 && col >= sc + 1 && col <= ec - 1 && (col % 2 === 0)) color = toppingColor;
+          rects.push('<rect x="' + (col*s) + '" y="' + (row*s) + '" width="' + s + '" height="' + s + '" fill="' + color + '"/>');
+        }
+      }
+      var coneRows = [[2,6],[3,5],[3,5],[4,4],[4,4]];
+      for (var cr = 0; cr < coneRows.length; cr++) {
+        var csc = coneRows[cr][0], cec = coneRows[cr][1];
+        for (var col2 = csc; col2 <= cec; col2++) {
+          var wc = ((cr + col2) % 2 === 0) ? cc.waffle : cc.waffle_dark;
+          rects.push('<rect x="' + (col2*s) + '" y="' + ((cr+6)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
+        }
+      }
+      return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (11*s) + '" width="' + (9*s) + '" height="' + (11*s) + '">' + rects.join('') + '</svg>';
+    }
+
     const BRAND_COLORS = {
       culvers: '#005696',
       kopps: '#000000',
@@ -451,14 +523,16 @@
       if (day.type === 'confirmed') {
         todayBadge.textContent = 'Confirmed';
         todayBadge.className = 'day-card-badge day-card-badge-confirmed';
-        todayFlavor.textContent = day.flavor;
+        todayFlavor.innerHTML = renderMiniConeSVG(day.flavor) + escapeHtml(day.flavor);
+        todayFlavor.style.color = '';
         todayDesc.textContent = day.description || '';
         todayDesc.hidden = !day.description;
         todayPredictions.innerHTML = '';
       } else if (day.type === 'predicted') {
         todayBadge.textContent = 'Predicted';
         todayBadge.className = 'day-card-badge day-card-badge-predicted';
-        todayFlavor.textContent = day.flavor;
+        todayFlavor.innerHTML = renderMiniConeSVG(day.flavor) + escapeHtml(day.flavor);
+        todayFlavor.style.color = '';
         todayDesc.textContent = '';
         todayDesc.hidden = true;
 
@@ -471,7 +545,7 @@
             const barWidth = Math.max(5, (p.probability / Math.max(maxProb, 0.01)) * 100);
             const conf = p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low');
             html += '<div class="prediction-row">'
-              + '<span class="prediction-name">' + escapeHtml(p.flavor) + '</span>'
+              + '<span class="prediction-name">' + renderMiniConeSVG(p.flavor) + escapeHtml(p.flavor) + '</span>'
               + '<div class="prediction-bar-wrap"><div class="prediction-bar prediction-bar-' + conf + '" style="width:' + barWidth + '%"></div></div>'
               + '<span class="prediction-pct">' + pct + '%</span>'
               + '</div>';
@@ -518,6 +592,7 @@
           card.innerHTML =
             '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+            + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
             + '<div class="week-day-confidence" style="color:#2e7d32;">Confirmed</div>';
         } else if (day.type === 'predicted') {
@@ -527,6 +602,7 @@
           card.innerHTML =
             '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+            + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
             + (pct ? '<div class="week-day-confidence">' + pct + ' likely</div>' : '');
         } else {
@@ -592,7 +668,7 @@
 
     // --- Init ---
     async function init() {
-      await loadStores();
+      await Promise.all([loadStores(), loadFlavorColors()]);
 
       // Check localStorage for a saved store
       let savedSlug = null;

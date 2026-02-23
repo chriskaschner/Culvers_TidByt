@@ -614,28 +614,56 @@
       return baseColors.vanilla || null;
     }
 
+    function getFlavorProfileLocal(flavorName) {
+      if (!flavorColorData || !flavorName) return null;
+      var key = flavorName.toLowerCase();
+      var profiles = flavorColorData.profiles || {};
+      if (profiles[key]) return profiles[key];
+      var norm = key.replace(/\u2019/g, "'").replace(/\u2018/g, "'");
+      if (profiles[norm]) return profiles[norm];
+      return null;
+    }
+
     function renderMiniConeSVG(flavorName) {
       if (!flavorColorData) return '';
-      const baseColor = getFlavorBaseColor(flavorName) || '#F5DEB3';
-      const coneColors = flavorColorData.cone_colors || { waffle: '#D4A574', waffle_dark: '#A0784C' };
-      const s = 3; // scale factor -> 27x33 px
-      const rects = [];
+      var baseColors = flavorColorData.base_colors || {};
+      var ribbonColors = flavorColorData.ribbon_colors || {};
+      var toppingColors = flavorColorData.topping_colors || {};
+      var coneColors = flavorColorData.cone_colors || { waffle: '#D4A574', waffle_dark: '#A0784C' };
 
-      // Scoop rows (0-5)
-      const scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
-      for (let row = 0; row < scoopRows.length; row++) {
-        const [sc, ec] = scoopRows[row];
-        for (let col = sc; col <= ec; col++) {
-          rects.push('<rect x="' + (col*s) + '" y="' + (row*s) + '" width="' + s + '" height="' + s + '" fill="' + baseColor + '"/>');
+      var profile = getFlavorProfileLocal(flavorName);
+      var baseColor = (profile ? baseColors[profile.base] : null) || getFlavorBaseColor(flavorName) || '#F5DEB3';
+      var ribbonColor = (profile && profile.ribbon) ? (ribbonColors[profile.ribbon] || null) : null;
+      var toppingColor = (profile && profile.toppings && profile.toppings.length > 0)
+        ? (toppingColors[profile.toppings[0]] || null) : null;
+
+      var s = 5; // scale factor -> 45x55 px
+      var rects = [];
+
+      // Scoop rows (0-5): base + ribbon diagonal + topping accents
+      var scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
+      for (var row = 0; row < scoopRows.length; row++) {
+        var sc = scoopRows[row][0], ec = scoopRows[row][1];
+        for (var col = sc; col <= ec; col++) {
+          var color = baseColor;
+          // Ribbon diagonal (rows 2-3, cols 2-5, every 3rd cell)
+          if (ribbonColor && (row === 2 || row === 3) && col >= 2 && col <= 5 && ((row + col) % 3 === 0)) {
+            color = ribbonColor;
+          }
+          // Topping accents (rows 0-1, inset from edges, even columns)
+          if (toppingColor && row <= 1 && col >= sc + 1 && col <= ec - 1 && (col % 2 === 0)) {
+            color = toppingColor;
+          }
+          rects.push('<rect x="' + (col*s) + '" y="' + (row*s) + '" width="' + s + '" height="' + s + '" fill="' + color + '"/>');
         }
       }
-      // Cone rows (6-10)
-      const coneRows = [[2,6],[3,5],[3,5],[4,4],[4,4]];
-      for (let row = 0; row < coneRows.length; row++) {
-        const [sc, ec] = coneRows[row];
-        for (let col = sc; col <= ec; col++) {
-          const c = ((row + col) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
-          rects.push('<rect x="' + (col*s) + '" y="' + ((row+6)*s) + '" width="' + s + '" height="' + s + '" fill="' + c + '"/>');
+      // Cone rows (6-10): waffle crosshatch
+      var coneRows = [[2,6],[3,5],[3,5],[4,4],[4,4]];
+      for (var cr = 0; cr < coneRows.length; cr++) {
+        var csc = coneRows[cr][0], cec = coneRows[cr][1];
+        for (var cc = csc; cc <= cec; cc++) {
+          var wc = ((cr + cc) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
+          rects.push('<rect x="' + (cc*s) + '" y="' + ((cr+6)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
         }
       }
       return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (11*s) + '" width="' + (9*s) + '" height="' + (11*s) + '">' + rects.join('') + '</svg>';
