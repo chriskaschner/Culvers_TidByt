@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 <body>
   <header class="forecast-header">
@@ -49,32 +50,58 @@
         </div>
 
         <div class="fronts-control-block">
-          <label for="fronts-day">Forecast Day</label>
-          <div class="fronts-day-wrap">
-            <input id="fronts-day" type="range" min="0" max="6" step="1" value="0">
-            <span id="fronts-day-label" class="fronts-day-label">Today</span>
-          </div>
-        </div>
-
-        <div class="fronts-control-block">
           <label for="fronts-flavor">Flavor Front</label>
           <select id="fronts-flavor">
             <option value="">Load a location first...</option>
           </select>
         </div>
       </div>
-
-      <div id="fronts-status" class="fronts-status">Select a location to build your local forecast map.</div>
     </section>
 
     <section class="fronts-layout">
       <div class="fronts-map-shell">
         <div id="fronts-map"></div>
-        <div class="fronts-legend" aria-label="Map legend">
-          <span><i class="legend-dot legend-confirmed"></i> Confirmed today</span>
-          <span><i class="legend-dot legend-high"></i> High forecast</span>
-          <span><i class="legend-dot legend-medium"></i> Medium forecast</span>
-          <span><i class="legend-dot legend-low"></i> Low forecast</span>
+
+        <div class="fronts-overlay-card fronts-legend-card" aria-label="Map legend">
+          <h3>Flavor Intensity</h3>
+          <div class="fronts-legend-scale">
+            <span class="fronts-legend-band"></span>
+            <ul>
+              <li>Extreme</li>
+              <li>Heavy</li>
+              <li>Moderate</li>
+              <li>Light</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="fronts-overlay-card fronts-timeline-card">
+          <button id="fronts-play" class="fronts-play-btn" aria-label="Play timeline">
+            <span id="fronts-play-icon">&#9654;</span>
+          </button>
+          <div class="fronts-timeline-main">
+            <div class="fronts-timeline-head">
+              <div>
+                <strong>7-Day Front Forecast</strong>
+                <div id="fronts-time-label" class="fronts-time-label">Today</div>
+              </div>
+              <div id="fronts-active-flavor" class="fronts-active-flavor">No front selected</div>
+            </div>
+            <input id="fronts-day" type="range" min="0" max="6" step="1" value="0">
+            <div class="fronts-tick-row">
+              <span>Today</span>
+              <span>Day 2</span>
+              <span>Day 3</span>
+              <span>Day 4</span>
+              <span>Day 5</span>
+              <span>Day 6</span>
+              <span>Day 7</span>
+            </div>
+            <div class="fronts-status-row">
+              <span id="fronts-day-label" class="fronts-day-label">Today</span>
+              <span id="fronts-status" class="fronts-status">Select a location to build your local forecast map.</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -120,6 +147,10 @@
     const frontsRefreshBtn = document.getElementById('fronts-refresh');
     const frontsDayInput = document.getElementById('fronts-day');
     const frontsDayLabel = document.getElementById('fronts-day-label');
+    const frontsTimeLabel = document.getElementById('fronts-time-label');
+    const frontsPlayBtn = document.getElementById('fronts-play');
+    const frontsPlayIcon = document.getElementById('fronts-play-icon');
+    const frontsActiveFlavor = document.getElementById('fronts-active-flavor');
     const frontsFlavorSelect = document.getElementById('fronts-flavor');
     const frontsStatus = document.getElementById('fronts-status');
 
@@ -128,18 +159,36 @@
     const metricPeak = document.getElementById('metric-peak');
     const frontsHotspots = document.getElementById('fronts-hotspots');
 
-    const map = L.map('fronts-map').setView([43.0, -89.5], 7);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const map = L.map('fronts-map', { zoomControl: false }).setView([43.0, -89.5], 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 18,
     }).addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
     const baseLayer = L.layerGroup().addTo(map);
     const signalLayer = L.layerGroup().addTo(map);
+    const heatLayer = L.heatLayer([], {
+      radius: 32,
+      blur: 26,
+      maxZoom: 10,
+      minOpacity: 0.2,
+      gradient: {
+        0.2: '#51d8ff',
+        0.45: '#1f6bff',
+        0.62: '#8c3dff',
+        0.78: '#e83e8c',
+        1.0: '#fff59d',
+      },
+    }).addTo(map);
 
     let nearbyStores = [];
     const forecastCache = new Map();
     let selectedFlavorKey = '';
+    let autoPlayTimer = null;
+    let pulseAnimationFrame = null;
+    let pulseMarkers = [];
+    let isAutoPlaying = false;
 
     function toISODate(dateObj) {
       return dateObj.toISOString().slice(0, 10);
@@ -192,6 +241,11 @@
       const dayOffset = Number(frontsDayInput.value || 0);
       const activeDate = activeDateFromSlider();
       frontsDayLabel.textContent = formatDayLabel(dayOffset, activeDate);
+      frontsTimeLabel.textContent = activeDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+      });
     }
 
     function setStatus(message, tone) {
@@ -246,6 +300,7 @@
         frontsFlavorSelect.innerHTML = '<option value="">No forecast flavors available</option>';
         frontsFlavorSelect.disabled = true;
         selectedFlavorKey = '';
+        frontsActiveFlavor.textContent = 'No front selected';
         return;
       }
 
@@ -260,6 +315,7 @@
         if (flavor.key === selectedFlavorKey) option.selected = true;
         frontsFlavorSelect.appendChild(option);
       }
+      frontsActiveFlavor.textContent = topFlavors.find((f) => f.key === selectedFlavorKey)?.name || 'No front selected';
     }
 
     function signalForStore(store, dayIso, dayOffset, flavorKey) {
@@ -304,12 +360,72 @@
 
     function signalRadius(signal) {
       if (!signal) return 3;
-      return Math.min(20, 6 + signal.score * 30);
+      return Math.min(20, 5 + signal.score * 26);
+    }
+
+    function signalHeatIntensity(signal) {
+      if (!signal) return 0;
+      if (signal.mode === 'confirmed') return 1;
+      return Math.min(1, signal.score / 0.2);
+    }
+
+    function stopPulseAnimation() {
+      if (pulseAnimationFrame) {
+        cancelAnimationFrame(pulseAnimationFrame);
+        pulseAnimationFrame = null;
+      }
+    }
+
+    function startPulseAnimation() {
+      stopPulseAnimation();
+      if (!pulseMarkers.length) return;
+
+      function animate(ts) {
+        const wave = (Math.sin(ts / 380) + 1) / 2;
+        for (const pulse of pulseMarkers) {
+          pulse.marker.setRadius(pulse.baseRadius + wave * pulse.bump);
+          pulse.marker.setStyle({ fillOpacity: Math.min(0.96, pulse.baseOpacity + wave * 0.18) });
+        }
+        pulseAnimationFrame = requestAnimationFrame(animate);
+      }
+      pulseAnimationFrame = requestAnimationFrame(animate);
+    }
+
+    function setAutoPlayState(active) {
+      isAutoPlaying = active;
+      frontsPlayIcon.innerHTML = active ? '&#10074;&#10074;' : '&#9654;';
+      frontsPlayBtn.setAttribute('aria-label', active ? 'Pause timeline' : 'Play timeline');
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+      setAutoPlayState(false);
+    }
+
+    function startAutoPlay() {
+      if (!nearbyStores.length) return;
+      stopAutoPlay();
+      setAutoPlayState(true);
+      autoPlayTimer = setInterval(() => {
+        const next = (Number(frontsDayInput.value || 0) + 1) % 7;
+        frontsDayInput.value = String(next);
+        frontsDayInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }, 1500);
+    }
+
+    function toggleAutoPlay() {
+      if (isAutoPlaying) stopAutoPlay();
+      else startAutoPlay();
     }
 
     function renderMapSignals() {
       baseLayer.clearLayers();
       signalLayer.clearLayers();
+      heatLayer.setLatLngs([]);
+      pulseMarkers = [];
 
       const dayOffset = Number(frontsDayInput.value || 0);
       const dayIso = toISODate(activeDateFromSlider());
@@ -318,6 +434,7 @@
 
       let activeCount = 0;
       const hotspots = [];
+      const heatPoints = [];
 
       for (const store of nearbyStores) {
         if (!store.lat || !store.lon) continue;
@@ -336,13 +453,14 @@
 
         activeCount += 1;
         hotspots.push({ store, signal });
+        heatPoints.push([store.lat, store.lon, signalHeatIntensity(signal)]);
 
         const marker = L.circleMarker([store.lat, store.lon], {
           radius: signalRadius(signal),
-          color: '#ffffff',
-          weight: 1.5,
+          color: '#0b1220',
+          weight: 1.2,
           fillColor: signalColor(signal),
-          fillOpacity: Math.min(0.95, 0.35 + signal.score),
+          fillOpacity: Math.min(0.9, 0.45 + signal.score),
         });
 
         const todayFlavorLine = store.flavor ? '<div><strong>Today:</strong> ' + escapeHtml(store.flavor) + '</div>' : '';
@@ -355,10 +473,30 @@
 
         marker.bindPopup(popup);
         marker.addTo(signalLayer);
+        pulseMarkers.push({
+          marker,
+          baseRadius: signalRadius(signal),
+          bump: 2.2 + signal.score * 6,
+          baseOpacity: Math.min(0.9, 0.45 + signal.score),
+        });
       }
 
       hotspots.sort((a, b) => b.signal.score - a.signal.score);
       renderHotspots(hotspots.slice(0, 8));
+      if (heatPoints.length > 0) heatLayer.setLatLngs(heatPoints);
+
+      if (hotspots.length >= 3) {
+        const path = hotspots
+          .slice(0, 8)
+          .sort((a, b) => a.store.lon - b.store.lon)
+          .map((h) => [h.store.lat, h.store.lon]);
+        L.polyline(path, {
+          color: '#67e8f9',
+          weight: 2,
+          opacity: 0.4,
+          dashArray: '10 8',
+        }).addTo(signalLayer);
+      }
 
       metricStores.textContent = String(nearbyStores.length);
       metricActive.textContent = String(activeCount);
@@ -368,6 +506,7 @@
       } else {
         metricPeak.textContent = '-';
       }
+      startPulseAnimation();
     }
 
     function renderHotspots(entries) {
@@ -495,6 +634,9 @@
           nearbyStores = [];
           baseLayer.clearLayers();
           signalLayer.clearLayers();
+          heatLayer.setLatLngs([]);
+          stopPulseAnimation();
+          stopAutoPlay();
           metricStores.textContent = '0';
           metricActive.textContent = '0';
           metricPeak.textContent = '-';
@@ -529,8 +671,10 @@
     });
 
     frontsGeoBtn.addEventListener('click', useDetectedLocation);
+    frontsPlayBtn.addEventListener('click', toggleAutoPlay);
 
-    frontsDayInput.addEventListener('input', () => {
+    frontsDayInput.addEventListener('input', (evt) => {
+      if (evt.isTrusted && isAutoPlaying) stopAutoPlay();
       updateDayLabel();
       populateFlavorSelect();
       renderMapSignals();
@@ -538,6 +682,7 @@
 
     frontsFlavorSelect.addEventListener('change', () => {
       selectedFlavorKey = frontsFlavorSelect.value;
+      frontsActiveFlavor.textContent = frontsFlavorSelect.options[frontsFlavorSelect.selectedIndex]?.textContent || 'No front selected';
       renderMapSignals();
     });
 
