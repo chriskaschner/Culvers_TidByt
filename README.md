@@ -14,6 +14,7 @@ Custard Calendar is a full-stack custard observability platform that ingests, no
 | [Custard Map](https://custard.chriskaschner.com/map.html) | Search nearby flavors across all brands, filter by flavor or location |
 | [Flavor Alerts](https://custard.chriskaschner.com/alerts.html) | Email notifications when your favorite flavor is coming up (daily or weekly digest) |
 | [Flavor Radar](https://custard.chriskaschner.com/radar.html) | 7-day personalized flavor outlook blending confirmed data with ML predictions |
+| [Flavor Fronts](https://custard.chriskaschner.com/forecast-map.html) | Weather-map style forecast view with flavor-intensity hotspots and day slider |
 | [Siri Shortcut](https://custard.chriskaschner.com/siri.html) | "Hey Siri, what's the flavor of the day?" -- voice-first flavor lookup |
 | API v1 | Versioned REST API with flavor data, store search, geolocation, metrics, and social cards |
 | Tidbyt | Pixel-art ice cream cones on a 64x32 LED display |
@@ -156,7 +157,7 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 # Worker (Vitest) -- 343 tests across 21 suites
 cd worker && npm test
 
-# Browser smoke suite (Playwright: nav + Radar Phase 2)
+# Browser smoke suite (Playwright: nav + Radar Phase 2 + Fronts page)
 cd worker && npm run test:browser -- --workers=1
 
 # All Python tests (~176 tests)
@@ -263,6 +264,7 @@ custard-calendar/
 │   ├── map.html                   # Multi-brand custard map
 │   ├── alerts.html                # Flavor alert signup
 │   ├── radar.html                 # Flavor Radar (7-day ML outlook)
+│   ├── forecast-map.html          # Flavor Fronts weather-map forecast view
 │   ├── siri.html                  # Siri Shortcut setup page
 │   ├── flavors.json               # Flavor catalog for client-side pickers
 │   ├── style.css                  # Shared stylesheet

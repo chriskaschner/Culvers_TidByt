@@ -3,6 +3,7 @@ const STATIC_ASSETS = [
   './',
   './index.html',
   './calendar.html',
+  './forecast-map.html',
   './style.css',
   './manifest.json',
   './icon-192.svg',
