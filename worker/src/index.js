@@ -20,6 +20,7 @@ import { handleMetricsRoute } from './metrics.js';
 import { handleForecast } from './forecast.js';
 import { handleSocialCard } from './social-card.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
+import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
 import { fetchGillesFlavors } from './gilles-fetcher.js';
@@ -272,7 +273,7 @@ function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared }) {
  * @param {Object} [env] - Full env for D1 access (optional)
  * @returns {Promise<{name: string, flavors: Array}>}
  */
-export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false, env = {}) {
+export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false, env = {}, { recordOnHit = false } = {}) {
   const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
   const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
   const isShared = Boolean(brandInfo.kvPrefix);
@@ -283,7 +284,12 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   const cached = kv ? await kv.get(cacheKey) : null;
   if (cached) {
     const parsed = parseFlavorCacheRecord(cached, { slug, cacheKey, isShared });
-    if (parsed) return parsed;
+    if (parsed) {
+      if (recordOnHit && env.DB) {
+        await recordSnapshots(null, slug, parsed, { db: env.DB, brand: brandInfo.brand });
+      }
+      return parsed;
+    }
   }
 
   // Cache miss: fetch from upstream
@@ -873,6 +879,30 @@ export default {
       const result = isWeekly
         ? await checkWeeklyDigests(env, fetchFn)
         : await checkAlerts(env, fetchFn);
+
+      // Phase 2: Snapshot harvest (independent of email config)
+      try {
+        const targets = await resolveSnapshotTargets(env.DB, env.FLAVOR_CACHE);
+        const alreadyFetched = result?.fetchedSlugs || new Set();
+        const toHarvest = targets.filter(s => !alreadyFetched.has(s));
+
+        const BATCH_SIZE = 50;
+        const cursor = await getCronCursor(env.DB, 'snapshot_harvest');
+        const batch = toHarvest.slice(cursor, cursor + BATCH_SIZE);
+
+        for (const slug of batch) {
+          try {
+            await getFlavorsCached(slug, env.FLAVOR_CACHE, defaultFetchFlavors, false, env, { recordOnHit: true });
+          } catch (err) {
+            console.error(`Snapshot harvest failed for ${slug}: ${err.message}`);
+          }
+        }
+
+        const next = cursor + batch.length >= toHarvest.length ? 0 : cursor + batch.length;
+        await setCronCursor(env.DB, 'snapshot_harvest', next);
+      } catch (err) {
+        console.error(`Snapshot harvest phase failed: ${err.message}`);
+      }
 
       // Persist cron results to D1 for observability (O1)
       if (env.DB) {

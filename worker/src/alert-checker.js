@@ -139,7 +139,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
   // Write run metadata
   await writeRunMetadata(kv, subscriptions.length, sent);
 
-  return { sent, checked: subscriptions.length, errors };
+  return { sent, checked: subscriptions.length, errors, fetchedSlugs: new Set(flavorsBySlug.keys()) };
 }
 
 /**
