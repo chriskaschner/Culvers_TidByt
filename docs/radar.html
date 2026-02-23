@@ -185,12 +185,26 @@
       margin-top: 0.125rem;
     }
 
+    .day-card-body {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .day-card-cone {
+      flex-shrink: 0;
+    }
+
+    .day-card-text {
+      flex: 1;
+      min-width: 0;
+    }
+
     .day-card-flavor {
       font-size: 1.0625rem;
       font-weight: 700;
       color: #1a1a1a;
-      display: flex;
-      align-items: center;
     }
 
     .day-card-desc {
@@ -652,7 +666,7 @@
       var ribbonColor = hasRibbon ? (rc[ribbonKey] || null) : null;
       var tSlotKeys = resolveToppingSlots(profile);
 
-      var s = 5;
+      var s = 8;
       var rects = [];
 
       // Scoop base fill (rounded top + bottom)
@@ -1366,12 +1380,16 @@
               '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
               '<span class="day-card-badge day-card-badge-confirmed">Confirmed</span>' +
             '</div>' +
-            '<div class="day-card-flavor">' +
-              renderMiniConeSVG(day.flavor) +
-              (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) +
-            '</div>' +
-            renderFlavorBadges(day.flavor, day) +
-            (day.description ? '<div class="day-card-desc">' + escapeHtml(day.description) + '</div>' : '');
+            '<div class="day-card-body">' +
+              '<div class="day-card-cone">' + renderMiniConeSVG(day.flavor) + '</div>' +
+              '<div class="day-card-text">' +
+                '<div class="day-card-flavor">' +
+                  (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) +
+                '</div>' +
+                renderFlavorBadges(day.flavor, day) +
+                (day.description ? '<div class="day-card-desc">' + escapeHtml(day.description) + '</div>' : '') +
+              '</div>' +
+            '</div>';
 
         } else if (day.type === 'predicted') {
           const anyFav = day.predictions.some(p => isFavorite(p.flavor));
