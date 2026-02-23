@@ -1076,6 +1076,27 @@ footer a {
   margin-bottom: 0.75rem;
 }
 
+.today-rarity {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: #555;
+}
+
+.rarity-badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  margin-right: 0.375rem;
+  vertical-align: middle;
+}
+
+.rarity-badge-ultra-rare { background: #fce4ec; color: #b71c1c; }
+.rarity-badge-rare { background: #fff3e0; color: #e65100; }
+.rarity-badge-uncommon { background: #e3f2fd; color: #1565c0; }
+
 .today-predictions {
   margin-bottom: 0.75rem;
 }

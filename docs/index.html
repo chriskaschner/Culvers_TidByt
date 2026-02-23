@@ -93,6 +93,7 @@
             <div class="today-flavor-content">
               <div class="today-flavor-name" id="today-flavor"></div>
               <div class="today-flavor-desc" id="today-desc"></div>
+              <div class="today-rarity" id="today-rarity" hidden></div>
             </div>
           </div>
           <div class="today-predictions" id="today-predictions"></div>
@@ -398,6 +399,7 @@
     const todayFlavor = document.getElementById('today-flavor');
     const todayCone = document.getElementById('today-cone');
     const todayDesc = document.getElementById('today-desc');
+    const todayRarity = document.getElementById('today-rarity');
     const todayPredictions = document.getElementById('today-predictions');
     const todayStore = document.getElementById('today-store');
     const todayFreshness = document.getElementById('today-freshness');
@@ -565,9 +567,10 @@
       todayLoading.hidden = false;
 
       try {
-        const [flavorsResp, forecastResp] = await Promise.all([
+        const [flavorsResp, forecastResp, todayResp] = await Promise.all([
           fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug)),
           fetch(WORKER_BASE + '/api/v1/forecast/' + encodeURIComponent(slug)),
+          fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(slug)),
         ]);
 
         let confirmedFlavors = [];
@@ -587,6 +590,11 @@
           forecast = await forecastResp.json();
         }
 
+        let todayData = null;
+        if (todayResp.ok) {
+          todayData = await todayResp.json();
+        }
+
         const today = new Date();
         today.setHours(12, 0, 0, 0);
         const timeline = buildTimeline(confirmedFlavors, forecast, today);
@@ -594,10 +602,10 @@
         todayLoading.hidden = true;
 
         if (timeline.length > 0) {
-          renderTodayCard(timeline[0], slug, fetchedAt, forecast);
+          renderTodayCard(timeline[0], slug, fetchedAt, forecast, todayData);
           renderWeekStrip(timeline.slice(1), fetchedAt);
         } else {
-          renderTodayCard({ date: toISODate(today), type: 'none' }, slug, fetchedAt, forecast);
+          renderTodayCard({ date: toISODate(today), type: 'none' }, slug, fetchedAt, forecast, todayData);
         }
       } catch (err) {
         console.error('Forecast load error:', err);
@@ -639,7 +647,30 @@
     }
 
     // --- Rendering ---
-    function renderTodayCard(day, slug, fetchedAt, forecast) {
+    function renderRarity(rarity) {
+      if (!rarity) {
+        todayRarity.hidden = true;
+        return;
+      }
+      var html = '';
+      if (rarity.label) {
+        var cssClass = 'rarity-badge rarity-badge-' + rarity.label.toLowerCase().replace(/\s+/g, '-');
+        html += '<span class="' + cssClass + '">' + escapeHtml(rarity.label) + '</span>';
+        if (rarity.avg_gap_days) {
+          html += 'Shows up roughly every ' + rarity.avg_gap_days + ' days at your store';
+        }
+      } else if (rarity.avg_gap_days) {
+        html += 'Back in about ' + rarity.avg_gap_days + ' days';
+      }
+      if (html) {
+        todayRarity.innerHTML = html;
+        todayRarity.hidden = false;
+      } else {
+        todayRarity.hidden = true;
+      }
+    }
+
+    function renderTodayCard(day, slug, fetchedAt, forecast, todayData) {
       const store = allStores.find(s => s.slug === slug);
       const brand = brandFromSlug(slug);
       const color = BRAND_COLORS[brand] || '#005696';
@@ -655,6 +686,7 @@
         todayDesc.textContent = day.description || '';
         todayDesc.hidden = !day.description;
         todayPredictions.innerHTML = '';
+        renderRarity(todayData && todayData.rarity);
       } else if (day.type === 'predicted') {
         todayBadge.textContent = 'Predicted';
         todayBadge.className = 'day-card-badge day-card-badge-predicted';
@@ -683,6 +715,7 @@
         } else {
           todayPredictions.innerHTML = '';
         }
+        renderRarity(null);
       } else {
         todayBadge.textContent = '';
         todayBadge.className = 'day-card-badge';
@@ -693,6 +726,7 @@
         todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
         todayDesc.hidden = false;
         todayPredictions.innerHTML = '';
+        renderRarity(null);
       }
 
       todayStore.textContent = store ? store.name : slug;

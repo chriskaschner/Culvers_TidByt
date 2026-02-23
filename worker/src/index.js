@@ -635,6 +635,60 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
     }
     spoken += '.';
 
+    // Compute rarity from D1 snapshots (best-effort, never breaks response)
+    let rarity = null;
+    try {
+      if (env.DB) {
+        const normalizedFlavor = normalize(flavorName);
+
+        // Query 1: this flavor's appearance dates at this store
+        const flavorDates = await env.DB.prepare(
+          'SELECT date FROM snapshots WHERE slug = ? AND normalized_flavor = ? ORDER BY date ASC'
+        ).bind(slug, normalizedFlavor).all();
+
+        // Query 2: all flavor counts at this store (for percentile ranking)
+        const allCounts = await env.DB.prepare(
+          'SELECT normalized_flavor, COUNT(*) as cnt FROM snapshots WHERE slug = ? GROUP BY normalized_flavor'
+        ).bind(slug).all();
+
+        if (flavorDates.results && flavorDates.results.length > 0 && allCounts.results && allCounts.results.length > 0) {
+          const appearances = flavorDates.results.length;
+
+          // Compute average gap between consecutive appearances
+          let avgGapDays = null;
+          if (appearances >= 2) {
+            const dates = flavorDates.results.map(r => new Date(r.date + 'T00:00:00Z'));
+            let totalGap = 0;
+            for (let i = 1; i < dates.length; i++) {
+              totalGap += (dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24);
+            }
+            avgGapDays = Math.round(totalGap / (dates.length - 1));
+          }
+
+          // Percentile ranking: where does this flavor's count fall among all flavors?
+          const thisCnt = appearances;
+          const counts = allCounts.results.map(r => r.cnt).sort((a, b) => a - b);
+          const rank = counts.filter(c => c < thisCnt).length;
+          const percentile = rank / counts.length;
+
+          let label = null;
+          if (percentile < 0.10) label = 'Ultra Rare';
+          else if (percentile < 0.25) label = 'Rare';
+          else if (percentile < 0.50) label = 'Uncommon';
+
+          rarity = { appearances, avg_gap_days: avgGapDays, label };
+        }
+      }
+    } catch (_) {
+      // D1 failure is non-fatal; rarity stays null
+    }
+
+    // Append rarity info to spoken text for rare flavors
+    if (rarity && rarity.avg_gap_days && (rarity.label === 'Ultra Rare' || rarity.label === 'Rare')) {
+      spoken = spoken.replace(/\.$/, '');
+      spoken += `. This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
+    }
+
     return Response.json({
       store: data.name,
       slug,
@@ -642,6 +696,7 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
       date: todayFlavor.date,
       flavor: flavorName,
       description: todayFlavor.description || null,
+      rarity,
       spoken,
     }, {
       headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },

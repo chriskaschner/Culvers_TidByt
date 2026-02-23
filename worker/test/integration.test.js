@@ -901,13 +901,53 @@ describe('/api/today endpoint', () => {
   let mockFetchFlavors;
   let env;
 
+  // Mock D1 with snapshot data for mt-horeb
+  function createMockDB(snapshotRows, countRows) {
+    return {
+      prepare: (sql) => ({
+        bind: (...args) => ({
+          all: async () => {
+            if (sql.includes('ORDER BY date')) {
+              return { results: snapshotRows || [] };
+            }
+            return { results: countRows || [] };
+          },
+        }),
+      }),
+    };
+  }
+
+  // Snapshot data: Dark Chocolate PB Crunch appeared 3 times (rare relative to 10 flavors)
+  const SNAPSHOT_DATES = [
+    { date: '2025-06-01' },
+    { date: '2025-09-15' },
+    { date: '2026-02-20' },
+  ];
+  const FLAVOR_COUNTS = [
+    { normalized_flavor: 'vanilla', cnt: 30 },
+    { normalized_flavor: 'chocolate', cnt: 28 },
+    { normalized_flavor: 'caramel cashew', cnt: 25 },
+    { normalized_flavor: 'butter pecan', cnt: 22 },
+    { normalized_flavor: 'cookie dough', cnt: 20 },
+    { normalized_flavor: 'mint chip', cnt: 18 },
+    { normalized_flavor: 'strawberry', cnt: 15 },
+    { normalized_flavor: 'chocolate caramel twist', cnt: 10 },
+    { normalized_flavor: 'dark chocolate decadence', cnt: 5 },
+    { normalized_flavor: 'dark chocolate pb crunch', cnt: 3 },
+  ];
+
   beforeEach(() => {
     mockKV = createMockKV();
     mockFetchFlavors = createMockFetchFlavors();
-    env = { FLAVOR_CACHE: mockKV, _validSlugsOverride: TEST_VALID_SLUGS, _storeIndexOverride: TEST_STORE_INDEX };
+    env = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      _storeIndexOverride: TEST_STORE_INDEX,
+      DB: createMockDB(SNAPSHOT_DATES, FLAVOR_COUNTS),
+    };
   });
 
-  it('64: returns today\'s flavor with spoken field', async () => {
+  it('64: returns today\'s flavor with spoken field and rarity', async () => {
     const req = makeRequest('/api/v1/today?slug=mt-horeb');
     const res = await handleRequest(req, env, mockFetchFlavors);
 
@@ -922,6 +962,11 @@ describe('/api/today endpoint', () => {
     expect(body.spoken).toContain("Culver's of Mt. Horeb");
     expect(body.spoken).not.toContain("WI - ");
     expect(body.spoken).toContain(body.description);
+    // Rarity fields
+    expect(body.rarity).toBeTruthy();
+    expect(body.rarity.appearances).toBe(3);
+    expect(body.rarity.avg_gap_days).toBeGreaterThan(0);
+    expect(['Ultra Rare', 'Rare', 'Uncommon']).toContain(body.rarity.label);
   });
 
   it('65: returns 400 when slug is missing', async () => {
@@ -978,5 +1023,46 @@ describe('/api/today endpoint', () => {
     const body = await res.json();
     expect(body.flavor).toBeNull();
     expect(body.spoken).toMatch(/couldn't find/i);
+  });
+
+  it('70: rarity is null when DB is unavailable', async () => {
+    const noDbEnv = {
+      FLAVOR_CACHE: createMockKV(),
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      _storeIndexOverride: TEST_STORE_INDEX,
+    };
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, noDbEnv, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.flavor).toBeTruthy();
+    expect(body.rarity).toBeNull();
+  });
+
+  it('71: rarity is null when store has no snapshots', async () => {
+    const emptyDbEnv = {
+      FLAVOR_CACHE: createMockKV(),
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      _storeIndexOverride: TEST_STORE_INDEX,
+      DB: createMockDB([], []),
+    };
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, emptyDbEnv, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.flavor).toBeTruthy();
+    expect(body.rarity).toBeNull();
+  });
+
+  it('72: spoken text includes gap info for rare flavors', async () => {
+    const req = makeRequest('/api/v1/today?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    const body = await res.json();
+    if (body.rarity && (body.rarity.label === 'Ultra Rare' || body.rarity.label === 'Rare')) {
+      expect(body.spoken).toMatch(/averages \d+ days between appearances/);
+    }
   });
 });
