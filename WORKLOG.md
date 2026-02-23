@@ -1,5 +1,38 @@
 # Worklog
 
+## Session Update (2026-02-23) -- Accuracy + Email + Calendar Color
+
+### Shipped
+
+Three features on `codex/kv-d1-hardening` building on D1-primary infrastructure:
+
+1. **Google Calendar event color** -- events now use colorId `"9"` (Blueberry, closest to Culver's #005696). Threaded from `config.yaml` -> `main.py` -> `sync_from_cache` -> `sync_calendar` -> `create_or_update_event`. 6 Python tests.
+
+2. **Forecast accuracy tracking** -- compare ML predictions against actual D1 snapshots.
+   - `analytics/accuracy.py`: pure-function evaluation (top-1, top-5, log-loss) against forecast JSON + actual snapshots.
+   - `scripts/evaluate_forecasts.py`: CLI to query D1 forecasts + snapshots, compute metrics, optionally upload to `accuracy_metrics` table.
+   - `worker/src/migrations/004_accuracy.sql`: `accuracy_metrics` table (slug, window, hit rates, log loss, sample count).
+   - Worker endpoints: `GET /api/metrics/accuracy` (all stores, grouped) and `GET /api/metrics/accuracy/{slug}` (per-store).
+   - 11 Python tests + 4 Worker tests.
+
+3. **Forecast weekly email pipeline** -- the Worker email code was already built. Added `scripts/refresh_forecasts.sh` convenience script to generate + upload forecasts in one command.
+
+### Validation
+
+- `uv run pytest tests/test_calendar_sync.py` -- 6 passed
+- `uv run pytest analytics/tests/test_accuracy.py` -- 11 passed
+- `cd worker && npm test` -- 296 passed (17 suites)
+
+### Follow-up Ops
+
+1. Apply D1 migration `004_accuracy.sql` in production.
+2. Deploy Worker.
+3. Run `./scripts/refresh_forecasts.sh --store mt-horeb` to seed forecasts.
+4. Run `uv run python scripts/evaluate_forecasts.py --store mt-horeb --upload` to compute + upload accuracy.
+5. Verify: `curl https://custard.chriskaschner.com/api/v1/metrics/accuracy/mt-horeb`
+
+---
+
 ## Session Update (2026-02-23)
 
 ### Shipped In This Session

@@ -10,12 +10,12 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Flavor Radar Phase 2** — cross-store "Next Best Store" recommendations, rarity/streak badges, forecast accuracy dashboard (2026-02-22)
 - [ ] **Alexa skill** — custom Alexa skill using `/api/v1/today` endpoint (requires Amazon developer account + certification)
 - [ ] **Flavor chatbot assistant** — conversational Q&A for flavor info (e.g., today's flavor, upcoming week, nearby stores with a flavor) via web chat UI and `/api/v1` endpoints
-- [ ] **Forecast accuracy tracking** — compare predictions vs actual flavors for WI stores; compute hit rate metrics to retrain models
+- [x] **Forecast accuracy tracking** — compare predictions vs actual flavors for WI stores; compute hit rate metrics to retrain models (2026-02-23)
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" (deprioritized per WORKLOG)
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
-- [ ] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose (Worker code done, needs batch_forecast run + D1 upload)
+- [x] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose (Worker code done, batch pipeline + D1 upload wired) (2026-02-23)
 ### Bugs / Polish
-- [ ] **Google Calendar event color** — calendar events should use Culver's dark blue (`#005696`); current sync doesn't set color correctly
+- [x] **Google Calendar event color** — calendar events use Blueberry colorId 9, closest to Culver's #005696 (2026-02-23)
 
 ### Docs
 (none)
