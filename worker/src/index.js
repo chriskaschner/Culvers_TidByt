@@ -19,6 +19,7 @@ import { handleFlavorCatalog } from './flavor-catalog.js';
 import { handleMetricsRoute } from './metrics.js';
 import { handleForecast } from './forecast.js';
 import { handleSocialCard } from './social-card.js';
+import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
 
@@ -390,6 +391,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   } else if (canonical === '/api/flavors/catalog') {
     // Must match before /api/flavors to avoid prefix collision
     response = await handleFlavorCatalog(env, corsHeaders);
+  } else if (canonical === '/api/flavor-colors') {
+    response = handleFlavorColors(corsHeaders);
   } else if (canonical === '/api/today') {
     response = await handleApiToday(url, env, corsHeaders, fetchFlavorsFn);
   } else if (canonical === '/api/flavors') {
@@ -428,7 +431,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/forecast/{slug}, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/forecast/{slug}, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -834,6 +837,25 @@ function transformLocatorData(data) {
       description: meta.flavorOfTheDayDescription || '',
       rank: i + 1,
     };
+  });
+}
+
+/**
+ * Handle GET /api/flavor-colors requests.
+ * Returns the canonical flavor color system for custard visualization.
+ */
+function handleFlavorColors(corsHeaders) {
+  return Response.json({
+    profiles: FLAVOR_PROFILES,
+    base_colors: BASE_COLORS,
+    ribbon_colors: RIBBON_COLORS,
+    topping_colors: TOPPING_COLORS,
+    cone_colors: CONE_COLORS,
+  }, {
+    headers: {
+      ...corsHeaders,
+      'Cache-Control': 'public, max-age=86400', // 24h
+    },
   });
 }
 
