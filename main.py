@@ -59,12 +59,12 @@ def step_fetch(config: Dict) -> Dict:
     return cache_data
 
 
-def step_calendar_sync(cache_data: Dict, calendar_id: str) -> Dict:
+def step_calendar_sync(cache_data: Dict, calendar_id: str, color_id: str = '') -> Dict:
     """Step 2: Sync cached flavors to Google Calendar."""
     logger.info("Step 2: Syncing to Google Calendar...")
 
     service = authenticate()
-    stats = sync_from_cache(service, cache_data, calendar_id)
+    stats = sync_from_cache(service, cache_data, calendar_id, color_id=color_id)
 
     logger.info(
         f"  Calendar sync: {stats['created']} created, "
@@ -178,7 +178,9 @@ def main():
     logger.info("=" * 60)
 
     config = load_config(args.config)
-    calendar_id = config.get('google_calendar', {}).get('calendar_id')
+    cal_config = config.get('google_calendar', {})
+    calendar_id = cal_config.get('calendar_id')
+    color_id = cal_config.get('event_color_id', '')
 
     # Determine which steps to run
     run_fetch = True
@@ -214,7 +216,7 @@ def main():
         if not calendar_id:
             logger.error("No calendar_id in config -- skipping calendar sync")
         else:
-            step_calendar_sync(cache_data, calendar_id)
+            step_calendar_sync(cache_data, calendar_id, color_id=color_id)
 
     # Step 3: Tidbyt render + push
     if run_tidbyt:

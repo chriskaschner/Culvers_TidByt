@@ -85,7 +85,8 @@ def create_or_update_event(
     restaurant_url: str = '',
     restaurant_location: str = '',
     calendar_id: str = 'primary',
-    backup_option: Dict[str, str] = None
+    backup_option: Dict[str, str] = None,
+    color_id: str = '',
 ) -> Dict:
     """
     Create or update a calendar event for a flavor of the day.
@@ -141,6 +142,10 @@ def create_or_update_event(
         # Add location if provided
         if restaurant_location:
             event_body['location'] = restaurant_location
+
+        # Add event color if provided
+        if color_id:
+            event_body['colorId'] = color_id
         
         # Check if event already exists for this date
         existing_event = find_event_by_date_and_title(
@@ -225,7 +230,8 @@ def sync_calendar(
     restaurant_url: str = '',
     restaurant_location: str = '',
     backup_flavors: List[Dict[str, str]] = None,
-    backup_location_name: str = ''
+    backup_location_name: str = '',
+    color_id: str = '',
 ) -> Dict[str, int]:
     """
     Sync a list of flavors to Google Calendar with optional backup location.
@@ -279,7 +285,8 @@ def sync_calendar(
             create_or_update_event(
                 service, date, name, description,
                 restaurant_url, restaurant_location, calendar_id,
-                backup_option=backup_option
+                backup_option=backup_option,
+                color_id=color_id,
             )
 
             if existing:
@@ -355,7 +362,7 @@ def delete_past_events(
         return 0
 
 
-def sync_from_cache(service, cache_data: Dict, calendar_id: str) -> Dict[str, int]:
+def sync_from_cache(service, cache_data: Dict, calendar_id: str, color_id: str = '') -> Dict[str, int]:
     """
     Sync calendar events from cached flavor data.
 
@@ -384,7 +391,8 @@ def sync_from_cache(service, cache_data: Dict, calendar_id: str) -> Dict[str, in
         restaurant_url=primary.get('url', ''),
         restaurant_location=primary.get('restaurant_info', {}).get('full_address', ''),
         backup_flavors=backup['flavors'] if backup else None,
-        backup_location_name=backup.get('name', '') if backup else ''
+        backup_location_name=backup.get('name', '') if backup else '',
+        color_id=color_id,
     )
 
 
