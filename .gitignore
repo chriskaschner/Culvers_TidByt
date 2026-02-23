@@ -56,6 +56,8 @@ test-results/
 analytics/executed_review.html
 analytics/executed_review.ipynb
 data/forecasts/
+TODO.md
+WORKLOG.md
 
 # Cloudflare Worker
 worker/node_modules/
