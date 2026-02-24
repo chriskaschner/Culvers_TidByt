@@ -95,7 +95,7 @@ The analytics pipeline's best output isn't predictions -- it's **flavor intellig
 
 - [ ] **Add DoW + seasonality features** -- 38 flavors show significant day-of-week bias. Add to FrequencyRecency and MarkovRecency models. Expected +5-8% top-1 accuracy.
 - [ ] **Implement ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%.
-- [ ] **Expand overdue watch-list** -- show top 5 overdue flavors in emails (currently 3).
+- [x] **Expand overdue watch-list** -- n_overdue default raised from 3 to 5 in forecast_writer.py. (2026-02-27)
 - [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands.
 - [ ] **Fix NMF convergence** -- increase max_iter to 1000, test n_components=5.
 - [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores.

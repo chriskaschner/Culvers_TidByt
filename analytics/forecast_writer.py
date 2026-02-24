@@ -20,7 +20,7 @@ def build_forecast_context(
     store_slug: str,
     date: pd.Timestamp,
     n_top: int = 5,
-    n_overdue: int = 3,
+    n_overdue: int = 5,
 ) -> dict:
     """Build structured context for forecast generation."""
     date = pd.Timestamp(date)
