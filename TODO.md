@@ -97,7 +97,7 @@ The analytics pipeline's best output isn't predictions -- it's **flavor intellig
 - [ ] **Implement ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%.
 - [x] **Expand overdue watch-list** -- n_overdue default raised from 3 to 5 in forecast_writer.py. (2026-02-27)
 - [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands.
-- [ ] **Fix NMF convergence** -- increase max_iter to 1000, test n_components=5.
+- [x] **Fix NMF convergence** -- max_iter raised from 500 to 1000 in collaborative.py. Test fixture still warns (sparse synthetic data), production should converge. n_components=5 needs accuracy evaluation. (2026-02-27)
 - [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores.
 - [ ] **Embedding-based fallback recommendations** -- "if X unavailable, try Y."
 - [ ] **Cluster-personalized forecast emails** -- compare store to its PCA cluster centroid.
