@@ -24,6 +24,9 @@ import { handleSocialCard } from './social-card.js';
 import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
+import { handleReliabilityRoute, getReliabilityBatch, refreshReliabilityBatch } from './reliability.js';
+import { handlePlan } from './planner.js';
+import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
@@ -408,6 +411,15 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     if (metricsResponse) {
       response = metricsResponse;
     }
+  } else if (canonical === '/api/plan') {
+    response = await handlePlan(url, env, corsHeaders);
+  } else if (canonical.startsWith('/api/signals/')) {
+    response = await handleSignals(url, env, corsHeaders);
+  } else if (canonical.startsWith('/api/reliability')) {
+    const reliabilityResponse = await handleReliabilityRoute(canonical, env, corsHeaders);
+    if (reliabilityResponse) {
+      response = reliabilityResponse;
+    }
   } else if (canonical.startsWith('/og/')) {
     const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
     if (cardResponse) {
@@ -428,7 +440,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -1018,6 +1030,18 @@ export default {
         await setCronCursor(env.DB, 'snapshot_harvest', next);
       } catch (err) {
         console.error(`Snapshot harvest phase failed: ${err.message}`);
+      }
+
+      // Phase 3: Reliability index refresh (25 stores per tick)
+      try {
+        const relCursor = await getCronCursor(env.DB, 'reliability_refresh');
+        const { slugs: relBatch, nextCursor: relNext } = await getReliabilityBatch(env.DB, 25, relCursor);
+        if (relBatch.length > 0) {
+          await refreshReliabilityBatch(env.DB, relBatch);
+        }
+        await setCronCursor(env.DB, 'reliability_refresh', relNext);
+      } catch (err) {
+        console.error(`Reliability refresh phase failed: ${err.message}`);
       }
 
       // Persist cron results to D1 for observability (O1)

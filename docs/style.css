@@ -744,6 +744,21 @@ details ol {
   vertical-align: middle;
 }
 
+.popup-confirmed {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.store-popup .cta-row {
+  margin-top: 0.4rem;
+}
+
 .error-msg {
   color: #c00;
   padding: 1rem;
@@ -783,7 +798,13 @@ details ol {
   border-left: 5px solid #005696;
 }
 
-.day-card-predicted {
+.day-card-watch {
+  background: #fffde7;
+  border-left: 4px dotted #f9a825;
+}
+
+.day-card-predicted,
+.day-card-estimated {
   border-left: 3px dashed #ccc;
   background: #fafafa;
   opacity: 0.85;
@@ -822,6 +843,16 @@ details ol {
 .day-card-badge-confirmed {
   background: #e8f5e9;
   color: #2e7d32;
+}
+
+.day-card-badge-watch {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.day-card-badge-estimated {
+  background: #f0f0f0;
+  color: #999;
 }
 
 .day-card-badge-predicted {
@@ -866,9 +897,7 @@ details ol {
   transition: width 0.3s ease;
 }
 
-.prediction-bar-high { background: #005696; }
-.prediction-bar-medium { background: #6fa3d8; }
-.prediction-bar-low { background: #b0c4de; }
+.prediction-bar-estimated { background: #b0c4de; }
 
 .prediction-pct {
   flex: 0 0 2.5rem;
@@ -885,7 +914,7 @@ details ol {
   flex-shrink: 0;
 }
 
-/* Weather-style confidence strip at top of day cards */
+/* Certainty strip at top of day cards */
 .confidence-strip {
   height: 4px;
   border-radius: 3px 3px 0 0;
@@ -893,9 +922,8 @@ details ol {
 }
 
 .confidence-strip-confirmed { background: #005696; }
-.confidence-strip-high { background: #2e7d32; }
-.confidence-strip-medium { background: #f9a825; }
-.confidence-strip-low { background: #bdbdbd; }
+.confidence-strip-watch { background: #f9a825; }
+.confidence-strip-estimated { background: #bdbdbd; }
 .confidence-strip-none { background: #e0e0e0; }
 
 .trust-banner {
@@ -906,6 +934,106 @@ details ol {
   font-size: 0.8125rem;
   color: #666;
   margin-top: 1rem;
+}
+
+.watch-banner {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-left: 4px solid #f57f17;
+  border-radius: 6px;
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  color: #5d4037;
+  margin-top: 1rem;
+}
+
+.watch-banner-icon {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1.25rem;
+  text-align: center;
+  background: #f57f17;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 0.75rem;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+.cta-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.cta-link {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  text-decoration: none;
+  border: 1px solid #ddd;
+  color: #005696;
+  background: #fff;
+  transition: background 0.15s;
+}
+
+.cta-link:hover {
+  background: #f0f7ff;
+}
+
+/* Flavor signals */
+.signals-header {
+  font-size: 1rem;
+  color: #003366;
+  margin: 1rem 0 0.5rem;
+}
+
+.signals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.signal-card {
+  display: flex;
+  border: 1px solid #d5e6f4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fcfdff;
+}
+
+.signal-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+}
+
+.signal-accent-overdue { background: #e65100; }
+.signal-accent-dow_pattern { background: #1565c0; }
+.signal-accent-seasonal { background: #2e7d32; }
+.signal-accent-active_streak { background: #f9a825; }
+.signal-accent-rare_find { background: #7b1fa2; }
+
+.signal-card-body {
+  padding: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.signal-headline {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #14385f;
+}
+
+.signal-explanation {
+  font-size: 0.8rem;
+  color: #4a6d8c;
+  margin: 0.15rem 0 0.3rem;
+  line-height: 1.35;
 }
 
 .overdue-section, .similar-section {
@@ -1468,7 +1596,8 @@ footer a {
   border-left: 4px solid #005696;
 }
 
-.week-day-card-predicted {
+.week-day-card-predicted,
+.week-day-card-estimated {
   border-left: 4px dashed #b0c4de;
 }
 

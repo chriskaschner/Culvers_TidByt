@@ -50,7 +50,7 @@ def nmf_decompose(
         H: components × flavors (latent flavor profiles)
         model: fitted NMF model
     """
-    model = NMF(n_components=n_components, random_state=random_state, max_iter=500)
+    model = NMF(n_components=n_components, random_state=random_state, max_iter=1000)
     W = model.fit_transform(matrix.values)
     H = model.components_
 
