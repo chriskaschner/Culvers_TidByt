@@ -20,10 +20,14 @@ jobs:
 
       - name: Install pixlet
         run: |
-          curl -LO https://github.com/tidbyt/pixlet/releases/latest/download/pixlet_linux_amd64.tar.gz
-          tar -xzf pixlet_linux_amd64.tar.gz
+          PIXLET_TAG=$(gh release view --repo tidbyt/pixlet --json tagName -q .tagName)
+          PIXLET_VER=${PIXLET_TAG#v}
+          curl -LO "https://github.com/tidbyt/pixlet/releases/download/${PIXLET_TAG}/pixlet_${PIXLET_VER}_linux_amd64.tar.gz"
+          tar -xzf "pixlet_${PIXLET_VER}_linux_amd64.tar.gz"
           sudo mv pixlet /usr/local/bin/
           pixlet version
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Fetch flavor data
         run: uv run python main.py --fetch-only

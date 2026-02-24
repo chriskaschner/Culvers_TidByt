@@ -71,6 +71,7 @@
 
     <section id="timeline-section" hidden>
       <h2>7-Day Outlook</h2>
+      <p class="hint">Solid blue cards are confirmed from the store. Faded cards are model predictions.</p>
       <div id="timeline" class="day-cards"></div>
       <div id="trust-banner" class="trust-banner" hidden></div>
     </section>
@@ -865,7 +866,8 @@
       if (percentile <= 10) return 'Ultra Rare';
       if (percentile <= 25) return 'Rare';
       if (percentile <= 50) return 'Uncommon';
-      return null;
+      if (percentile <= 75) return 'Common';
+      return 'Staple';
     }
 
     function streakBadge(flavorName) {
@@ -1287,7 +1289,7 @@
 
         if (day.type === 'confirmed') {
           const hasFav = isFavorite(day.flavor);
-          card.className = 'day-card' + (hasFav ? ' day-card-highlight' : '');
+          card.className = 'day-card day-card-confirmed' + (hasFav ? ' day-card-highlight' : '');
           card.innerHTML =
             '<div class="' + confidenceStripClass(day) + '"></div>' +
             '<div class="day-card-header">' +

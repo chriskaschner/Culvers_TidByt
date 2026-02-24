@@ -739,8 +739,15 @@ details ol {
   overflow: hidden;
 }
 
+.day-card-confirmed {
+  background: #f0f7ff;
+  border-left: 5px solid #005696;
+}
+
 .day-card-predicted {
-  border-left: 4px dashed #b0c4de;
+  border-left: 3px dashed #ccc;
+  background: #fafafa;
+  opacity: 0.85;
 }
 
 .day-card-none {
@@ -779,8 +786,8 @@ details ol {
 }
 
 .day-card-badge-predicted {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: #f0f0f0;
+  color: #999;
 }
 
 .prediction-row {
@@ -828,7 +835,7 @@ details ol {
   flex: 0 0 2.5rem;
   text-align: right;
   font-size: 0.75rem;
-  color: #666;
+  color: #aaa;
 }
 
 /* Mini cone SVG icons */
@@ -1278,6 +1285,8 @@ footer a {
 .rarity-badge-ultra-rare { background: #fce4ec; color: #b71c1c; }
 .rarity-badge-rare { background: #fff3e0; color: #e65100; }
 .rarity-badge-uncommon { background: #e3f2fd; color: #1565c0; }
+.rarity-badge-common { background: #f5f5f5; color: #616161; }
+.rarity-badge-staple { background: #e8f5e9; color: #2e7d32; }
 
 .today-predictions {
   margin-bottom: 0.75rem;
