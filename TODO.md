@@ -54,6 +54,15 @@ Quiz/Mad Lib maps personality/archetype to flavor preferences, then calls planne
 - [x] **Planner integration** -- quiz results use `CustardPlanner.actionCTAsHTML()` for Directions/Alert/Calendar CTAs. Matched stores get all three CTAs; outside-radius stores get Alert/Calendar; no-match gets general alert link. (2026-02-27)
 - [x] **Actionable results** -- always shows in-radius match, nearest outside radius (with distance), and alternates. Three result states: matched within radius (full CTAs), matched outside radius (nearest store shown with Alert/Calendar), no match (alert link + archetype reference). (2026-02-27)
 
+## Next -- Quiz: Data-Driven Trivia Content
+
+Flavor and store errata powered by real D1 snapshot data. Questions generated from analytics, not hand-written. Shareable social content doubles as quiz questions.
+
+- [ ] **Trivia question API** -- `GET /api/v1/trivia` returns generated questions from D1 snapshots. Question types: "Which store has the most FOTDs of {flavor} in the past year?", "Which FOTD is the most common in {state}?", "Rank these 3 flavors by likelihood at {store}." Query patterns: `GROUP BY store_slug WHERE title = X`, `GROUP BY title WHERE state = X ORDER BY COUNT DESC`, per-store frequency rankings.
+- [ ] **Quiz content integration** -- new quiz mode in engine.js: data trivia alongside personality archetypes. Pull questions from trivia API, validate answers client-side against returned data. Mix of multiple-choice, ranking, and fill-in-the-blank.
+- [ ] **Social sharing cards** -- trivia answers as shareable OG images. "Did you know? Mint Explosion was served 47 times at the Mt. Horeb store last year -- more than any other location." SVG card at `/v1/og/trivia/{question_id}.svg`.
+- [ ] **State and regional leaderboards** -- "Most common FOTD in WI vs IL vs MN." Per-state flavor rankings from snapshots. Surface on quiz results and as standalone shareable content.
+
 ## Next -- Flavor Signals and Stories
 
 Turn high-specificity seasonal/store insights into explainable content with evidence thresholds.
