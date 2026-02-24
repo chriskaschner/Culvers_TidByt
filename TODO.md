@@ -20,9 +20,9 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "Where should I go, within my radius and time window, for flavors I care about?"
 
-- [ ] **Shared planner engine** -- score components are explicit and consistent: distance, certainty tier, rarity, wait-until-next-chance, preference match. Same inputs produce same top recommendation across surfaces.
+- [x] **Shared planner engine** -- `worker/src/planner.js`: haversine distance, certainty-weighted scoring (40% certainty, 30% distance, 20% rarity, 10% preference), `/api/v1/plan` endpoint. 32 tests. (2026-02-26)
+- [x] **Certainty tiers** -- `worker/src/certainty.js`: Confirmed/Watch/Estimated/None with score caps (1.0/0.7/0.5/0). 21 tests. (2026-02-26)
 - [ ] **Consistent action CTAs** -- every recommendation surfaces Directions, Alert, Calendar, Alternatives. Unified across Forecast, Map, Radar, Fronts, Quiz.
-- [ ] **Certainty tiers** -- three explicit tiers: **Confirmed** (from schedule), **Watch** (confirmed but store has reliability issues), **Estimated** (probabilistic fill). Every recommendation line shows certainty state and meaning.
 
 ## Now -- Weather Brand Reframe
 
