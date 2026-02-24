@@ -61,8 +61,7 @@ test('quiz page returns an in-radius available flavor match', async ({ page }) =
   await page.goto('/quiz.html');
 
   await expect(page.locator('h1')).toContainText('Custard Personality Engine');
-  await expect(page.locator('#quiz-variant')).toHaveValue('classic-v1');
-  await page.locator('#quiz-variant').selectOption('weather-v1');
+  await expect(page.locator('#quiz-variant')).toHaveValue('weather-v1');
   await page.locator('#quiz-location').fill('Madison, WI');
   await page.locator('#quiz-radius').selectOption('20');
 

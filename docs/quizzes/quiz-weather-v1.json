@@ -8,20 +8,20 @@
       "id": "sky-pattern",
       "prompt": "Pick a sky pattern.",
       "options": [
-        { "id": "clear-morning", "label": "Clear morning blue", "icon": "color:#64B5F6", "commentary": "Clear morning blue -- calm and collected, no storm in sight", "traits": { "calm": 2, "classic": 1, "analytical": 1 } },
-        { "id": "storm-band", "label": "Fast-moving storm bands", "icon": "color:#455A64", "commentary": "Fast-moving storm bands -- you thrive in high-energy systems", "traits": { "bold": 2, "energetic": 2, "adventurous": 1 } },
-        { "id": "golden-haze", "label": "Golden sunset haze", "icon": "color:#FFB74D", "commentary": "Golden sunset haze -- warm, nostalgic, a little romantic", "traits": { "romantic": 2, "social": 1, "classic": 1 } },
-        { "id": "electric-night", "label": "Electric night clouds", "icon": "color:#7E57C2", "commentary": "Electric night clouds -- restless energy looking for somewhere to go", "traits": { "bold": 1, "adventurous": 2, "energetic": 1 } }
+        { "id": "clear-morning", "label": "Clear morning blue", "icon": "pixel:sun", "commentary": "Clear morning blue -- calm and collected, no storm in sight", "traits": { "calm": 2, "classic": 1, "analytical": 1 } },
+        { "id": "storm-band", "label": "Fast-moving storm bands", "icon": "pixel:storm", "commentary": "Fast-moving storm bands -- you thrive in high-energy systems", "traits": { "bold": 2, "energetic": 2, "adventurous": 1 } },
+        { "id": "golden-haze", "label": "Golden sunset haze", "icon": "pixel:sunset", "commentary": "Golden sunset haze -- warm, nostalgic, a little romantic", "traits": { "romantic": 2, "social": 1, "classic": 1 } },
+        { "id": "electric-night", "label": "Electric night clouds", "icon": "pixel:night", "commentary": "Electric night clouds -- restless energy looking for somewhere to go", "traits": { "bold": 1, "adventurous": 2, "energetic": 1 } }
       ]
     },
     {
       "id": "temperature-band",
       "prompt": "Pick your comfort temperature band.",
       "options": [
-        { "id": "cold-crisp", "label": "20-35F, crisp and focused", "icon": "color:#90CAF9", "commentary": "Crisp and focused -- you think clearest when it's cold out", "traits": { "calm": 2, "analytical": 1 } },
-        { "id": "cool-breathable", "label": "36-55F, cool and breathable", "icon": "color:#4DB6AC", "commentary": "Cool and breathable -- the sweet spot where you feel most alive", "traits": { "calm": 1, "classic": 1, "adventurous": 1 } },
-        { "id": "balanced-sunny", "label": "56-75F, balanced and sunny", "icon": "color:#FFD54F", "commentary": "Balanced and sunny -- you like things easy and warm", "traits": { "social": 1, "classic": 1, "romantic": 1 } },
-        { "id": "heat-high", "label": "76+F, hot and high energy", "icon": "color:#FF7043", "commentary": "Hot and high energy -- you run at full blast", "traits": { "energetic": 2, "bold": 1, "social": 1 } }
+        { "id": "cold-crisp", "label": "20-35F, crisp and focused", "icon": "pixel:snowflake", "commentary": "Crisp and focused -- you think clearest when it's cold out", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "cool-breathable", "label": "36-55F, cool and breathable", "icon": "pixel:leaf", "commentary": "Cool and breathable -- the sweet spot where you feel most alive", "traits": { "calm": 1, "classic": 1, "adventurous": 1 } },
+        { "id": "balanced-sunny", "label": "56-75F, balanced and sunny", "icon": "pixel:warm-sun", "commentary": "Balanced and sunny -- you like things easy and warm", "traits": { "social": 1, "classic": 1, "romantic": 1 } },
+        { "id": "heat-high", "label": "76+F, hot and high energy", "icon": "pixel:flame", "commentary": "Hot and high energy -- you run at full blast", "traits": { "energetic": 2, "bold": 1, "social": 1 } }
       ]
     },
     {

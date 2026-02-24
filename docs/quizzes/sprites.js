@@ -31,6 +31,20 @@ var PALETTE = {
   'T': '#8e0000', // tartan red
   't': '#c62828', // tartan light
   'L': '#1b5e20', // tartan green
+  // Weather / sky
+  'Y': '#FFF176', // bright sun center
+  'H': '#FFB74D', // sunset warm orange
+  'h': '#FF8A65', // warm salmon (flame inner)
+  'V': '#7E57C2', // electric night purple
+  'v': '#B39DDB', // light purple
+  'k': '#455A64', // storm gray
+  'K': '#263238', // deep storm
+  'l': '#FFEE58', // lightning yellow
+  // Temperature
+  'I': '#B3E5FC', // ice blue
+  'F': '#FF5722', // flame outer
+  'e': '#81C784', // leaf light green
+  'E': '#4CAF50', // leaf dark green
 };
 
 var SPRITES = {
@@ -137,6 +151,112 @@ var SPRITES = {
     '.tTTTt..',
     '..tPt...',
     '...P....',
+  ],
+  // -- Weather / sky sprites --
+  // SUN: bright circle, clear morning
+  'sun': [
+    '...yy...',
+    '..yYYy..',
+    '.yYYYYy.',
+    'yYYYYYYy',
+    'yYYYYYYy',
+    '.yYYYYy.',
+    '..yYYy..',
+    '...yy...',
+    '........',
+    '........',
+  ],
+  // STORM: dark cloud with lightning bolt
+  'storm': [
+    '...kk...',
+    '..kKKk..',
+    '.kKKKKk.',
+    'kKKKKKKk',
+    'KKKKKKkk',
+    '...l....',
+    '..ll....',
+    '...l....',
+    '..l.....',
+    '........',
+  ],
+  // SUNSET: warm half-sun above horizon line
+  'sunset': [
+    '........',
+    '...HH...',
+    '..HHHH..',
+    '.HHyyHH.',
+    'HHyyyyHH',
+    'HHHHHHHH',
+    'hhhhhhhh',
+    '.hhhhhh.',
+    '........',
+    '........',
+  ],
+  // NIGHT: crescent moon with stars
+  'night': [
+    'w..vvv..',
+    '..vVVVv.',
+    '.vVVV...',
+    'vVVV..w.',
+    'vVVV....',
+    '.vVVV...',
+    '..vVVVv.',
+    'w..vvv..',
+    '......w.',
+    '........',
+  ],
+  // -- Temperature sprites --
+  // SNOWFLAKE: six-arm crystal
+  'snowflake': [
+    '...Iw...',
+    '.I.ww.I.',
+    '..IIII..',
+    'wIIIIIIw',
+    '..IIII..',
+    'wIIIIIIw',
+    '..IIII..',
+    '.I.ww.I.',
+    '...wI...',
+    '........',
+  ],
+  // LEAF: green leaf on brown stem
+  'leaf': [
+    '...ee...',
+    '..eEEe..',
+    '.eEEEEe.',
+    'eEEEEEEe',
+    'eEEEEEEe',
+    '.eEEEEe.',
+    '..eEEe..',
+    '...ee...',
+    '...B....',
+    '...B....',
+  ],
+  // WARM-SUN: sun with radiating warm rays
+  'warm-sun': [
+    '.H.yy.H.',
+    '..yyyy..',
+    'HyYYYYyH',
+    'yyYYYYyy',
+    'yyYYYYyy',
+    'HyYYYYyH',
+    '..yyyy..',
+    '.H.yy.H.',
+    '........',
+    '........',
+  ],
+  // FLAME: fire with hot core
+  'flame': [
+    '...yy...',
+    '..yyyy..',
+    '..hhhh..',
+    '.hhhhhh.',
+    '.FhhhhF.',
+    'FFhhhhFF',
+    '.FFFFFF.',
+    '..FFFF..',
+    '...FF...',
+    '........',
   ],
 };
 
