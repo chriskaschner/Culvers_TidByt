@@ -54,6 +54,15 @@ Quiz/Mad Lib maps personality/archetype to flavor preferences, then calls planne
 - [x] **Planner integration** -- quiz results use `CustardPlanner.actionCTAsHTML()` for Directions/Alert/Calendar CTAs. Matched stores get all three CTAs; outside-radius stores get Alert/Calendar; no-match gets general alert link. (2026-02-27)
 - [x] **Actionable results** -- always shows in-radius match, nearest outside radius (with distance), and alternates. Three result states: matched within radius (full CTAs), matched outside radius (nearest store shown with Alert/Calendar), no match (alert link + archetype reference). (2026-02-27)
 
+## Next -- Quiz: Rotating Question Pool and UX Polish
+
+Expand beyond the single "what flavor are you" quiz into a rotating pool of quiz modes with location-aware question weighting.
+
+- [ ] **Rotating question pool** -- instead of one fixed 5-question set, build a pool of 15-20 questions per quiz mode. Engine randomly selects 5 per session. Bonus: weight question selection toward archetypes matching currently-available FOTD in the user's area (e.g., if mint flavors are scooping nearby, favor questions whose trait mapping skews toward mint archetypes).
+- [ ] **Multiple quiz modes** -- "What Flavor Are You?" (current), "Flavor Trivia Challenge" (data-driven), "Build Your Perfect Scoop" (ingredient picker), "Custard Compatibility" (pair with a friend). Each mode is a separate JSON file loaded by engine.js.
+- [ ] **Fallback flavor encouragement** -- when no archetype match is available nearby, show a brand-consistent nudge like "Or go grab some Double Strawberry -- no quiz can hold you down!" instead of a dead end. Pull fallback flavor from whatever IS available at the nearest store.
+- [ ] **Pixel art / branding alignment** -- establish consistent art direction for all pixel sprites. Target aesthetic sits between Superbrothers: Sword & Sworcery EP (moody, minimal, atmospheric) and Dave the Diver (colorful, charming, detail-rich). Current sprites are functional but need a coherent palette and style guide. Apply across quiz icons, cone renderer, and any future illustration surfaces.
+
 ## Next -- Quiz: Data-Driven Trivia Content
 
 Flavor and store errata powered by real D1 snapshot data. Questions generated from analytics, not hand-written. Shareable social content doubles as quiz questions.
@@ -91,6 +100,8 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 - [ ] **Decompose index.js** -- extract route-today.js (~160 lines), route-calendar.js (~100), route-nearby.js (~120), kv-cache.js (~100), brand-registry.js (~30). index.js drops from 1,072 to ~550 lines.
 - [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
 - [ ] **Greenfield target architecture** -- three-layer model: Presentation (docs), Decision (planner/certainty/signals/reliability as pure functions), Data (KV/D1 access). Incremental migration, not rewrite.
+- [ ] **CLAUDE.md + Codex rules: rate limit awareness** -- add explicit rule: always assume external endpoints have rate limits, document known limits before bulk requests. Applies especially to Wayback Machine, upstream brand sites, and OSM/Nominatim. Sync rules between CLAUDE.md (this repo) and any codex task definitions.
+- [ ] **CLAUDE.md / Codex consistency** -- audit CLAUDE.md and codex task instructions for drift. Ensure both reflect same commands, architecture, constraints, and conventions. Single source of truth where possible.
 
 ## Someday/Maybe
 
