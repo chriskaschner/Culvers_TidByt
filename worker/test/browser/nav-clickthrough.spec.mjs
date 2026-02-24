@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: "Alerts", href: /\/alerts\.html$/ },
   { label: "Siri", href: /\/siri\.html$/ },
   { label: "Fronts", href: /\/forecast-map\.html$/ },
+  { label: "Widget", href: /\/widget\.html$/ },
 ];
 
 test("nav click-through across all docs pages", async ({ page }) => {
@@ -19,7 +20,7 @@ test("nav click-through across all docs pages", async ({ page }) => {
   const labels = await nav.locator("a").allTextContents();
   expect(labels.map((x) => x.trim())).toEqual(NAV_LINKS.map((x) => x.label));
 
-  const sequence = ["Calendar", "Map", "Radar", "Alerts", "Siri", "Fronts", "Forecast"];
+  const sequence = ["Calendar", "Map", "Radar", "Alerts", "Siri", "Fronts", "Widget", "Forecast"];
   for (const label of sequence) {
     const target = NAV_LINKS.find((x) => x.label === label);
     expect(target).toBeTruthy();

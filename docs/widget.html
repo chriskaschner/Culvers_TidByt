@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iOS Widget — Custard Calendar</title>
+  <meta name="description" content="Add a Flavor of the Day widget to your iPhone home screen with Scriptable.">
+  <meta property="og:title" content="iOS Widget — Custard Calendar">
+  <meta property="og:description" content="Add a Flavor of the Day widget to your iPhone home screen with Scriptable.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/widget.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .step-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .step-card h3 {
+      font-size: 1rem;
+      color: #003366;
+      margin-bottom: 0.5rem;
+    }
+    .step-card p, .step-card li {
+      font-size: 0.875rem;
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+    .step-card code {
+      background: #f0f4f8;
+      padding: 0.125rem 0.375rem;
+      border-radius: 3px;
+      font-size: 0.8125rem;
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #003366;
+      color: white;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    .slug-box {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .slug-box input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.875rem;
+      background: #f9f9f9;
+    }
+    .slug-box button {
+      padding: 0.5rem 1rem;
+      background: #005696;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      white-space: nowrap;
+    }
+    .slug-box button:hover { background: #003366; }
+    .widget-sizes {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .size-card {
+      flex: 1;
+      background: #005696;
+      border-radius: 16px;
+      padding: 1rem;
+      color: white;
+      min-height: 100px;
+    }
+    .size-card h4 {
+      font-size: 0.6875rem;
+      opacity: 0.7;
+      margin-bottom: 0.25rem;
+    }
+    .size-card .flavor-name {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .size-card .date-label {
+      font-size: 0.6875rem;
+      opacity: 0.7;
+    }
+    .size-card .rarity-badge {
+      font-size: 0.5625rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #90CAF9;
+      margin-top: 0.5rem;
+    }
+    .size-card.medium {
+      min-height: 80px;
+    }
+    .size-card.medium .row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+      margin-bottom: 0.125rem;
+    }
+    .size-card.medium .row .day {
+      font-size: 0.6875rem;
+      opacity: 0.6;
+      min-width: 3.5rem;
+    }
+    .size-card.medium .row .fname {
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+    .store-filter {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .store-filter select, .store-filter input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+    #store-list {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    #store-list .store-option {
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    #store-list .store-option:hover,
+    #store-list .store-option.selected { background: #e8f0fe; }
+    #store-list .store-option .slug-hint {
+      font-size: 0.75rem;
+      color: #999;
+      margin-left: 0.25rem;
+    }
+    .script-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .script-actions a, .script-actions button {
+      display: inline-block;
+      padding: 0.6rem 1.25rem;
+      background: #005696;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .script-actions a:hover, .script-actions button:hover { background: #003366; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Custard Calendar</h1>
+    <p>Add today's Flavor of the Day to your iPhone home screen.</p>
+    <nav class="nav-links">
+      <a href="index.html">Forecast</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="map.html">Map</a>
+      <a href="radar.html">Radar</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="siri.html">Siri</a>
+      <a href="forecast-map.html">Fronts</a>
+      <a href="widget.html" class="nav-active">Widget</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Widget Preview</h2>
+      <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">What you'll see on your home screen.</p>
+      <div class="widget-sizes">
+        <div class="size-card" id="preview-small">
+          <h4>Culver's</h4>
+          <div class="flavor-name" id="preview-flavor">Loading...</div>
+          <div class="date-label" id="preview-date"></div>
+          <div class="rarity-badge" id="preview-rarity"></div>
+        </div>
+        <div class="size-card medium" id="preview-medium">
+          <h4 id="preview-brand-3day">Culver's -- 3-Day Forecast</h4>
+          <div id="preview-rows"></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="margin-top:1.5rem;">
+      <h2>Find Your Store Slug</h2>
+      <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">The slug is a short ID for your store. Pick your store below, then use its slug in the widget parameter.</p>
+
+      <div class="store-filter">
+        <select id="state-filter">
+          <option value="">All States</option>
+        </select>
+        <input type="text" id="city-search" placeholder="Search city or store...">
+      </div>
+      <div id="store-list"></div>
+
+      <div class="slug-box">
+        <input type="text" id="slug-display" readonly value="mt-horeb" placeholder="Select a store above">
+        <button id="copy-slug">Copy Slug</button>
+      </div>
+    </section>
+
+    <section style="margin-top:1.5rem;">
+      <h2>Setup</h2>
+
+      <div class="step-card">
+        <h3><span class="step-number">1</span> Install Scriptable</h3>
+        <p>Download <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable</a> from the App Store (free).</p>
+      </div>
+
+      <div class="step-card">
+        <h3><span class="step-number">2</span> Add the Script</h3>
+        <p>Open Scriptable, tap <strong>+</strong> to create a new script, and paste the code below.</p>
+        <div class="script-actions">
+          <button id="copy-script">Copy Script to Clipboard</button>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <h3><span class="step-number">3</span> Add Widget to Home Screen</h3>
+        <ol style="padding-left:1.25rem;">
+          <li>Long-press your home screen, tap <strong>+</strong> in the top corner.</li>
+          <li>Search for <strong>Scriptable</strong>, choose Small or Medium size.</li>
+          <li>Long-press the new widget, tap <strong>Edit Widget</strong>.</li>
+          <li>Set <strong>Script</strong> to the script you just created.</li>
+          <li>Set <strong>Parameter</strong> to your store slug: <code id="param-slug">mt-horeb</code></li>
+        </ol>
+      </div>
+
+      <div class="step-card">
+        <h3><span class="step-number">4</span> Done</h3>
+        <p>The widget refreshes automatically throughout the day. Small shows today's flavor; medium shows a 3-day forecast.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+  </footer>
+
+  <script>
+    var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    var SCRIPT_URL = 'https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js';
+    var allStores = [];
+    var selectedSlug = 'mt-horeb';
+
+    var stateFilter = document.getElementById('state-filter');
+    var citySearch = document.getElementById('city-search');
+    var storeList = document.getElementById('store-list');
+    var slugDisplay = document.getElementById('slug-display');
+    var copySlugBtn = document.getElementById('copy-slug');
+    var copyScriptBtn = document.getElementById('copy-script');
+    var paramSlug = document.getElementById('param-slug');
+
+    // Load stores
+    async function loadStores() {
+      try {
+        var resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        var data = await resp.json();
+        allStores = data.stores || [];
+        populateStates();
+        renderStores();
+      } catch (err) {
+        storeList.innerHTML = '<div style="padding:0.5rem;color:#c00">Failed to load stores</div>';
+      }
+    }
+
+    function populateStates() {
+      var states = [...new Set(allStores.map(function(s) { return s.state; }))].sort();
+      for (var i = 0; i < states.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = states[i];
+        opt.textContent = states[i];
+        stateFilter.appendChild(opt);
+      }
+    }
+
+    var BRAND_DISPLAY = {
+      kopps: "Kopp's", gilles: "Gille's", hefners: "Hefner's",
+      kraverz: "Kraverz", oscars: "Oscar's"
+    };
+
+    function storeLabel(s) {
+      var prefix = s.brand ? ((BRAND_DISPLAY[s.brand] || s.brand) + ' -- ') : '';
+      return prefix + s.city + ', ' + s.state + ' -- ' + s.address;
+    }
+
+    function renderStores() {
+      var state = stateFilter.value;
+      var query = citySearch.value.toLowerCase().trim();
+      var filtered = allStores.filter(function(s) {
+        if (state && s.state !== state) return false;
+        if (query) {
+          var searchable = (s.name + ' ' + s.city + ' ' + s.address + ' ' + s.slug + ' ' + (s.brand || '')).toLowerCase();
+          return searchable.indexOf(query) !== -1;
+        }
+        return true;
+      }).slice(0, 50);
+
+      storeList.innerHTML = '';
+      for (var i = 0; i < filtered.length; i++) {
+        var s = filtered[i];
+        var div = document.createElement('div');
+        div.className = 'store-option' + (s.slug === selectedSlug ? ' selected' : '');
+        div.innerHTML = storeLabel(s) + '<span class="slug-hint">' + s.slug + '</span>';
+        div.dataset.slug = s.slug;
+        div.addEventListener('click', function() {
+          selectStore(this.dataset.slug);
+        });
+        storeList.appendChild(div);
+      }
+    }
+
+    function selectStore(slug) {
+      selectedSlug = slug;
+      slugDisplay.value = slug;
+      paramSlug.textContent = slug;
+      renderStores();
+      loadPreview(slug);
+    }
+
+    stateFilter.addEventListener('change', renderStores);
+    citySearch.addEventListener('input', renderStores);
+
+    copySlugBtn.addEventListener('click', async function() {
+      try {
+        await navigator.clipboard.writeText(slugDisplay.value);
+        copySlugBtn.textContent = 'Copied!';
+        setTimeout(function() { copySlugBtn.textContent = 'Copy Slug'; }, 2000);
+      } catch (e) {
+        slugDisplay.select();
+        document.execCommand('copy');
+      }
+    });
+
+    copyScriptBtn.addEventListener('click', async function() {
+      try {
+        var resp = await fetch(SCRIPT_URL);
+        if (!resp.ok) throw new Error('fetch failed');
+        var text = await resp.text();
+        await navigator.clipboard.writeText(text);
+        copyScriptBtn.textContent = 'Copied!';
+        setTimeout(function() { copyScriptBtn.textContent = 'Copy Script to Clipboard'; }, 2000);
+      } catch (e) {
+        // Fallback: direct user to raw file
+        window.open(SCRIPT_URL, '_blank');
+      }
+    });
+
+    // Live preview
+    async function loadPreview(slug) {
+      try {
+        var todayResp = await fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(slug));
+        if (todayResp.ok) {
+          var today = await todayResp.json();
+          document.getElementById('preview-flavor').textContent = today.flavor || 'No flavor';
+          document.getElementById('preview-date').textContent = formatDateLabel(today.date);
+          var rarityEl = document.getElementById('preview-rarity');
+          if (today.rarity && today.rarity.label) {
+            rarityEl.textContent = today.rarity.label.toUpperCase();
+          } else {
+            rarityEl.textContent = '';
+          }
+          // Update brand color
+          var brandKey = today.brand || "Culver's";
+          var brandColors = {
+            "Culver's": '#005696', "Kopp's": '#1a1a1a', "Gille's": '#EBCC35',
+            "Hefner's": '#93BE46', "Kraverz": '#CE742D', "Oscar's": '#BC272C'
+          };
+          var bg = brandColors[brandKey] || '#005696';
+          document.getElementById('preview-small').style.background = bg;
+          document.querySelector('#preview-small h4').textContent = brandKey;
+        }
+
+        var flavorsResp = await fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug));
+        if (flavorsResp.ok) {
+          var data = await flavorsResp.json();
+          var todayStr = new Date().toISOString().slice(0, 10);
+          var upcoming = (data.flavors || []).filter(function(f) { return f.date >= todayStr; }).slice(0, 3);
+          var rowsEl = document.getElementById('preview-rows');
+          rowsEl.innerHTML = '';
+          for (var i = 0; i < upcoming.length; i++) {
+            var row = document.createElement('div');
+            row.className = 'row';
+            row.innerHTML = '<span class="day">' + formatDateLabel(upcoming[i].date) + '</span><span class="fname">' + escapeHtml(upcoming[i].title) + '</span>';
+            rowsEl.appendChild(row);
+          }
+        }
+      } catch (err) {
+        document.getElementById('preview-flavor').textContent = 'Preview unavailable';
+      }
+    }
+
+    function formatDateLabel(dateStr) {
+      if (!dateStr) return '';
+      var d = new Date(dateStr + 'T12:00:00');
+      var today = new Date(); today.setHours(12, 0, 0, 0);
+      var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+      if (d.toDateString() === today.toDateString()) return 'Today';
+      if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    loadStores();
+    loadPreview(selectedSlug);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function() {});
+    }
+  </script>
+</body>
+</html>
