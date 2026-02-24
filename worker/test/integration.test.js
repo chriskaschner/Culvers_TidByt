@@ -978,6 +978,8 @@ describe('/api/today endpoint', () => {
     expect(body.spoken).toContain("Culver's of Mt. Horeb");
     expect(body.spoken).not.toContain("WI - ");
     expect(body.spoken).toContain(body.description);
+    expect(body.spoken_verbose).toMatch(/For .*?, .* is serving /);
+    expect(body.spoken_verbose).toMatch(/Location:/);
     // Rarity fields
     expect(body.rarity).toBeTruthy();
     expect(body.rarity.appearances).toBe(3);
@@ -1049,6 +1051,7 @@ describe('/api/today endpoint', () => {
     const body = await res.json();
     expect(body.flavor).toBeNull();
     expect(body.spoken).toMatch(/couldn't find/i);
+    expect(body.spoken_verbose).toMatch(/Try again later today/i);
   });
 
   it('70: rarity is null when DB is unavailable', async () => {

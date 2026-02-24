@@ -585,11 +585,20 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
     const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
     const brand = getBrandForSlug(slug);
     const today = new Date().toISOString().slice(0, 10);
+    const formatSpeechDate = (isoDate) => {
+      const d = new Date((isoDate || today) + 'T12:00:00Z');
+      return d.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+    };
 
     // Find today's flavor (or fall back to the first available)
     const todayFlavor = data.flavors.find(f => f.date === today) || data.flavors[0] || null;
 
     if (!todayFlavor) {
+      const spokenMissing = `I couldn't find today's flavor of the day at ${data.name}. Check back later.`;
       return Response.json({
         store: data.name,
         slug,
@@ -597,7 +606,8 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
         date: today,
         flavor: null,
         description: null,
-        spoken: `I couldn't find today's flavor of the day at ${data.name}. Check back later.`,
+        spoken: spokenMissing,
+        spoken_verbose: `${spokenMissing} Try again later today for an updated flavor listing.`,
       }, {
         headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
       });
@@ -615,6 +625,24 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
       spoken += ' - ' + desc;
     }
     spoken += '.';
+
+    const spokenDate = formatSpeechDate(todayFlavor.date);
+    const spokenLocation = storeEntry
+      ? `${storeEntry.city}, ${storeEntry.state}`
+      : data.name;
+    let spokenVerbose = `For ${spokenDate}, ${spokenStore} is serving ${flavorName}.`;
+    if (todayFlavor.description) {
+      const desc = todayFlavor.description.replace(/\.+$/, '');
+      spokenVerbose += ` ${desc}.`;
+    }
+    spokenVerbose += ` Location: ${spokenLocation}.`;
+
+    const nextFlavor = (data.flavors || [])
+      .filter((f) => f && f.date && f.date > todayFlavor.date && f.title)
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (nextFlavor) {
+      spokenVerbose += ` Next listed flavor is ${nextFlavor.title} on ${formatSpeechDate(nextFlavor.date)}.`;
+    }
 
     // Compute rarity from D1 snapshots (best-effort, never breaks response)
     let rarity = null;
@@ -668,6 +696,7 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
     if (rarity && rarity.avg_gap_days && (rarity.label === 'Ultra Rare' || rarity.label === 'Rare')) {
       spoken = spoken.replace(/\.$/, '');
       spoken += `. This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
+      spokenVerbose += ` This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
     }
 
     return Response.json({
@@ -679,6 +708,7 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
       description: todayFlavor.description || null,
       rarity,
       spoken,
+      spoken_verbose: spokenVerbose,
     }, {
       headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
     });
