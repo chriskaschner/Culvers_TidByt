@@ -30,8 +30,10 @@ const els = {
   resultAvailability: document.getElementById('result-availability'),
   resultAlternates: document.getElementById('result-alternates'),
   resultMapLink: document.getElementById('result-map-link'),
+  resultCone: document.getElementById('result-cone'),
   resultCtas: document.getElementById('result-ctas'),
   resultNearestOutside: document.getElementById('result-nearest-outside'),
+  resultNearestAny: document.getElementById('result-nearest-any'),
 };
 
 function setStatus(message, tone = 'neutral') {
@@ -445,10 +447,48 @@ async function runQuiz(evt) {
     }
     alternateRows.sort((a, b) => (a.distanceMiles || 0) - (b.distanceMiles || 0));
 
+    // -- Step 5b: Find nearest store within radius serving ANY flavor --
+    let nearestAnyStore = null;
+    let nearestAnyDistance = null;
+    if (center && stores.length > 0) {
+      const withinAny = stores
+        .map((s) => {
+          const lat = Number(s.lat);
+          const lon = Number(s.lon);
+          let dist = null;
+          if (Number.isFinite(lat) && Number.isFinite(lon)) {
+            dist = haversineMiles(center.lat, center.lon, lat, lon);
+          }
+          return { ...s, _dist: dist };
+        })
+        .filter((s) => s._dist != null && s._dist <= radiusMiles)
+        .sort((a, b) => a._dist - b._dist);
+      if (withinAny.length > 0) {
+        // Skip if it's the same store+flavor as bestStore
+        for (const s of withinAny) {
+          if (bestStore && s.slug === bestStore.slug && normalizeFlavor(s.flavor) === normalizeFlavor(resultFlavor)) continue;
+          nearestAnyStore = s;
+          nearestAnyDistance = s._dist;
+          break;
+        }
+      }
+    }
+
     // -- Render results --
     els.resultTitle.textContent = `${archetype.name}: ${archetype.headline}`;
     els.resultFlavor.textContent = displayFlavor || 'Flavor signal unavailable';
     els.resultBlurb.textContent = archetype.blurb || '';
+
+    // Render cone icon for the result flavor
+    if (els.resultCone) {
+      if (displayFlavor && typeof window.renderMiniConeHDSVG === 'function') {
+        els.resultCone.innerHTML = window.renderMiniConeHDSVG(displayFlavor, 5);
+      } else if (displayFlavor && typeof window.renderMiniConeSVG === 'function') {
+        els.resultCone.innerHTML = window.renderMiniConeSVG(displayFlavor, 8);
+      } else {
+        els.resultCone.innerHTML = '';
+      }
+    }
 
     const traits = topTraits(traitScores, 3);
     els.resultTraits.textContent = traits.length
@@ -517,6 +557,20 @@ async function runQuiz(evt) {
       els.resultCtas.innerHTML = '<div class="cta-row"><a href="alerts.html" class="cta-link cta-alert">Set Flavor Alert</a></div>';
 
       setStatus('No live matches today; showing your archetype flavor for reference.', 'neutral');
+    }
+
+    // Render nearest store within radius serving any flavor
+    if (els.resultNearestAny) {
+      els.resultNearestAny.hidden = true;
+      if (nearestAnyStore) {
+        const dist = formatMiles(nearestAnyDistance);
+        const coneSvg = typeof window.renderMiniConeSVG === 'function'
+          ? `<span class="nearest-any-cone">${window.renderMiniConeSVG(nearestAnyStore.flavor, 4)}</span>` : '';
+        els.resultNearestAny.innerHTML =
+          `<strong>Nearest in radius:</strong> ${coneSvg}${nearestAnyStore.flavor} at ${nearestAnyStore.name}` +
+          (dist ? ` (${dist})` : '');
+        els.resultNearestAny.hidden = false;
+      }
     }
 
     renderAlternates(alternateRows, locationText, radiusMiles);

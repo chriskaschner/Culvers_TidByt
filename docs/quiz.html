@@ -301,6 +301,16 @@
       margin-top: 0.7rem;
     }
 
+    .result-flavor-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .result-cone {
+      flex-shrink: 0;
+    }
+
     .result-nearest-outside {
       border-left: 4px solid #b0c4de;
       background: #f5f8fc;
@@ -310,6 +320,23 @@
       font-size: 0.86rem;
       line-height: 1.4;
       margin-top: 0.7rem;
+    }
+
+    .result-nearest-any {
+      border-left: 4px solid var(--quiz-accent-2);
+      background: #f0faf8;
+      padding: 0.56rem 0.7rem;
+      border-radius: 8px;
+      color: #1a5c52;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      margin-top: 0.7rem;
+    }
+
+    .result-nearest-any .nearest-any-cone {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.25rem;
     }
 
     .result-map-link {
@@ -404,12 +431,17 @@
 
     <section id="quiz-result" class="quiz-result" hidden>
       <h3 id="result-title"></h3>
-      <div id="result-flavor" class="result-flavor"></div>
+      <div class="result-flavor-row">
+        <div id="result-cone" class="result-cone"></div>
+        <div id="result-flavor" class="result-flavor"></div>
+      </div>
       <p id="result-blurb" class="result-blurb"></p>
       <p id="result-traits" class="result-traits"></p>
       <div id="result-availability" class="result-availability"></div>
       <div id="result-ctas" class="result-ctas"></div>
       <div id="result-nearest-outside" class="result-nearest-outside" hidden></div>
+
+      <div id="result-nearest-any" class="result-nearest-any" hidden></div>
 
       <div class="result-list-wrap">
         <h4>Alternates In Radius</h4>
@@ -424,6 +456,7 @@
     <small>Custard Personality Engine beta. Results are for fun and based on current flavor availability.</small>
   </footer>
 
+  <script src="cone-renderer.js"></script>
   <script src="planner-shared.js"></script>
   <script type="module" src="quizzes/engine.js"></script>
 </body>
