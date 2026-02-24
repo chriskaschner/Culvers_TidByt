@@ -58,9 +58,9 @@ Quiz/Mad Lib maps personality/archetype to flavor preferences, then calls planne
 
 Turn high-specificity seasonal/store insights into explainable content with evidence thresholds.
 
-- [ ] **Signal detection** -- statistically gated pattern recognition (e.g., How Now Brown Cow over-index signatures). Plain-language explanation with evidence.
-- [ ] **Surface across pages** -- Forecast signal card, Radar "why this," Map store signature line, weekly email "Wild Find."
-- [ ] **Action linkage** -- every signal links to an action (Alert, Calendar, Directions).
+- [x] **Signal detection** -- `worker/src/signals.js`: 5 signal types (overdue, dow_pattern, seasonal, active_streak, rare_find). Statistically gated: chi-squared for DOW (p<0.05), 1.5x ratio for overdue, 50% concentration for seasonal. `/api/v1/signals/{slug}` endpoint. 31 tests, 483 total. (2026-02-27)
+- [x] **Surface across pages** -- Signal cards on Forecast (index.html) and Radar (radar.html) via shared `CustardPlanner.fetchSignals()`. Color-coded accent bars per signal type. (2026-02-27)
+- [x] **Action linkage** -- Every signal card has a CTA: overdue/seasonal -> Set Alert, dow_pattern -> Subscribe, streak/rare_find -> Directions. Built into `signalCardHTML()` in planner-shared.js. (2026-02-27)
 
 ## Next/Later -- Map/Fronts Visual v2
 

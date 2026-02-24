@@ -26,6 +26,7 @@ import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
 import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
 import { handleReliabilityRoute, getReliabilityBatch, refreshReliabilityBatch } from './reliability.js';
 import { handlePlan } from './planner.js';
+import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
@@ -412,6 +413,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     }
   } else if (canonical === '/api/plan') {
     response = await handlePlan(url, env, corsHeaders);
+  } else if (canonical.startsWith('/api/signals/')) {
+    response = await handleSignals(url, env, corsHeaders);
   } else if (canonical.startsWith('/api/reliability')) {
     const reliabilityResponse = await handleReliabilityRoute(canonical, env, corsHeaders);
     if (reliabilityResponse) {

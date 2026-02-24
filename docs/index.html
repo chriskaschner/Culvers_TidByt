@@ -150,6 +150,12 @@
 
     <div id="watch-banner-container"></div>
 
+    <!-- Flavor signals -->
+    <section id="signals-section" hidden>
+      <h2 class="signals-header">Flavor Signals</h2>
+      <div id="signals-list" class="signals-list"></div>
+    </section>
+
     <!-- Week strip -->
     <section id="week-section" hidden>
       <div class="week-header">
@@ -629,12 +635,19 @@
         CustardPlanner.fetchReliability(WORKER_BASE, slug).then(function (rel) {
           watchEl.innerHTML = CustardPlanner.watchBannerHTML(rel);
         });
+
+        // Fetch and render flavor signals
+        fetchSignals(slug);
       } catch (err) {
         console.error('Forecast load error:', err);
         todayLoading.hidden = true;
         errorMessage.textContent = 'Something went wrong loading the flavor data.';
         errorState.hidden = false;
       }
+    }
+
+    function fetchSignals(slug) {
+      CustardPlanner.fetchSignals(WORKER_BASE, slug, document.getElementById('signals-section'), document.getElementById('signals-list'));
     }
 
     function buildTimeline(confirmedFlavors, forecast, today) {

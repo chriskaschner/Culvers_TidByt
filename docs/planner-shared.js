@@ -512,5 +512,59 @@ var CustardPlanner = (function () {
     calendarIcsUrl: calendarIcsUrl,
     alertPageUrl: alertPageUrl,
     actionCTAsHTML: actionCTAsHTML,
+
+    // Signals
+    signalCardHTML: signalCardHTML,
+    fetchSignals: fetchSignalsShared,
   };
+
+  // ---------------------------------------------------------------------------
+  // Flavor signals
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Render a single signal card as HTML.
+   * @param {Object} sig - Signal object from /api/v1/signals
+   * @param {string} slug - Store slug for action URLs
+   * @param {string} workerBase - Worker base URL
+   * @returns {string} HTML
+   */
+  function signalCardHTML(sig, slug, workerBase) {
+    var actionLabel = sig.action === 'directions' ? 'Directions' : sig.action === 'calendar' ? 'Subscribe' : 'Set Alert';
+    var actionClass = 'cta-link cta-' + sig.action;
+    var actionHref = sig.action === 'alert' ? alertPageUrl(slug) : sig.action === 'calendar' ? calendarIcsUrl(workerBase, slug) : '#';
+    var esc = function(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    return '<div class="signal-card">'
+      + '<div class="signal-card-accent signal-accent-' + esc(sig.type) + '"></div>'
+      + '<div class="signal-card-body">'
+      + '<div class="signal-headline">' + esc(sig.headline) + '</div>'
+      + '<div class="signal-explanation">' + esc(sig.explanation) + '</div>'
+      + '<a href="' + actionHref + '" class="' + actionClass + '">' + actionLabel + '</a>'
+      + '</div></div>';
+  }
+
+  /**
+   * Fetch signals for a store and render into a container.
+   * @param {string} workerBase
+   * @param {string} slug
+   * @param {HTMLElement} section - Container section (hidden/shown)
+   * @param {HTMLElement} list - List container for signal cards
+   * @param {number} [limit=3]
+   */
+  function fetchSignalsShared(workerBase, slug, section, list, limit) {
+    limit = limit || 3;
+    fetch(workerBase + '/api/v1/signals/' + encodeURIComponent(slug) + '?limit=' + limit)
+      .then(function (resp) { return resp.ok ? resp.json() : null; })
+      .then(function (data) {
+        if (!data || !data.signals || data.signals.length === 0) return;
+        var html = '';
+        for (var i = 0; i < data.signals.length; i++) {
+          html += signalCardHTML(data.signals[i], slug, workerBase);
+        }
+        list.innerHTML = html;
+        section.hidden = false;
+      })
+      .catch(function () { /* enhancement-only */ });
+  }
 })();
+

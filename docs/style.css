@@ -970,6 +970,57 @@ details ol {
   background: #f0f7ff;
 }
 
+/* Flavor signals */
+.signals-header {
+  font-size: 1rem;
+  color: #003366;
+  margin: 1rem 0 0.5rem;
+}
+
+.signals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.signal-card {
+  display: flex;
+  border: 1px solid #d5e6f4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fcfdff;
+}
+
+.signal-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+}
+
+.signal-accent-overdue { background: #e65100; }
+.signal-accent-dow_pattern { background: #1565c0; }
+.signal-accent-seasonal { background: #2e7d32; }
+.signal-accent-active_streak { background: #f9a825; }
+.signal-accent-rare_find { background: #7b1fa2; }
+
+.signal-card-body {
+  padding: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.signal-headline {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #14385f;
+}
+
+.signal-explanation {
+  font-size: 0.8rem;
+  color: #4a6d8c;
+  margin: 0.15rem 0 0.3rem;
+  line-height: 1.35;
+}
+
 .overdue-section, .similar-section {
   margin-top: 1.25rem;
 }

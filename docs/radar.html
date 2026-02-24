@@ -76,6 +76,11 @@
       <div id="trust-banner" class="trust-banner" hidden></div>
     </section>
 
+    <section id="radar-signals-section" hidden>
+      <h2 class="signals-header">Flavor Signals</h2>
+      <div id="radar-signals-list" class="signals-list"></div>
+    </section>
+
     <section id="next-best-section" hidden>
       <h2>Next Best Store</h2>
       <p class="hint">When your favorites are weak at this store, we'll suggest nearby alternatives with stronger odds.</p>
@@ -1191,10 +1196,17 @@
           }
         });
 
+        // Fetch flavor signals
+        fetchRadarSignals(selectedSlug);
+
       } catch (err) {
         console.error('Timeline fetch error:', err);
         timelineEl.innerHTML = '<p style="color:#c00;font-size:0.875rem;">Failed to load forecast data. Please try again.</p>';
       }
+    }
+
+    function fetchRadarSignals(slug) {
+      CustardPlanner.fetchSignals(WORKER_BASE, slug, document.getElementById('radar-signals-section'), document.getElementById('radar-signals-list'));
     }
 
     var certaintyStripClass = CustardPlanner.confidenceStripClass;
