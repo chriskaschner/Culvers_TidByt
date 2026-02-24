@@ -29,6 +29,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Write config
+        run: |
+          cat > config.yaml << 'EOF'
+          stores:
+            - slug: "mt-horeb"
+              brand: "culvers"
+              name: "Mt. Horeb"
+              role: "primary"
+            - slug: "madison-todd-drive"
+              brand: "culvers"
+              name: "Madison Todd Dr"
+              role: "secondary"
+          worker_base: "https://custard-calendar.chris-kaschner.workers.dev"
+          tidbyt:
+            device_id: "repeatedly-enduring-fetching-bowerbird-761"
+            installation_id: "culvers"
+            view_mode: "three_day"
+            brand: "culvers"
+          EOF
+
       - name: Fetch flavor data
         run: uv run python main.py --fetch-only
 
