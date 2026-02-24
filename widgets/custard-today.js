@@ -28,7 +28,8 @@ var RARITY_COLORS = {
   "Ultra Rare": "#9C27B0",
   "Rare":       "#E65100",
   "Uncommon":   "#1565C0",
-  "Common":     "#757575"
+  "Common":     "#757575",
+  "Staple":     "#2E7D32"
 };
 
 // Base flavor colors for cone scoop -- matches the Forecast page palette

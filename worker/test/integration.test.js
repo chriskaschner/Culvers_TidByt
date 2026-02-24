@@ -1026,7 +1026,7 @@ describe('/api/today endpoint', () => {
     expect(body.rarity).toBeTruthy();
     expect(body.rarity.appearances).toBe(3);
     expect(body.rarity.avg_gap_days).toBeGreaterThan(0);
-    expect(['Ultra Rare', 'Rare', 'Uncommon']).toContain(body.rarity.label);
+    expect(['Ultra Rare', 'Rare', 'Uncommon', 'Common', 'Staple']).toContain(body.rarity.label);
   });
 
   it('65: returns 400 when slug is missing', async () => {

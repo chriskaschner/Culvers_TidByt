@@ -44,6 +44,7 @@ test('quiz page returns an in-radius available flavor match', async ({ page }) =
             rank: 2,
           },
         ],
+        all_flavors_today: ['Mint Explosion', 'Turtle'],
       }),
     });
   });

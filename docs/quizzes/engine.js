@@ -47,6 +47,66 @@ function normalizeFlavor(value) {
     .trim();
 }
 
+const SIMILARITY_GROUPS = {
+  mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
+  chocolate: [
+    'chocolate caramel twist', 'chocolate heath crunch',
+    'dark chocolate decadence', 'dark chocolate pb crunch',
+    'brownie thunder', 'chocolate volcano', 'chocolate oreo volcano',
+  ],
+  caramel: [
+    'caramel cashew', 'caramel fudge cookie dough', 'caramel pecan',
+    'caramel turtle', 'salted caramel pecan pie',
+    'salted double caramel pecan', 'caramel peanut buttercup',
+    'caramel chocolate pecan',
+  ],
+  cheesecake: [
+    'oreo cheesecake', 'oreo cookie cheesecake',
+    'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake',
+  ],
+  turtle: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'],
+  cookie: [
+    'crazy for cookie dough', 'caramel fudge cookie dough',
+    'oreo cookies and cream',
+  ],
+  peanutButter: [
+    'dark chocolate pb crunch', 'peanut butter cup',
+    'really reeses', 'caramel peanut buttercup',
+  ],
+  berry: [
+    'blackberry cobbler', 'raspberry cheesecake',
+    'double strawberry', 'chocolate covered strawberry',
+    'strawberry cheesecake', 'georgia peach',
+    'lemon berry layer cake',
+  ],
+  pecan: [
+    'butter pecan', 'caramel pecan', 'salted caramel pecan pie',
+    'georgia peach pecan', 'caramel chocolate pecan',
+  ],
+};
+
+function findSimilarFlavors(target, availableFlavors) {
+  const normalizedTarget = normalizeFlavor(target);
+  const normalizedAvailable = new Set(availableFlavors.map((f) => normalizeFlavor(f)));
+  const similar = new Set();
+  for (const members of Object.values(SIMILARITY_GROUPS)) {
+    if (members.includes(normalizedTarget)) {
+      for (const member of members) {
+        if (member !== normalizedTarget && normalizedAvailable.has(member)) {
+          similar.add(member);
+        }
+      }
+    }
+  }
+  return [...similar];
+}
+
+// Culver's typical hours end around 10pm local. After that, today's flavors
+// are wrapping up. We note this in result messaging.
+function isAfterClosing() {
+  return new Date().getHours() >= 22;
+}
+
 function parseLatLon(value) {
   if (typeof value !== 'string') return null;
   const match = value.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
@@ -228,8 +288,10 @@ async function fetchNearby(locationText) {
     throw new Error(`Nearby lookup failed (${resp.status})`);
   }
   const data = await resp.json();
-  if (!Array.isArray(data?.nearby)) return [];
-  return data.nearby;
+  return {
+    nearby: Array.isArray(data?.nearby) ? data.nearby : [],
+    all_flavors_today: Array.isArray(data?.all_flavors_today) ? data.all_flavors_today : [],
+  };
 }
 
 function rankAvailabilityMatches(stores, candidateFlavors, center, radiusMiles) {
@@ -341,21 +403,108 @@ async function runQuiz(evt) {
     if (!archetype) {
       throw new Error('Could not determine an archetype from the selected answers.');
     }
-    const fallbackFlavor = pickResultFlavor(state.activeQuiz.id, archetype);
     const candidateFlavors = archetype.flavors || [];
+    const lateNight = isAfterClosing();
 
-    const [nearbyStores, center] = await Promise.all([
+    // Fetch nearby data and geocode in parallel
+    const [nearbyData, center] = await Promise.all([
       fetchNearby(locationText),
       geocodeLocation(locationText).catch(() => null),
     ]);
 
-    const ranked = rankAvailabilityMatches(nearbyStores, candidateFlavors, center, radiusMiles);
-    const bestWithin = ranked.within[0] || null;
-    const nearestOutside = ranked.outside[0] || null;
-    const bestFlavor = bestWithin?.store?.flavor || fallbackFlavor;
+    const stores = nearbyData.nearby;
+    const allFlavorsToday = nearbyData.all_flavors_today;
 
+    // -- Step 1: Match archetype candidates against what is actually available --
+    const normalizedCandidates = new Map(candidateFlavors.map((f) => [normalizeFlavor(f), f]));
+    const normalizedAvailable = new Map(allFlavorsToday.map((f) => [normalizeFlavor(f), f]));
+
+    let matchedFlavor = null;
+    for (const [normCandidate, originalCandidate] of normalizedCandidates) {
+      if (normalizedAvailable.has(normCandidate)) {
+        matchedFlavor = originalCandidate;
+        break;
+      }
+    }
+
+    // -- Step 2: If no exact match, try similarity groups --
+    let similarMatch = null;
+    if (!matchedFlavor) {
+      for (const candidate of candidateFlavors) {
+        const similar = findSimilarFlavors(candidate, allFlavorsToday);
+        if (similar.length > 0) {
+          const normSimilar = similar[0];
+          for (const avail of allFlavorsToday) {
+            if (normalizeFlavor(avail) === normSimilar) {
+              similarMatch = avail;
+              break;
+            }
+          }
+          if (similarMatch) break;
+        }
+      }
+    }
+
+    // -- Step 3: Find the best store serving the matched flavor --
+    const resultFlavor = matchedFlavor || similarMatch;
+    let bestStore = null;
+    let bestDistance = null;
+    if (resultFlavor && center) {
+      const normalizedResult = normalizeFlavor(resultFlavor);
+      const matchingStores = stores
+        .filter((s) => normalizeFlavor(s.flavor) === normalizedResult)
+        .map((s) => {
+          const lat = Number(s.lat);
+          const lon = Number(s.lon);
+          let dist = null;
+          if (Number.isFinite(lat) && Number.isFinite(lon)) {
+            dist = haversineMiles(center.lat, center.lon, lat, lon);
+          }
+          return { ...s, _dist: dist };
+        })
+        .filter((s) => s._dist != null && s._dist <= radiusMiles)
+        .sort((a, b) => a._dist - b._dist);
+      if (matchingStores.length > 0) {
+        bestStore = matchingStores[0];
+        bestDistance = matchingStores[0]._dist;
+      }
+    }
+
+    // -- Step 4: Fallback if nothing matched --
+    const fallbackFlavor = resultFlavor ? null : pickResultFlavor(state.activeQuiz.id, archetype);
+    const displayFlavor = resultFlavor || fallbackFlavor;
+
+    // -- Step 5: Build ranked alternates from any archetype + similarity matches --
+    // Collect all available flavors that match archetype or similarity groups
+    const alternateRows = [];
+    const usedFlavors = new Set();
+    if (resultFlavor) usedFlavors.add(normalizeFlavor(resultFlavor));
+
+    for (const candidate of candidateFlavors) {
+      const normCand = normalizeFlavor(candidate);
+      if (usedFlavors.has(normCand)) continue;
+      if (!normalizedAvailable.has(normCand)) continue;
+      // Find stores serving this flavor within radius
+      for (const s of stores) {
+        if (normalizeFlavor(s.flavor) !== normCand) continue;
+        const lat = Number(s.lat);
+        const lon = Number(s.lon);
+        let dist = null;
+        if (center && Number.isFinite(lat) && Number.isFinite(lon)) {
+          dist = haversineMiles(center.lat, center.lon, lat, lon);
+        }
+        if (dist != null && dist <= radiusMiles) {
+          alternateRows.push({ store: s, distanceMiles: dist });
+          usedFlavors.add(normCand);
+          break;
+        }
+      }
+    }
+    alternateRows.sort((a, b) => (a.distanceMiles || 0) - (b.distanceMiles || 0));
+
+    // -- Render results --
     els.resultTitle.textContent = `${archetype.name}: ${archetype.headline}`;
-    els.resultFlavor.textContent = bestFlavor || 'Flavor signal unavailable';
+    els.resultFlavor.textContent = displayFlavor || 'Flavor signal unavailable';
     els.resultBlurb.textContent = archetype.blurb || '';
 
     const traits = topTraits(traitScores, 3);
@@ -363,34 +512,47 @@ async function runQuiz(evt) {
       ? `Top traits: ${traits.map((t) => `${t.trait} (${t.score})`).join(', ')}`
       : 'Top traits: balanced profile';
 
-    if (bestWithin) {
-      const dist = bestWithin.distanceMiles != null ? ` (${formatMiles(bestWithin.distanceMiles)})` : '';
-      const store = bestWithin.store;
-      els.resultAvailability.textContent = `Available now: ${store.flavor} at ${store.name}${dist}. ${store.address || ''}`.trim();
-      setStatus('Forecast locked: at least one archetype flavor is available inside your radius.', 'success');
-    } else if (nearestOutside) {
-      const dist = nearestOutside.distanceMiles != null ? ` (${formatMiles(nearestOutside.distanceMiles)})` : '';
-      els.resultAvailability.textContent = `No archetype flavors inside ${radiusMiles} miles right now. Closest is ${nearestOutside.store.flavor} at ${nearestOutside.store.name}${dist}.`;
-      setStatus('No in-radius match right now; showing closest outside your selected radius.', 'neutral');
+    const lateNote = lateNight ? ' Last chance tonight -- stores close around 10pm.' : '';
+
+    if (resultFlavor && bestStore) {
+      const dist = bestDistance != null ? ` (${formatMiles(bestDistance)})` : '';
+      const addr = bestStore.address ? ` ${bestStore.address}` : '';
+      els.resultAvailability.textContent =
+        `Available now: ${resultFlavor} at ${bestStore.name}${dist}.${addr}${lateNote}`.trim();
+      if (similarMatch && !matchedFlavor) {
+        setStatus(
+          `No exact archetype flavor today, but ${similarMatch} is a close match and available nearby.`,
+          'success',
+        );
+      } else {
+        setStatus('Forecast locked: your archetype flavor is scooping nearby right now.', 'success');
+      }
+    } else if (resultFlavor && !bestStore) {
+      els.resultAvailability.textContent =
+        `${resultFlavor} is scooping today, but not within ${radiusMiles} miles of your location.${lateNote}`.trim();
+      setStatus('Your flavor is available today, just outside your drive radius.', 'neutral');
     } else {
-      els.resultAvailability.textContent = `No current nearby stores matched your archetype flavors. Fallback pick: ${fallbackFlavor}.`;
-      setStatus('No live local matches yet; fallback flavor personality selected.', 'neutral');
+      const tomorrow = lateNight ? ' Check back tomorrow morning for fresh forecasts.' : ' Check back tomorrow.';
+      els.resultAvailability.textContent =
+        `Your archetype flavor ${fallbackFlavor} is not scooping nearby today.${tomorrow}`.trim();
+      setStatus('No live matches today; showing your archetype flavor for reference.', 'neutral');
     }
 
-    renderAlternates(ranked.within.slice(bestWithin ? 1 : 0), locationText, radiusMiles);
-    const mapFlavor = bestWithin?.store?.flavor || fallbackFlavor || '';
+    renderAlternates(alternateRows, locationText, radiusMiles);
+    const mapFlavor = resultFlavor || fallbackFlavor || '';
     els.resultMapLink.href = `map.html?location=${encodeURIComponent(locationText)}&flavor=${encodeURIComponent(mapFlavor)}`;
 
     await sendQuizEvent({
       event_type: 'quiz_result',
       quiz_id: state.activeQuiz.id,
       archetype: archetype.id,
-      result_flavor: bestFlavor,
-      matched_flavor: bestWithin?.store?.flavor || null,
-      matched_store_slug: bestWithin?.store?.slug || null,
-      matched_distance_miles: bestWithin?.distanceMiles ?? null,
+      result_flavor: displayFlavor,
+      matched_flavor: resultFlavor || null,
+      similar_match: similarMatch ? true : false,
+      matched_store_slug: bestStore?.slug || null,
+      matched_distance_miles: bestDistance ?? null,
       radius_miles: radiusMiles,
-      has_radius_match: Boolean(bestWithin),
+      has_radius_match: Boolean(bestStore),
       trait_scores: traitScores,
     });
 

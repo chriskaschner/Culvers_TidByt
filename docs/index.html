@@ -4,10 +4,10 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Custard Forecast — Today's Flavor of the Day</title>
-  <meta name="description" content="Today's Flavor of the Day forecast for frozen custard shops. See confirmed flavors and predictions for the week ahead.">
+  <title>Custard Calendar — Today's Flavor of the Day</title>
+  <meta name="description" content="Today's Flavor of the Day and this week's confirmed schedule for frozen custard shops.">
   <meta property="og:title" content="Custard Forecast — Today's Flavor of the Day">
-  <meta property="og:description" content="Today's Flavor of the Day forecast for frozen custard shops near you.">
+  <meta property="og:description" content="Today's Flavor of the Day and confirmed schedule for frozen custard shops near you.">
   <meta property="og:url" content="https://custard.chriskaschner.com/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
@@ -58,7 +58,7 @@
     <section id="empty-state">
       <div class="hero-empty">
         <p class="hero-kicker">New here?</p>
-        <h2>Forecast frozen custard flavors before you go.</h2>
+        <h2>Know today's flavor before you go.</h2>
         <p class="hero-subtitle">Custard Calendar tracks daily flavor schedules across 1,000+ stores so you can check today's scoop and the week ahead in one place.</p>
         <div class="hero-cta-row">
           <button class="btn-primary" id="find-store-btn">Find your store</button>
@@ -71,7 +71,7 @@
         <h3>Start in 3 steps</h3>
         <ol>
           <li>Pick a store above, or use one of the quick start stores below.</li>
-          <li>Check today's confirmed flavor and your week-ahead forecast.</li>
+          <li>Check today's confirmed flavor and this week's schedule.</li>
           <li>Use Calendar or Alerts so you do not miss favorite flavors.</li>
         </ol>
         <div id="quick-start-wrap" class="quick-start-wrap" hidden>
@@ -94,7 +94,7 @@
     <!-- Error state -->
     <section id="error-state" hidden>
       <div class="error-card">
-        <p id="error-message">Something went wrong loading the forecast.</p>
+        <p id="error-message">Something went wrong loading the flavor data.</p>
         <button class="btn-retry" id="retry-btn">Try again</button>
       </div>
     </section>
@@ -312,7 +312,7 @@
       if (day && day.type === 'confirmed' && day.description) {
         detail = day.description;
       } else if (day && day.type === 'predicted') {
-        detail = 'Likely flavor forecast based on recent schedule patterns.';
+        detail = 'Likely flavor based on recent schedule patterns.';
       }
 
       const color = accentColor || '#005696';
@@ -630,7 +630,7 @@
       } catch (err) {
         console.error('Forecast load error:', err);
         todayLoading.hidden = true;
-        errorMessage.textContent = 'Something went wrong loading the forecast.';
+        errorMessage.textContent = 'Something went wrong loading the flavor data.';
         errorState.hidden = false;
       }
     }

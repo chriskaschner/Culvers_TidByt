@@ -17,6 +17,7 @@ import { recordSnapshots } from './snapshot-writer.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
 import { handleMetricsRoute } from './metrics.js';
+import { handleFlavorStats } from './flavor-stats.js';
 import { handleForecast } from './forecast.js';
 import { handleQuizRoute } from './quiz-routes.js';
 import { handleSocialCard } from './social-card.js';
@@ -399,6 +400,9 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   } else if (canonical.match(/^\/api\/forecast\/[a-z0-9][a-z0-9_-]+$/)) {
     const forecastSlug = canonical.replace('/api/forecast/', '');
     response = await handleForecast(forecastSlug, env, corsHeaders);
+  } else if (canonical.match(/^\/api\/flavor-stats\/([^/]+)$/)) {
+    const statsSlug = canonical.match(/^\/api\/flavor-stats\/([^/]+)$/)[1];
+    response = await handleFlavorStats(request, env, decodeURIComponent(statsSlug));
   } else if (canonical.startsWith('/api/metrics/')) {
     const metricsResponse = await handleMetricsRoute(canonical, env, corsHeaders);
     if (metricsResponse) {
@@ -424,7 +428,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/forecast/{slug}, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -696,6 +700,8 @@ async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
           if (percentile < 0.10) label = 'Ultra Rare';
           else if (percentile < 0.25) label = 'Rare';
           else if (percentile < 0.50) label = 'Uncommon';
+          else if (percentile < 0.75) label = 'Common';
+          else label = 'Staple';
 
           rarity = { appearances, avg_gap_days: avgGapDays, label };
         }
