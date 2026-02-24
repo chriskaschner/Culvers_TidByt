@@ -1,27 +1,30 @@
-culvers:
-  locations:
-    - name: "Mt. Horeb"
-      url: "https://www.culvers.com/restaurants/mt-horeb"
-      role: "primary"  # Primary location shown as main event
-      enabled: true
-    - name: "Madison Todd Dr"
-      url: "https://www.culvers.com/restaurants/madison-todd-drive"
-      role: "backup"  # Backup option shown in event description
-      enabled: true
-  calendar_days: 30  # Try full month, fallback to 5
+stores:
+  - slug: "mt-horeb"
+    brand: "culvers"
+    name: "Mt. Horeb"
+    role: "primary"
+  - slug: "madison-todd-drive"
+    brand: "culvers"
+    name: "Madison Todd Dr"
+    role: "secondary"
+
+# Worker API base (single source of truth for flavor data)
+worker_base: "https://custard.chriskaschner.com"
 
 google_calendar:
-  calendar_id: "YOUR_CALENDAR_ID@group.calendar.google.com"  # Single calendar for all locations
+  calendar_id: "YOUR_CALENDAR_ID@group.calendar.google.com"
   timezone: "America/Chicago"
+  event_color_id: "9"  # Optional
 
 tidbyt:
   device_id: "your-tidbyt-device-id"
   installation_id: "culvers"
   view_mode: "three_day"  # "single" or "three_day"
+  brand: "culvers"  # culvers, kopps, gilles, hefners, kraverz, oscars, generic
 
 scheduling:
   cron_schedule: "0 6 * * *"  # Daily at 6 AM
 
 monitoring:
   healthcheck_url: ""  # Optional: healthchecks.io ping URL
-  alert_email: ""  # Optional: email for alerts
+  alert_email: ""      # Optional: email for alerts

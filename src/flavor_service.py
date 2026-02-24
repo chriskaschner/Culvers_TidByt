@@ -22,7 +22,7 @@ DEFAULT_CACHE_PATH = Path(__file__).parent.parent / 'flavor_cache.json'
 CACHE_VERSION = 2
 
 # Worker API defaults
-DEFAULT_WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev'
+DEFAULT_WORKER_BASE = 'https://custard.chriskaschner.com'
 API_TIMEOUT = 15  # seconds — Worker may cold-start
 MAX_RETRIES = 2
 
