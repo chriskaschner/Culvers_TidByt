@@ -88,7 +88,8 @@ Flavor and store errata powered by real D1 snapshot data. Questions generated fr
 
 - [x] **Metrics-pack powered trivia prompts** -- `scripts/generate_intelligence_metrics.py` now emits `worker/src/trivia-metrics-seed.js`, and `/api/v1/trivia` augments (or falls back to) this seed for top flavor frequency, top store, seasonal spotlight, HNBC month, and coverage questions when D1 windows are sparse or unavailable. (2026-02-24)
 - [x] **Trivia question API** -- `GET /api/v1/trivia` now generates multiple-choice questions from D1 snapshot aggregates (state/store flavor leaders, rarity, spread, volume), includes `correct_option_id`, and is cached for 15 minutes. Route is wired through versioned API with unit + integration tests. (2026-02-24)
-- [ ] **Quiz content integration** -- trivia mode now hydrates from `/api/v1/trivia` (with static fallback) and validates multiple-choice answers client-side using `correct_option_id`; ranking and fill-in-the-blank formats remain to be added.
+- [x] **Quiz content integration** -- trivia mode fetches live questions from `/api/v1/trivia` via `dynamic_source` in `quiz-trivia-v1.json`; `hydrateDynamicQuiz` in engine.js fetches + caches (15 min TTL); `collectAnswers` validates `correct_option_id` and shows `Trivia: X/Y correct` in result. Full D1 + metrics-seed fallback chain. (2026-02-25 verified)
+- [ ] **Quiz trivia: expanded formats** -- ranking questions ("order these flavors by rarity") and fill-in-the-blank formats beyond multiple-choice. Current integration only supports multiple-choice with `correct_option_id`.
 - [ ] **Social sharing cards** -- trivia answers as shareable OG images. "Did you know? Mint Explosion was served 47 times at the Mt. Horeb store last year -- more than any other location." SVG card at `/v1/og/trivia/{question_id}.svg`.
 - [ ] **State and regional leaderboards** -- "Most common FOTD in WI vs IL vs MN." Per-state flavor rankings from snapshots. Surface on quiz results and as standalone shareable content.
 
@@ -124,6 +125,35 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 - [ ] **CLAUDE.md / Codex consistency** -- audit CLAUDE.md and codex task instructions for drift. Ensure both reflect same commands, architecture, constraints, and conventions. Single source of truth where possible.
 - [ ] **Multi-agent coordination** -- prevent agents from stepping on each other's branches or squashing work. Options to evaluate: (1) content-hash IDs on TODO items so agents can reference specific tasks unambiguously, (2) branch-per-task convention with merge-only-forward rule (no force push, no rebase onto shared branches), (3) lock file or claim mechanism in TODO.md (agent writes its name next to a task before starting), (4) worktree isolation as default for Codex tasks so each agent gets its own branch from HEAD. Document the chosen protocol in CLAUDE.md so both Claude Code and Codex sessions follow it.
 - [ ] **Platform architecture review (executive)** -- five principal risks identified; address in order: (1) **Contract drift**: custard-tidbyt and custard-scriptable both implement their own flavor-name parsing, API response mapping, and store-slug resolution -- any Worker API change silently breaks them. Fix: publish a machine-readable API contract (OpenAPI or JSON schema) as part of Worker deploy; add smoke tests in each sibling repo that hit the live API and assert schema version. (2) **Duplicate client implementations**: at least 3 repos each maintain `haversine`, `flavorMatchScore`, and store-lookup logic. Fix: extract a published `@custard/client` npm package (or a single canonical JS module the Worker serves) so all clients share one implementation. (3) **CI asymmetry**: Worker has 450+ tests; GitHub Pages frontend has Playwright smoke tests only; Python pipeline has pytest but no live-API integration gate. Fix: add a nightly integration test that runs the full fetch->calendar->tidbyt pipeline against staging Worker, fails loudly if any leg breaks. (4) **Doc drift**: CLAUDE.md, README, and inline code comments are the only sources of architecture truth, and they diverge. Fix: maintain a lightweight `ARCHITECTURE.md` (data flow diagram + layer contracts) that is required to update before any PR touching cross-layer interfaces. (5) **Monolithic Worker growth**: index.js decomposition started but the Worker is the only deploy unit -- a bad route handler can silently kill the entire platform. Fix: evaluate Worker Services (route isolation) or at minimum enforce per-route unit test coverage gates in CI. Recommended direction: treat custard-calendar Worker as platform kernel; all sibling repos are consumers of its stable v1 API, not peers.
+
+## Strategy -- Marketing and Product Direction
+
+Consumer habit product first, intelligence platform second. One promise everywhere: "Know today's flavor, plan your week, never miss your favorites."
+
+**Product tier model:**
+- Core utility: Forecast + Alerts + Calendar
+- Assistive utility: Map + Radar
+- Delight/acquisition: Quiz + Fronts + Widget + Tidbyt
+
+**180-day roadmap:**
+- [ ] **0-45 days: Focus + Consistency** -- (1) Unify canonical domain/endpoint messaging across all repos and channels (still workers.dev in sister repos). (2) Simplify homepage/hero to one primary CTA ("Set Alerts" or "Pick Store") + one secondary ("View Map"). (3) Reframe technical copy for users; move "enterprise flavor intelligence" language to developer docs. (4) Add a privacy/telemetry explainer page with clear data-use language (prerequisite for trust/marketing conversion).
+- [ ] **45-90 days: Growth Loops** -- (1) Expose social-share loops from existing OG capability (`/v1/og/...`) in UI. (2) Turn quiz results into shareable outcomes with direct map/alert deep links. (3) Add channel cross-promo loops: web -> widget/tidbyt install prompts; alert emails -> map/radar return links; widget page -> alerts/calendar upsell. (4) Build search landing templates per store/state from `docs/stores.json` (high-intent SEO surface).
+- [ ] **90-180 days: Personalization + Defensibility** -- (1) "My Custard" state (saved store + favorites) as first-class home. (2) Reframe Radar as decision assistant ("best nearby option today") not feature showcase. (3) Operationalize rarity/seasonality content into recurring editorial/email moments. (4) ML predictions stay as support signal unless confidence/reliability thresholds are met.
+
+**KPI system (formalize weekly operating cadence):**
+- North-star: weekly users who take a planning action (alert subscribe, calendar subscribe, or directions click)
+- Acquisition: store-selection rate from landing sessions
+- Activation: session-to-first-action within same visit
+- Retention: returning action users (7d/28d)
+- Content: quiz completion -> action conversion
+- Channel: widget/tidbyt install starts -> successful setup
+- Current telemetry in `worker/src/events.js` + `worker/src/quiz-routes.js` supports most of this; biggest gap is consistent cohorting across sessions/channels.
+
+**Sister repo strategy:**
+- custard-calendar: source of truth (product + API + messaging canon)
+- custard-scriptable: distribution adapter with canonical API contract
+- custard-tidbyt: community distribution adapter with shared contract tests
+- Treat as adapters, not independent products; reduce marketing confusion + breakage risk
 
 ## Someday/Maybe
 
