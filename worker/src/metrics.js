@@ -236,20 +236,30 @@ function handleStoreContextMetrics(inputSlug, corsHeaders) {
  * Flavor metrics: how often does this flavor appear, at how many stores, when was it last seen?
  */
 async function handleFlavorMetrics(db, normalized, corsHeaders) {
+  const normalizedFlavor = normalizeFlavorKey(normalized);
+  const rank = getFlavorRank(TRIVIA_METRICS_SEED || {});
+  const globalRank = rank.byNormalized[normalizedFlavor] || null;
+  const globalPercentile = (globalRank && rank.total > 1)
+    ? Math.round((((globalRank - 1) / (rank.total - 1)) * 100) * 10) / 10
+    : null;
+
   const [frequencyResult, recentResult, storeCountResult] = await Promise.all([
     db.prepare(
       `SELECT COUNT(*) as total_appearances FROM snapshots WHERE normalized_flavor = ?`
-    ).bind(normalized).first(),
+    ).bind(normalizedFlavor).first(),
     db.prepare(
       `SELECT date, slug, flavor FROM snapshots WHERE normalized_flavor = ? ORDER BY date DESC LIMIT 10`
-    ).bind(normalized).all(),
+    ).bind(normalizedFlavor).all(),
     db.prepare(
       `SELECT COUNT(DISTINCT slug) as store_count FROM snapshots WHERE normalized_flavor = ?`
-    ).bind(normalized).first(),
+    ).bind(normalizedFlavor).first(),
   ]);
 
   return Response.json({
-    normalized_flavor: normalized,
+    normalized_flavor: normalizedFlavor,
+    global_rank: globalRank,
+    total_ranked_flavors: rank.total,
+    global_percentile: globalPercentile,
     total_appearances: frequencyResult?.total_appearances || 0,
     store_count: storeCountResult?.store_count || 0,
     recent: (recentResult?.results || []).map(r => ({

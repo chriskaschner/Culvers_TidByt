@@ -152,6 +152,7 @@
     let brandStores = []; // loaded from stores.json
     let skipMoveHandler = false; // flag to skip moveend during programmatic fitBounds
     const flavorColorsReady = loadFlavorColors().then(function() { flavorIconCache.clear(); });
+    const flavorIntelCache = new Map(); // normalized flavor -> rendered intel HTML
 
     // Brand chip state
     const BRAND_CHIP_COLORS = { culvers: '#003366', ...BRAND_COLORS };
@@ -407,6 +408,7 @@
             flavor: store.flavor || null,
             certainty_tier: store.flavor ? 'confirmed' : 'none',
           });
+          if (store.flavor) enrichPopupIntel(marker, store.flavor);
         });
         markers.addLayer(marker);
         window._allMarkers.push({ store: store, marker: marker });
@@ -755,6 +757,56 @@
       });
     }
 
+    function rarityChipClass(tier) {
+      if (!tier) return '';
+      const map = {
+        'Ultra Rare': 'rarity-ultra-rare',
+        'Rare': 'rarity-rare',
+        'Uncommon': 'rarity-uncommon',
+        'Common': 'rarity-common',
+        'Staple': 'rarity-staple',
+      };
+      return map[tier] || '';
+    }
+
+    function buildPopupIntelHTML(data) {
+      if (!data || !data.found || !data.flavor) return '';
+      const tier = CustardPlanner.rarityLabelFromRank(data.rank, data.total_ranked_flavors);
+      const peak = data.flavor.peak_month_name || null;
+      const parts = [];
+      if (tier) {
+        const cls = rarityChipClass(tier);
+        parts.push(`<span class="popup-rarity-chip ${escapeHtml(cls)}">${escapeHtml(tier)}</span>`);
+      }
+      if (peak) parts.push(`Peak: ${escapeHtml(peak)}`);
+      return parts.join('');
+    }
+
+    function injectPopupIntel(marker, html) {
+      const popup = marker.getPopup && marker.getPopup();
+      if (!popup) return;
+      const el = popup.getElement && popup.getElement();
+      if (!el) return;
+      const placeholder = el.querySelector('.popup-intel');
+      if (placeholder) placeholder.innerHTML = html;
+    }
+
+    async function enrichPopupIntel(marker, flavorName) {
+      const key = normalizeFlavorKey(flavorName);
+      if (flavorIntelCache.has(key)) {
+        injectPopupIntel(marker, flavorIntelCache.get(key));
+        return;
+      }
+      try {
+        const resp = await fetch(`${WORKER_BASE}/api/v1/metrics/context/flavor/${encodeURIComponent(flavorName)}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const html = buildPopupIntelHTML(data);
+        flavorIntelCache.set(key, html);
+        injectPopupIntel(marker, html);
+      } catch (_) {}
+    }
+
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
       const certBadge = store.flavor ? ' <span class="popup-confirmed">Confirmed</span>' : '';
@@ -770,10 +822,12 @@
         workerBase: WORKER_BASE,
         actions: ['directions', 'alert', 'calendar'],
       }) : '';
+      const intelPlaceholder = store.flavor ? '<div class="popup-intel"></div>' : '';
       return `<div class="store-popup">
         <strong${nameColor}>${escapeHtml(store.name)}</strong>${matchBadge}${certBadge}<br>
         ${escapeHtml(store.address)}<br>
         <em>${escapeHtml(store.flavor || 'No flavor data')}</em>${desc}
+        ${intelPlaceholder}
         ${ctas}
       </div>`;
     }

@@ -39,6 +39,20 @@ describe('getFlavorProfile', () => {
     expect(profile.toppings).toEqual([]);
     expect(profile.density).toBe('standard');
   });
+
+  it('andes mint avalanche uses a darker base than mint explosion', () => {
+    const avalanche = getFlavorProfile('Andes Mint Avalanche');
+    const explosion = getFlavorProfile('Mint Explosion');
+    expect(avalanche.base).not.toBe(explosion.base);
+    expect(BASE_COLORS[avalanche.base]).toBeDefined();
+  });
+
+  it('salted double caramel pecan uses vanilla base for caramel ribbon contrast', () => {
+    const profile = getFlavorProfile('Salted Double Caramel Pecan');
+    expect(profile.base).toBe('vanilla');
+    expect(profile.ribbon).toBe('caramel');
+    expect(profile.toppings).toContain('pecan');
+  });
 });
 
 describe('renderConeSVG', () => {

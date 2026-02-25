@@ -131,6 +131,9 @@ describe('GET /api/metrics/flavor/{normalized}', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.normalized_flavor).toBe('turtle');
+    expect(body.total_ranked_flavors).toBeGreaterThan(0);
+    expect(body.global_rank).toBeGreaterThan(0);
+    expect(typeof body.global_percentile === 'number' || body.global_percentile === null).toBe(true);
     expect(body.total_appearances).toBe(3);
     expect(body.store_count).toBe(2);
     expect(body.recent).toHaveLength(3);
@@ -146,6 +149,8 @@ describe('GET /api/metrics/flavor/{normalized}', () => {
     expect(body.total_appearances).toBe(0);
     expect(body.store_count).toBe(0);
     expect(body.recent).toEqual([]);
+    expect(body.total_ranked_flavors).toBeGreaterThan(0);
+    expect(body.global_rank).toBeNull();
   });
 
   it('decodes URL-encoded flavor names', async () => {
@@ -156,6 +161,7 @@ describe('GET /api/metrics/flavor/{normalized}', () => {
     const body = await res.json();
     expect(body.normalized_flavor).toBe('mint explosion');
     expect(body.total_appearances).toBe(1);
+    expect(body.global_rank).toBeGreaterThan(0);
   });
 });
 

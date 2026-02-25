@@ -25,6 +25,34 @@ var CustardPlanner = (function () {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  function rarityLabelFromPercentile(percentile) {
+    var p = Number(percentile);
+    if (!Number.isFinite(p)) return null;
+    if (p <= 10) return 'Ultra Rare';
+    if (p <= 25) return 'Rare';
+    if (p <= 50) return 'Uncommon';
+    if (p <= 75) return 'Common';
+    return 'Staple';
+  }
+
+  function rarityLabelFromRank(rank, totalRankedFlavors) {
+    var r = Number(rank);
+    var total = Number(totalRankedFlavors);
+    if (!Number.isFinite(r) || !Number.isFinite(total) || r < 1 || total < 2) return null;
+    var percentile = ((r - 1) / (total - 1)) * 100;
+    return rarityLabelFromPercentile(percentile);
+  }
+
+  function formatCadenceText(avgGapDays, opts) {
+    var days = Math.round(Number(avgGapDays));
+    if (!Number.isFinite(days) || days < 2 || days > 365) return '';
+    var scope = opts && typeof opts.scope === 'string' ? opts.scope : '';
+    var suffix = '';
+    if (scope === 'store') suffix = ' at this store';
+    if (scope === 'primary') suffix = ' at your store';
+    return 'Shows up roughly every ' + days + ' days' + suffix;
+  }
+
   function getPrimaryStoreSlug() {
     try {
       if (typeof localStorage === 'undefined') return null;
@@ -887,6 +915,9 @@ var CustardPlanner = (function () {
     escapeHtml: escapeHtml,
     getPrimaryStoreSlug: getPrimaryStoreSlug,
     setPrimaryStoreSlug: setPrimaryStoreSlug,
+    rarityLabelFromPercentile: rarityLabelFromPercentile,
+    rarityLabelFromRank: rarityLabelFromRank,
+    formatCadenceText: formatCadenceText,
 
     // Certainty
     CERTAINTY: CERTAINTY,

@@ -267,6 +267,13 @@
       line-height: 1.4;
     }
 
+    .day-card-cadence {
+      font-size: 0.75rem;
+      color: #2f6f45;
+      margin-top: 0.2rem;
+      line-height: 1.3;
+    }
+
     .day-card-nodata {
       font-style: italic;
       color: #999;
@@ -1057,28 +1064,36 @@
       computeRarityPercentiles();
     }
 
-    // Percentile-based rarity: ranks flavors relative to the loaded dataset
+    // Percentile-based rarity: prefers global seed rank from metrics API and
+    // falls back to local-page percentiles if global metadata is unavailable.
     let rarityPercentileMap = new Map(); // normalized_flavor -> percentile (0-100)
 
     function computeRarityPercentiles() {
       rarityPercentileMap = new Map();
-      const entries = [];
+      const fallbackEntries = [];
       for (const [key, metrics] of flavorMetricsCache) {
         if (!metrics) continue;
+        const globalRank = Number(metrics.global_rank || 0);
+        const totalRanked = Number(metrics.total_ranked_flavors || 0);
+        if (globalRank > 0 && totalRanked > 1) {
+          const percentile = ((globalRank - 1) / (totalRanked - 1)) * 100;
+          rarityPercentileMap.set(key, percentile);
+          continue;
+        }
         const total = Number(metrics.total_appearances || 0);
-        entries.push({ key, total });
+        fallbackEntries.push({ key, total });
       }
 
-      // Sample floor: skip all badges if fewer than 10 distinct flavors
-      if (entries.length < 10) return;
+      // Local fallback sample floor: only apply when global rank data is absent.
+      if (fallbackEntries.length < 10) return;
 
       // Sort ascending by appearance count
-      entries.sort((a, b) => a.total - b.total);
+      fallbackEntries.sort((a, b) => a.total - b.total);
 
       // Assign percentile rank
-      for (let i = 0; i < entries.length; i++) {
-        const percentile = (i / (entries.length - 1)) * 100;
-        rarityPercentileMap.set(entries[i].key, percentile);
+      for (let i = 0; i < fallbackEntries.length; i++) {
+        const percentile = (i / (fallbackEntries.length - 1)) * 100;
+        rarityPercentileMap.set(fallbackEntries[i].key, percentile);
       }
     }
 
@@ -1086,11 +1101,7 @@
       const key = normalize(flavorName);
       const percentile = rarityPercentileMap.get(key);
       if (percentile === undefined) return null;
-      if (percentile <= 10) return 'Ultra Rare';
-      if (percentile <= 25) return 'Rare';
-      if (percentile <= 50) return 'Uncommon';
-      if (percentile <= 75) return 'Common';
-      return 'Staple';
+      return CustardPlanner.rarityLabelFromPercentile(percentile);
     }
 
     function streakBadge(flavorName) {
@@ -1126,6 +1137,15 @@
       if (!Number.isFinite(avgGap)) return null;
       if (avgGap < 2 || avgGap > 180) return null;
       return 'Every ' + Math.round(avgGap) + ' days';
+    }
+
+    function cadenceSummary(flavorName) {
+      if (!selectedSlug) return '';
+      const key = flavorStatsKey(selectedSlug, flavorName);
+      if (!key) return '';
+      const stats = flavorStatsCache.get(key);
+      if (!stats) return '';
+      return CustardPlanner.formatCadenceText(stats.avg_gap_days, { scope: 'primary' });
     }
 
     function renderFlavorBadges(flavorName, day, inline = false) {
@@ -1514,6 +1534,7 @@
                   (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) +
                 '</div>' +
                 renderFlavorBadges(day.flavor, day) +
+                (cadenceSummary(day.flavor) ? '<div class="day-card-cadence">' + escapeHtml(cadenceSummary(day.flavor)) + '</div>' : '') +
                 (day.description ? '<div class="day-card-desc">' + escapeHtml(day.description) + '</div>' : '') +
               '</div>' +
             '</div>';
