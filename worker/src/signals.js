@@ -37,10 +37,30 @@ export const MIN_APPEARANCES = 3;
 export const OVERDUE_RATIO = 1.5;
 
 /** Minimum appearances for DOW chi-squared to be meaningful. */
-export const MIN_DOW_APPEARANCES = 7;
+export const MIN_DOW_APPEARANCES = 12;
+
+/** Minimum distinct weekdays in flavor history for DOW pattern detection. */
+export const MIN_DOW_DISTINCT_DAYS = 2;
+
+/** Minimum % on peak day before we surface a DOW pattern. */
+export const MIN_DOW_PEAK_PCT = 45;
+
+/** Required lift vs store baseline peak weekday %. */
+export const MIN_DOW_PEAK_LIFT_PCT = 20;
+
+/** Suppress DOW signals when store baseline is already dominated by one weekday. */
+export const MAX_BASELINE_PEAK_PCT = 65;
 
 /** Chi-squared critical value for DOW bias (df=6, p<0.05). */
 export const CHI_SQUARED_CRITICAL = 12.592;
+export const CHI_SQUARED_CRITICAL_BY_DF = {
+  1: 3.841,
+  2: 5.991,
+  3: 7.815,
+  4: 9.488,
+  5: 11.07,
+  6: 12.592,
+};
 
 /** Minimum concentration for seasonal detection. */
 export const SEASONAL_CONCENTRATION = 0.5;
@@ -50,6 +70,15 @@ export const MIN_STREAK_DAYS = 2;
 
 /** Maximum stores serving a flavor for it to count as "rare." */
 export const MAX_RARE_STORES = 3;
+
+function normalizeFlavorKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\u00ae\u2122\u00a9]/g, '')
+    .replace(/[\u2018\u2019']/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
 
 // --- Signal computation ---
 
@@ -98,10 +127,35 @@ export function detectOverdue(flavorHistory, today) {
  * Detect day-of-week scheduling bias via chi-squared test.
  *
  * @param {Array} flavorHistory - [{flavor, dates: [string]}]
+ * @param {Object} [opts]
+ * @param {number[]} [opts.baselineDowCounts] - Optional store-level DOW counts
+ * @param {number} [opts.baselineTotal] - Total observations in baselineDowCounts
  * @returns {Array} DOW pattern signals
  */
-export function detectDowPatterns(flavorHistory) {
+export function detectDowPatterns(flavorHistory, opts = {}) {
   const signals = [];
+  const baselineCounts = Array.isArray(opts.baselineDowCounts) && opts.baselineDowCounts.length === 7
+    ? opts.baselineDowCounts.map((n) => Number(n) || 0)
+    : null;
+  const baselineTotal = Math.max(Number(opts.baselineTotal) || 0, 0);
+
+  const hasBaseline = !!baselineCounts && baselineTotal > 0;
+  const expectedWeights = hasBaseline
+    ? baselineCounts.map((n) => n / baselineTotal)
+    : new Array(7).fill(1 / 7);
+  const baselineActiveDays = hasBaseline
+    ? baselineCounts.filter((n) => n > 0).length
+    : 7;
+  const baselinePeakPct = hasBaseline
+    ? Math.round(Math.max(...expectedWeights) * 100)
+    : Math.round((1 / 7) * 100);
+
+  // If the store itself is almost single-day cadence, DOW "bias" signals
+  // become mostly an artifact of scrape/update timing rather than flavor behavior.
+  if (hasBaseline) {
+    if (baselineActiveDays < MIN_DOW_DISTINCT_DAYS) return [];
+    if (baselinePeakPct >= MAX_BASELINE_PEAK_PCT) return [];
+  }
 
   for (const { flavor, dates } of flavorHistory) {
     if (dates.length < MIN_DOW_APPEARANCES) continue;
@@ -109,27 +163,56 @@ export function detectDowPatterns(flavorHistory) {
     // Count appearances per DOW
     const dowCounts = [0, 0, 0, 0, 0, 0, 0];
     for (const d of dates) {
-      const dow = new Date(d).getUTCDay();
+      const parsed = new Date(d);
+      if (Number.isNaN(parsed.getTime())) continue;
+      const dow = parsed.getUTCDay();
       dowCounts[dow]++;
     }
+    const totalObserved = dowCounts.reduce((sum, n) => sum + n, 0);
+    if (totalObserved < MIN_DOW_APPEARANCES) continue;
+    const flavorActiveDays = dowCounts.filter((n) => n > 0).length;
+    if (flavorActiveDays < MIN_DOW_DISTINCT_DAYS) continue;
 
-    // Chi-squared test
-    const expected = dates.length / 7;
+    // Chi-squared test against either uniform weekday probability
+    // or store-level baseline weekday availability.
     let chiSquared = 0;
-    for (const count of dowCounts) {
+    let activeBuckets = 0;
+    for (let i = 0; i < dowCounts.length; i++) {
+      const count = dowCounts[i];
+      const expected = expectedWeights[i] * totalObserved;
+      if (expected <= 0) continue;
+      activeBuckets++;
       chiSquared += ((count - expected) ** 2) / expected;
     }
 
-    if (chiSquared >= CHI_SQUARED_CRITICAL) {
+    const degreesOfFreedom = activeBuckets - 1;
+    if (degreesOfFreedom < 1) continue;
+    const critical = CHI_SQUARED_CRITICAL_BY_DF[degreesOfFreedom] || CHI_SQUARED_CRITICAL;
+
+    if (chiSquared >= critical) {
       const peakDow = dowCounts.indexOf(Math.max(...dowCounts));
-      const peakPct = Math.round((dowCounts[peakDow] / dates.length) * 100);
+      const peakPct = Math.round((dowCounts[peakDow] / totalObserved) * 100);
+      const expectedPeakPct = Math.round((expectedWeights[peakDow] || 0) * 100);
+      const liftPct = peakPct - expectedPeakPct;
+      if (peakPct < MIN_DOW_PEAK_PCT) continue;
+      if (liftPct < MIN_DOW_PEAK_LIFT_PCT) continue;
       signals.push({
         type: SIGNAL_TYPES.DOW_PATTERN,
         flavor,
         headline: `${flavor} peaks on ${DOW_NAMES[peakDow]}s`,
-        explanation: `${flavor} appears ${peakPct}% of the time on ${DOW_NAMES[peakDow]}s (${dowCounts[peakDow]} of ${dates.length} appearances).`,
+        explanation: `${flavor} appears ${peakPct}% of the time on ${DOW_NAMES[peakDow]}s (${dowCounts[peakDow]} of ${totalObserved}), versus a ${expectedPeakPct}% store baseline.`,
         action: 'calendar',
-        evidence: { peak_dow: peakDow, peak_name: DOW_NAMES[peakDow], peak_pct: peakPct, chi_squared: Math.round(chiSquared * 10) / 10, total: dates.length },
+        evidence: {
+          peak_dow: peakDow,
+          peak_name: DOW_NAMES[peakDow],
+          peak_pct: peakPct,
+          expected_peak_pct: expectedPeakPct,
+          lift_pct: liftPct,
+          flavor_active_days: flavorActiveDays,
+          baseline_peak_pct: hasBaseline ? baselinePeakPct : null,
+          chi_squared: Math.round(chiSquared * 10) / 10,
+          total: totalObserved,
+        },
         score: chiSquared,
       });
     }
@@ -271,10 +354,16 @@ export function buildFlavorHistory(rows) {
   const map = new Map();
   for (const row of rows) {
     if (!row.flavor || !row.date) continue;
-    if (!map.has(row.flavor)) {
-      map.set(row.flavor, { flavor: row.flavor, dates: [] });
+    const key = normalizeFlavorKey(row.normalized_flavor || row.flavor);
+    if (!key) continue;
+    if (!map.has(key)) {
+      map.set(key, { flavor: row.flavor, dates: [] });
     }
-    map.get(row.flavor).dates.push(row.date);
+    const entry = map.get(key);
+    entry.dates.push(row.date);
+    if (typeof row.flavor === 'string' && row.flavor.length > String(entry.flavor || '').length) {
+      entry.flavor = row.flavor;
+    }
   }
   return Array.from(map.values());
 }
@@ -300,9 +389,18 @@ export function computeSignals(opts = {}) {
   } = opts;
 
   const history = buildFlavorHistory(snapshotRows);
+  const baselineDowCounts = [0, 0, 0, 0, 0, 0, 0];
+  let baselineTotal = 0;
+  for (const row of snapshotRows) {
+    const parsed = new Date(row?.date);
+    if (Number.isNaN(parsed.getTime())) continue;
+    baselineDowCounts[parsed.getUTCDay()]++;
+    baselineTotal++;
+  }
+
   const signals = [
     ...detectOverdue(history, today),
-    ...detectDowPatterns(history),
+    ...detectDowPatterns(history, { baselineDowCounts, baselineTotal }),
     ...detectSeasonal(history),
     ...detectStreaks(history, today),
   ];
@@ -359,7 +457,11 @@ export async function handleSignals(url, env, corsHeaders) {
   let rows;
   try {
     const result = await db.prepare(
-      `SELECT flavor, date FROM snapshots WHERE slug = ? AND date >= date('now', '-365 days') ORDER BY date`
+      `SELECT flavor, normalized_flavor, date
+       FROM snapshots
+       WHERE slug = ?
+         AND date >= date('now', '-365 days')
+       ORDER BY date`
     ).bind(slug).all();
     rows = result.results || [];
   } catch {

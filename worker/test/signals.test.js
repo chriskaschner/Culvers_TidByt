@@ -4,7 +4,12 @@ import {
   MIN_APPEARANCES,
   OVERDUE_RATIO,
   MIN_DOW_APPEARANCES,
+  MIN_DOW_DISTINCT_DAYS,
+  MIN_DOW_PEAK_PCT,
+  MIN_DOW_PEAK_LIFT_PCT,
+  MAX_BASELINE_PEAK_PCT,
   CHI_SQUARED_CRITICAL,
+  CHI_SQUARED_CRITICAL_BY_DF,
   SEASONAL_CONCENTRATION,
   MIN_STREAK_DAYS,
   MAX_RARE_STORES,
@@ -44,8 +49,13 @@ describe('signal type constants', () => {
   it('exports threshold constants', () => {
     expect(MIN_APPEARANCES).toBe(3);
     expect(OVERDUE_RATIO).toBe(1.5);
-    expect(MIN_DOW_APPEARANCES).toBe(7);
+    expect(MIN_DOW_APPEARANCES).toBe(12);
+    expect(MIN_DOW_DISTINCT_DAYS).toBe(2);
+    expect(MIN_DOW_PEAK_PCT).toBe(45);
+    expect(MIN_DOW_PEAK_LIFT_PCT).toBe(20);
+    expect(MAX_BASELINE_PEAK_PCT).toBe(65);
     expect(CHI_SQUARED_CRITICAL).toBe(12.592);
+    expect(CHI_SQUARED_CRITICAL_BY_DF[6]).toBe(12.592);
     expect(SEASONAL_CONCENTRATION).toBe(0.5);
     expect(MIN_STREAK_DAYS).toBe(2);
     expect(MAX_RARE_STORES).toBe(3);
@@ -103,14 +113,14 @@ describe('detectOverdue', () => {
 
 describe('detectDowPatterns', () => {
   it('detects significant DOW bias', () => {
-    // All 10 appearances on Tuesdays
-    const tuesdays = Array.from({ length: 10 }, (_, i) => {
-      // Find consecutive Tuesdays starting from 2026-01-06 (a Tuesday)
-      const d = new Date('2026-01-06');
-      d.setDate(d.getDate() + i * 7);
-      return d.toISOString().slice(0, 10);
-    });
-    const signals = detectDowPatterns([{ flavor: 'Turtle', dates: tuesdays }]);
+    // 12 Tuesdays + 2 Thursdays: still strong Tuesday bias, but not single-day cadence.
+    const dates = [
+      '2026-01-06', '2026-01-13', '2026-01-20', '2026-01-27',
+      '2026-02-03', '2026-02-10', '2026-02-17', '2026-02-24',
+      '2026-03-03', '2026-03-10', '2026-03-17', '2026-03-24',
+      '2026-01-08', '2026-03-12',
+    ];
+    const signals = detectDowPatterns([{ flavor: 'Turtle', dates }]);
     expect(signals).toHaveLength(1);
     expect(signals[0].type).toBe('dow_pattern');
     expect(signals[0].evidence.peak_name).toBe('Tuesday');
@@ -127,6 +137,66 @@ describe('detectDowPatterns', () => {
 
   it('skips flavor with too few appearances', () => {
     const signals = detectDowPatterns([{ flavor: 'Rare', dates: ['2026-01-06', '2026-01-13'] }]);
+    expect(signals).toHaveLength(0);
+  });
+
+  it('suppresses cadence artifacts when store baseline is one weekday', () => {
+    const mondays = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date('2026-01-05'); // Monday
+      d.setUTCDate(d.getUTCDate() + i * 7);
+      return d.toISOString().slice(0, 10);
+    });
+    const signals = detectDowPatterns(
+      [{ flavor: 'Cadence Artifact', dates: mondays }],
+      {
+        baselineDowCounts: [0, 28, 0, 0, 0, 0, 0],
+        baselineTotal: 28,
+      }
+    );
+    expect(signals).toHaveLength(0);
+  });
+
+  it('suppresses single-day flavor cadence even without baseline data', () => {
+    const tuesdaysOnly = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date(Date.UTC(2026, 0, 6));
+      d.setUTCDate(d.getUTCDate() + i * 7);
+      return d.toISOString().slice(0, 10);
+    });
+    const signals = detectDowPatterns([{ flavor: 'Every Tuesday', dates: tuesdaysOnly }]);
+    expect(signals).toHaveLength(0);
+  });
+
+  it('suppresses DOW pattern when store baseline is already heavily concentrated', () => {
+    const mondaysWithOneTuesday = [
+      '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26',
+      '2026-02-02', '2026-02-09', '2026-02-16', '2026-02-23',
+      '2026-03-02', '2026-03-09', '2026-03-16', '2026-03-23',
+      '2026-03-30', '2026-03-31',
+    ];
+    const signals = detectDowPatterns(
+      [{ flavor: 'Baseline Dominated', dates: mondaysWithOneTuesday }],
+      {
+        baselineDowCounts: [2, 70, 8, 8, 6, 5, 1],
+        baselineTotal: 100,
+      }
+    );
+    expect(signals).toHaveLength(0);
+  });
+
+  it('suppresses weak lift over a strong baseline weekday', () => {
+    const mostlyMondays = [
+      '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26',
+      '2026-02-02', '2026-02-09', '2026-02-16', '2026-02-23',
+      '2026-03-02', '2026-03-09', '2026-03-16', '2026-03-23',
+      '2026-03-30', '2026-04-01',
+    ];
+    const signals = detectDowPatterns(
+      [{ flavor: 'Baseline Monday Flavor', dates: mostlyMondays }],
+      {
+        baselineDowCounts: [0, 70, 5, 5, 5, 5, 5],
+        baselineTotal: 95,
+      }
+    );
     expect(signals).toHaveLength(0);
   });
 });
@@ -302,6 +372,23 @@ describe('computeSignals', () => {
   it('returns empty for empty history', () => {
     const signals = computeSignals({ snapshotRows: [], today: '2026-02-20' });
     expect(signals).toEqual([]);
+  });
+
+  it('uses store weekday baseline to avoid false Monday bias', () => {
+    const snapshotRows = Array.from({ length: 28 }, (_, i) => {
+      const d = new Date('2025-10-06'); // Monday
+      d.setUTCDate(d.getUTCDate() + i * 7);
+      return {
+        flavor: i % 2 === 0 ? 'Flavor A' : 'Flavor B',
+        date: d.toISOString().slice(0, 10),
+      };
+    });
+    const signals = computeSignals({
+      snapshotRows,
+      today: '2026-02-17',
+      limit: 10,
+    });
+    expect(signals.some((s) => s.type === 'dow_pattern')).toBe(false);
   });
 });
 
