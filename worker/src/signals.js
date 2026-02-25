@@ -432,6 +432,31 @@ export function computeSignals(opts = {}) {
     .slice(0, limit);
 }
 
+/**
+ * Fetch snapshot rows from D1 for a store and compute signals.
+ * Convenience wrapper for use in scheduled jobs (alert-checker, digest).
+ *
+ * @param {string} slug
+ * @param {Object} env - Worker env bindings (expects env.DB)
+ * @param {string} today - YYYY-MM-DD
+ * @param {number} [limit=3]
+ * @returns {Promise<Array>} Signal objects (empty on any failure)
+ */
+export async function computeSignalsFromDb(slug, env, today, limit = 3) {
+  if (!env?.DB || !slug) return [];
+  try {
+    const result = await env.DB.prepare(
+      `SELECT flavor, date, normalized_flavor FROM snapshots
+       WHERE slug = ? AND date >= date('now', '-365 days')
+       ORDER BY date DESC`
+    ).bind(slug).all();
+    const snapshotRows = result?.results || [];
+    return computeSignals({ snapshotRows, today, limit });
+  } catch {
+    return [];
+  }
+}
+
 // --- API handler ---
 
 /**

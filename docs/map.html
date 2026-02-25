@@ -153,6 +153,7 @@
     let skipMoveHandler = false; // flag to skip moveend during programmatic fitBounds
     const flavorColorsReady = loadFlavorColors().then(function() { flavorIconCache.clear(); });
     const flavorIntelCache = new Map(); // normalized flavor -> rendered intel HTML
+    const storeIntelCache = new Map(); // slug -> rendered specialty HTML
 
     // Brand chip state
     const BRAND_CHIP_COLORS = { culvers: '#003366', ...BRAND_COLORS };
@@ -409,6 +410,7 @@
             certainty_tier: store.flavor ? 'confirmed' : 'none',
           });
           if (store.flavor) enrichPopupIntel(marker, store.flavor);
+          if (store.slug) enrichPopupStoreSpecialty(marker, store.slug);
         });
         markers.addLayer(marker);
         window._allMarkers.push({ store: store, marker: marker });
@@ -807,6 +809,35 @@
       } catch (_) {}
     }
 
+    function buildStoreSpecialtyHTML(specialty) {
+      if (!specialty || specialty.ratio < 1.2) return '';
+      return '<span class="popup-specialty">Store specialty: ' + escapeHtml(specialty.title) + '</span>';
+    }
+
+    function injectPopupSpecialty(marker, html) {
+      const popup = marker.getPopup && marker.getPopup();
+      if (!popup) return;
+      const el = popup.getElement && popup.getElement();
+      if (!el) return;
+      const slot = el.querySelector('.popup-specialty-slot');
+      if (slot) slot.innerHTML = html;
+    }
+
+    async function enrichPopupStoreSpecialty(marker, slug) {
+      if (storeIntelCache.has(slug)) {
+        injectPopupSpecialty(marker, storeIntelCache.get(slug));
+        return;
+      }
+      try {
+        var resp = await fetch(WORKER_BASE + '/api/v1/metrics/context/store/' + encodeURIComponent(slug));
+        if (!resp.ok) return;
+        var data = await resp.json();
+        var html = data.specialty_flavor ? buildStoreSpecialtyHTML(data.specialty_flavor) : '';
+        storeIntelCache.set(slug, html);
+        injectPopupSpecialty(marker, html);
+      } catch (_) {}
+    }
+
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
       const certBadge = store.flavor ? ' <span class="popup-confirmed">Confirmed</span>' : '';
@@ -822,7 +853,7 @@
         workerBase: WORKER_BASE,
         actions: ['directions', 'alert', 'calendar'],
       }) : '';
-      const intelPlaceholder = store.flavor ? '<div class="popup-intel"></div>' : '';
+      const intelPlaceholder = store.flavor ? '<div class="popup-intel"></div><div class="popup-specialty-slot"></div>' : '';
       return `<div class="store-popup">
         <strong${nameColor}>${escapeHtml(store.name)}</strong>${matchBadge}${certBadge}<br>
         ${escapeHtml(store.address)}<br>

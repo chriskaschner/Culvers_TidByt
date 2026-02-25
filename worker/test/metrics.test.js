@@ -411,6 +411,58 @@ describe('GET /api/metrics/coverage', () => {
   });
 });
 
+// --- Store specialty tests ---
+
+describe('GET /api/metrics/context/store/{slug} — specialty_flavor', () => {
+  // Minimal D1 mock: returns pre-defined rows for any query (the CTE is the only query here)
+  function createStoreContextMock(specialtyRows = []) {
+    return {
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({
+          all: vi.fn(async () => ({ results: specialtyRows })),
+          first: vi.fn(async () => null),
+        })),
+      })),
+    };
+  }
+
+  it('returns specialty_flavor when store has a disproportionate flavor (ratio >= 1.2)', async () => {
+    const specialtyRows = [{ display_flavor: 'Turtle', specialty_ratio: 3.5, store_count: 12 }];
+    const db = createStoreContextMock(specialtyRows);
+    const res = await handleMetricsRoute('/api/metrics/context/store/mt-horeb', { DB: db }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.specialty_flavor).not.toBeNull();
+    expect(body.specialty_flavor.title).toBe('Turtle');
+    expect(body.specialty_flavor.ratio).toBe(3.5);
+    expect(body.specialty_flavor.store_count).toBe(12);
+  });
+
+  it('returns specialty_flavor null when no flavors qualify (empty D1 result)', async () => {
+    const db = createStoreContextMock([]);
+    const res = await handleMetricsRoute('/api/metrics/context/store/mt-horeb', { DB: db }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.specialty_flavor).toBeNull();
+  });
+
+  it('returns specialty_flavor null when DB is not available (still returns 200)', async () => {
+    const res = await handleMetricsRoute('/api/metrics/context/store/mt-horeb', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.specialty_flavor).toBeNull();
+  });
+
+  it('returns specialty_flavor null when top flavor ratio < 1.2', async () => {
+    const specialtyRows = [{ display_flavor: 'Vanilla', specialty_ratio: 1.1, store_count: 5 }];
+    const db = createStoreContextMock(specialtyRows);
+    const res = await handleMetricsRoute('/api/metrics/context/store/mt-horeb', { DB: db }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.specialty_flavor).toBeNull();
+  });
+});
+
 describe('detectStreaks', () => {
   it('detects a streak of 3 consecutive same-flavor days', () => {
     const history = [

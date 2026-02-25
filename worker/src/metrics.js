@@ -73,7 +73,7 @@ export async function handleMetricsRoute(path, env, corsHeaders) {
 
   const contextStoreMatch = path.match(/^\/api\/metrics\/context\/store\/(.+)$/);
   if (contextStoreMatch) {
-    return handleStoreContextMetrics(decodeURIComponent(contextStoreMatch[1]), corsHeaders);
+    return handleStoreContextMetrics(decodeURIComponent(contextStoreMatch[1]), corsHeaders, env.DB);
   }
 
   const db = env.DB;
@@ -202,7 +202,55 @@ function handleFlavorContextMetrics(inputFlavor, corsHeaders) {
   });
 }
 
-function handleStoreContextMetrics(inputSlug, corsHeaders) {
+/**
+ * Compute which flavor a store serves disproportionately vs. the national average.
+ * Returns the top row if specialty_ratio >= 1.2, else null.
+ */
+async function computeStoreSpecialtyFromD1(slug, db) {
+  if (!db || !slug) return null;
+  try {
+    const result = await db.prepare(
+      `WITH store_counts AS (
+        SELECT normalized_flavor, MAX(flavor) AS display_flavor, COUNT(*) AS cnt
+        FROM snapshots
+        WHERE slug = ? AND date >= date('now', '-365 days')
+        GROUP BY normalized_flavor
+        HAVING cnt >= 3
+      ),
+      national_counts AS (
+        SELECT normalized_flavor, COUNT(*) AS cnt
+        FROM snapshots
+        WHERE date >= date('now', '-365 days')
+        GROUP BY normalized_flavor
+      ),
+      store_total AS (SELECT COUNT(*) AS n FROM snapshots WHERE slug = ? AND date >= date('now', '-365 days')),
+      national_total AS (SELECT COUNT(*) AS n FROM snapshots WHERE date >= date('now', '-365 days'))
+      SELECT
+        s.normalized_flavor, s.display_flavor, s.cnt AS store_count,
+        n.cnt AS national_count, st.n AS store_total, nt.n AS national_total,
+        ROUND(CAST(s.cnt AS REAL) / st.n / (CAST(n.cnt AS REAL) / nt.n), 2) AS specialty_ratio
+      FROM store_counts s
+      JOIN national_counts n ON s.normalized_flavor = n.normalized_flavor
+      CROSS JOIN store_total st
+      CROSS JOIN national_total nt
+      WHERE st.n > 0 AND nt.n > 0
+      ORDER BY specialty_ratio DESC
+      LIMIT 3`
+    ).bind(slug, slug).all();
+    const rows = result?.results || [];
+    const top = rows[0];
+    if (!top || Number(top.specialty_ratio) < 1.2) return null;
+    return {
+      title: top.display_flavor,
+      ratio: Number(top.specialty_ratio),
+      store_count: Number(top.store_count),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function handleStoreContextMetrics(inputSlug, corsHeaders, db) {
   const seed = TRIVIA_METRICS_SEED || {};
   const slug = String(inputSlug || '').trim().toLowerCase();
   const lookup = seed?.planner_features?.store_lookup && typeof seed.planner_features.store_lookup === 'object'
@@ -211,6 +259,8 @@ function handleStoreContextMetrics(inputSlug, corsHeaders) {
   const row = slug ? lookup[slug] : null;
   const rank = getFlavorRank(seed);
   const topFlavorKey = row?.top_flavor ? normalizeFlavorKey(row.top_flavor) : '';
+
+  const specialty_flavor = db ? await computeStoreSpecialtyFromD1(slug, db) : null;
 
   return Response.json({
     source: 'trivia_metrics_seed',
@@ -227,6 +277,7 @@ function handleStoreContextMetrics(inputSlug, corsHeaders) {
       top_flavor_count: Number(row.top_flavor_count || 0),
       top_flavor_rank: topFlavorKey ? (rank.byNormalized[topFlavorKey] || null) : null,
     } : null,
+    specialty_flavor,
   }, {
     headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
   });

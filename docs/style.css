@@ -786,6 +786,13 @@ details ol {
 .popup-rarity-chip.rarity-common     { background: #e8f5e9; color: #2e7d32; }
 .popup-rarity-chip.rarity-staple     { background: #f5f5f5; color: #777; }
 
+.popup-specialty {
+  display: block;
+  font-size: 0.75rem;
+  color: #555;
+  margin-top: 0.2rem;
+}
+
 .error-msg {
   color: #c00;
   padding: 1rem;

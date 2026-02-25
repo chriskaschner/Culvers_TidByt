@@ -14,6 +14,7 @@ import { sendAlertEmail, sendWeeklyDigestEmail } from './email-sender.js';
 import { accumulateFlavors } from './flavor-catalog.js';
 import { getForecastData } from './forecast.js';
 import { listSubscriptions } from './subscription-store.js';
+import { computeSignalsFromDb } from './signals.js';
 
 /**
  * Main scheduled handler — called by Cloudflare Worker cron trigger.
@@ -50,7 +51,9 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
 
   // Fetch flavors per slug (cached — no budget impact for cache hits)
   const flavorsBySlug = new Map();
+  const signalsBySlug = new Map();
   const allNewFlavors = [];
+  const signalToday = new Date().toISOString().slice(0, 10);
 
   for (const slug of bySlug.keys()) {
     try {
@@ -63,6 +66,9 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
     } catch (err) {
       console.error(`Failed to fetch flavors for ${slug}: ${err.message}`);
     }
+    // Compute signals once per slug (best-effort, independent of flavor fetch)
+    const slugSignals = await computeSignalsFromDb(slug, env, signalToday, 2);
+    signalsBySlug.set(slug, slugSignals);
   }
 
   // Check each subscriber for matches and send emails
@@ -110,6 +116,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
     const unsubscribeUrl = `${baseUrl}/api/alerts/unsubscribe?token=${sub.unsubToken}`;
 
     // Send consolidated alert email
+    const slugSignals = signalsBySlug.get(sub.slug) || [];
     try {
       const result = await sendAlertEmail(
         {
@@ -119,6 +126,7 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
           matches,
           statusUrl,
           unsubscribeUrl,
+          signal: slugSignals[0] || null,
         },
         apiKey,
         fromAddress,
@@ -184,9 +192,11 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
     bySlug.get(sub.slug).push(sub);
   }
 
-  // Fetch flavors and forecasts per slug
+  // Fetch flavors, forecasts, and signals per slug
   const flavorsBySlug = new Map();
   const forecastBySlug = new Map();
+  const signalsBySlug = new Map();
+  const signalToday = new Date().toISOString().slice(0, 10);
   for (const slug of bySlug.keys()) {
     try {
       const data = await getFlavorsCachedFn(slug, kv);
@@ -201,6 +211,9 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
     } catch {
       // Forecast data is optional -- degrade gracefully
     }
+    // Compute signals once per slug (best-effort)
+    const slugSignals = await computeSignalsFromDb(slug, env, signalToday, 3);
+    signalsBySlug.set(slug, slugSignals);
   }
 
   // Build week date range (today through next 6 days = 7 days total)
@@ -240,6 +253,7 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
 
     // Send weekly digest (even if no matches — the full week forecast is the value)
     const forecast = forecastBySlug.get(sub.slug) || null;
+    const slugSignals = signalsBySlug.get(sub.slug) || [];
     try {
       const result = await sendWeeklyDigestEmail(
         {
@@ -252,6 +266,7 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
           unsubscribeUrl,
           narrative: forecast ? forecast.prose : null,
           forecast,
+          signals: slugSignals.slice(0, 2),
         },
         apiKey,
         fromAddress,

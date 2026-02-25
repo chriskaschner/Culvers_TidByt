@@ -97,10 +97,11 @@ export async function sendConfirmationEmail({ email, storeName, favorites, confi
  * @param {Array<{title: string, date: string, description: string}>} params.matches - Matched flavors
  * @param {string} params.statusUrl - Full URL to manage subscription (token-gated)
  * @param {string} params.unsubscribeUrl - Full URL to unsubscribe (token-gated)
+ * @param {Object|null} [params.signal] - Optional flavor signal to inject (headline + explanation)
  * @param {string} apiKey
  * @param {string} fromAddress
  */
-export async function sendAlertEmail({ email, storeName, storeAddress, matches, statusUrl, unsubscribeUrl }, apiKey, fromAddress) {
+export async function sendAlertEmail({ email, storeName, storeAddress, matches, statusUrl, unsubscribeUrl, signal }, apiKey, fromAddress) {
   const firstMatch = matches[0];
   const dateObj = new Date(firstMatch.date + 'T12:00:00');
   const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
@@ -125,6 +126,14 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
 
   const quip = getRandomQuip();
 
+  const signalBlock = signal
+    ? `<div style="background:#f0f4f8;border-radius:6px;padding:12px;margin-top:14px;font-size:14px;">
+  <strong style="color:#005696;">Flavor Signal</strong><br>
+  <span style="font-style:italic;">${escapeHtml(signal.headline)}</span><br>
+  <span style="color:#555;">${escapeHtml(signal.explanation)}</span>
+</div>`
+    : '';
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -136,6 +145,7 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     ${matchRows}
   </table>
+  ${signalBlock}
   <p>
     <a href="${escapeHtml(statusUrl)}" style="color: #003366; text-decoration: underline;">Manage preferences</a>
     &nbsp;&middot;&nbsp;
@@ -172,10 +182,11 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
  * @param {string} params.statusUrl
  * @param {string} params.unsubscribeUrl
  * @param {string} [params.narrative] - Fun commentary about the week's flavors
+ * @param {Array<{headline: string, explanation: string}>} [params.signals] - Up to 2 flavor signals to surface
  * @param {string} apiKey
  * @param {string} fromAddress
  */
-export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative, forecast }, apiKey, fromAddress) {
+export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative, forecast, signals }, apiKey, fromAddress) {
   const quip = getRandomQuip();
 
   const subject = matches.length > 0
@@ -242,6 +253,16 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
     ? `<p>\u2b50 <strong>${matches.length} favorite${matches.length > 1 ? 's' : ''}</strong> spotted this week!</p>`
     : `<p>No favorites this week — but there's always next week.</p>`;
 
+  const signalsBlock = signals && signals.length > 0
+    ? `<div style="margin-top:16px;">
+  <h3 style="font-size:15px;color:#005696;">This Week's Signals</h3>
+  ${signals.map(s => `<div style="background:#f0f4f8;border-radius:6px;padding:12px;margin-bottom:8px;font-size:14px;">
+    <span style="font-style:italic;">${escapeHtml(s.headline)}</span><br>
+    <span style="color:#555;">${escapeHtml(s.explanation)}</span>
+  </div>`).join('')}
+</div>`
+    : '';
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -253,6 +274,7 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
   ${matchSummary}
   ${narrativeBlock}
   ${forecastBlock}
+  ${signalsBlock}
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     <thead>
       <tr style="background: #f8f9fa;">

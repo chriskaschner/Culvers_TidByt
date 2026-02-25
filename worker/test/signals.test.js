@@ -21,6 +21,7 @@ import {
   detectRareFind,
   buildFlavorHistory,
   computeSignals,
+  computeSignalsFromDb,
   handleSignals,
 } from '../src/signals.js';
 
@@ -402,6 +403,70 @@ describe('computeSignals', () => {
       limit: 10,
     });
     expect(signals.some((s) => s.type === 'dow_pattern')).toBe(false);
+  });
+});
+
+// --- computeSignalsFromDb ---
+
+describe('computeSignalsFromDb', () => {
+  it('returns signals when D1 has snapshot rows', async () => {
+    const rows = [
+      // Overdue pattern: 5 appearances every 10 days, last seen long ago
+      ...makeDates('2025-10-01', 5, 10).map((d) => ({ flavor: 'Turtle', date: d, normalized_flavor: 'turtle' })),
+    ];
+    const env = {
+      DB: {
+        prepare: vi.fn(() => ({
+          bind: vi.fn(() => ({
+            all: vi.fn(async () => ({ results: rows })),
+          })),
+        })),
+      },
+    };
+    const result = await computeSignalsFromDb('mt-horeb', env, '2026-02-20', 3);
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toHaveProperty('type');
+    expect(result[0]).toHaveProperty('headline');
+  });
+
+  it('returns empty array when D1 returns no rows', async () => {
+    const env = {
+      DB: {
+        prepare: vi.fn(() => ({
+          bind: vi.fn(() => ({
+            all: vi.fn(async () => ({ results: [] })),
+          })),
+        })),
+      },
+    };
+    const result = await computeSignalsFromDb('mt-horeb', env, '2026-02-20');
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array when env.DB is missing', async () => {
+    const result = await computeSignalsFromDb('mt-horeb', {}, '2026-02-20');
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array when slug is empty', async () => {
+    const env = { DB: { prepare: vi.fn() } };
+    const result = await computeSignalsFromDb('', env, '2026-02-20');
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array when D1 throws', async () => {
+    const env = {
+      DB: {
+        prepare: vi.fn(() => ({
+          bind: vi.fn(() => ({
+            all: vi.fn(async () => { throw new Error('D1 failure'); }),
+          })),
+        })),
+      },
+    };
+    const result = await computeSignalsFromDb('mt-horeb', env, '2026-02-20');
+    expect(result).toEqual([]);
   });
 });
 
