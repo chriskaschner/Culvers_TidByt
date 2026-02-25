@@ -1,3 +1,13 @@
+:root {
+  --brand: #005696;
+  --brand-dark: #003a6b;
+  --text: #1a1a1a;
+  --text-muted: #666;
+  --bg: #fafafa;
+  --border: #ddd;
+  --radius: 0.5rem;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -23,7 +33,7 @@ header {
 }
 
 header h1 {
-  color: #003366;
+  color: #005696;
   font-size: 1.5rem;
 }
 
@@ -66,10 +76,10 @@ main {
 #nearby-btn {
   width: 100%;
   padding: 0.5rem 1rem;
-  border: 1px solid #003366;
+  border: 1px solid #005696;
   border-radius: 4px;
   background: white;
-  color: #003366;
+  color: #005696;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -81,7 +91,7 @@ main {
 }
 
 #nearby-btn.active {
-  background: #003366;
+  background: #005696;
   color: white;
 }
 
@@ -105,7 +115,7 @@ main {
 
 .panel h2 {
   font-size: 1rem;
-  color: #003366;
+  color: #005696;
   margin-bottom: 0.25rem;
 }
 
@@ -129,7 +139,7 @@ main {
 .selected-badge {
   margin-top: 0.5rem;
   padding: 0.25rem 0.5rem;
-  background: #003366;
+  background: #005696;
   color: white;
   border-radius: 4px;
   font-size: 0.8125rem;
@@ -146,7 +156,7 @@ main {
 .badge {
   padding: 0.25rem 0.5rem;
   background: #e8f0fe;
-  color: #003366;
+  color: #005696;
   border-radius: 4px;
   font-size: 0.8125rem;
   display: inline-flex;
@@ -157,7 +167,7 @@ main {
 .badge button {
   background: none;
   border: none;
-  color: #003366;
+  color: #005696;
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
@@ -174,7 +184,7 @@ main {
 
 #result h2 {
   font-size: 1.125rem;
-  color: #003366;
+  color: #005696;
   margin-bottom: 1rem;
 }
 
@@ -196,7 +206,7 @@ main {
 
 .url-box button {
   padding: 0.5rem 1rem;
-  background: #003366;
+  background: #005696;
   color: white;
   border: none;
   border-radius: 4px;
@@ -253,7 +263,7 @@ main {
 }
 
 .mobile-toast a {
-  color: #003366;
+  color: #005696;
   font-weight: 600;
 }
 
@@ -263,7 +273,7 @@ details {
 
 details summary {
   cursor: pointer;
-  color: #003366;
+  color: #005696;
   font-size: 0.875rem;
 }
 
@@ -296,7 +306,7 @@ details ol {
 
 .cal-preview-loading {
   font-size: 0.75rem;
-  color: #003366;
+  color: #005696;
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -386,7 +396,7 @@ details ol {
 }
 
 .nav-links a {
-  color: #003366;
+  color: #005696;
   font-size: 0.875rem;
   text-decoration: none;
   margin: 0 0.5rem;
@@ -476,7 +486,7 @@ details ol {
     drop-shadow(0 1px 0 rgba(0, 0, 0, 0.65))
     drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.65))
     drop-shadow(0 0 1px rgba(255, 255, 255, 0.7))
-    drop-shadow(0 2px 0 var(--marker-ring, #003366))
+    drop-shadow(0 2px 0 var(--marker-ring, #005696))
     drop-shadow(0 7px 7px rgba(0, 0, 0, 0.4))
     drop-shadow(0 0 7px var(--marker-state-glow, transparent));
 }
@@ -511,7 +521,7 @@ details ol {
   border-radius: 4px;
   background: white;
   cursor: pointer;
-  color: #003366;
+  color: #005696;
 }
 
 .icon-btn:hover {
@@ -526,7 +536,7 @@ details ol {
 .btn-search {
   width: 100%;
   padding: 0.5rem 1.5rem;
-  background: #003366;
+  background: #005696;
   color: white;
   border: none;
   border-radius: 4px;
@@ -630,7 +640,7 @@ details ol {
 .suggestion-link {
   background: none;
   border: none;
-  color: #003366;
+  color: #005696;
   cursor: pointer;
   text-decoration: underline;
   font-size: 0.875rem;
@@ -678,7 +688,7 @@ details ol {
 }
 
 /* Brand color left borders */
-.brand-culvers { border-left: 4px solid #003366; }
+.brand-culvers { border-left: 4px solid #005696; }
 .brand-kopps { border-left: 4px solid #000000; }
 .brand-gilles { border-left: 4px solid #EBCC35; }
 .brand-hefners { border-left: 4px solid #93BE46; }
@@ -710,7 +720,7 @@ details ol {
 
 .store-card-flavor {
   font-size: 0.875rem;
-  color: #003366;
+  color: #005696;
   font-weight: 500;
   margin-top: 0.25rem;
 }
@@ -724,7 +734,7 @@ details ol {
 
 .store-card-link {
   font-size: 0.75rem;
-  color: #003366;
+  color: #005696;
   margin-top: 0.25rem;
   text-decoration: none;
 }
@@ -914,7 +924,7 @@ details ol {
 
 .prediction-name-favorite {
   font-weight: 700;
-  color: #003366;
+  color: #005696;
 }
 
 .prediction-bar-wrap {
@@ -1022,7 +1032,7 @@ details ol {
 /* Flavor signals */
 .signals-header {
   font-size: 1rem;
-  color: #003366;
+  color: #005696;
   margin: 1rem 0 0.5rem;
 }
 
@@ -1107,7 +1117,7 @@ details ol {
 
 .overdue-section h3, .similar-section h3 {
   font-size: 0.875rem;
-  color: #003366;
+  color: #005696;
   margin-bottom: 0.5rem;
 }
 
@@ -1147,7 +1157,7 @@ footer {
 }
 
 footer a {
-  color: #003366;
+  color: #005696;
 }
 
 /* ========================================
@@ -1197,7 +1207,7 @@ footer a {
   border-radius: 4px;
   background: white;
   cursor: pointer;
-  color: #003366;
+  color: #005696;
 }
 
 .location-geo-btn:hover {
@@ -1236,7 +1246,7 @@ footer a {
 }
 
 .store-dropdown-item.is-active .store-dropdown-name {
-  color: #003366;
+  color: #005696;
 }
 
 .store-dropdown-item .store-dropdown-name {
@@ -1256,7 +1266,7 @@ footer a {
   gap: 0.5rem;
   margin-top: 0.75rem;
   padding: 0.375rem 0.75rem;
-  background: #003366;
+  background: #005696;
   color: white;
   border-radius: 4px;
   font-size: 0.8125rem;
@@ -1293,7 +1303,7 @@ footer a {
 
 .hero-empty h2 {
   font-size: 1.5rem;
-  color: #003366;
+  color: #005696;
   margin-bottom: 0.5rem;
 }
 
@@ -1318,7 +1328,7 @@ footer a {
 .btn-primary {
   display: inline-block;
   padding: 0.75rem 2rem;
-  background: #003366;
+  background: #005696;
   color: white;
   border: none;
   border-radius: 6px;
@@ -1335,8 +1345,8 @@ footer a {
 .btn-secondary {
   display: inline-block;
   padding: 0.75rem 1.25rem;
-  border: 1px solid #003366;
-  color: #003366;
+  border: 1px solid #005696;
+  color: #005696;
   background: white;
   border-radius: 6px;
   font-size: 1rem;
@@ -1369,7 +1379,7 @@ footer a {
 .first-visit-guide h3 {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
-  color: #003366;
+  color: #005696;
 }
 
 .first-visit-guide ol {
@@ -1401,7 +1411,7 @@ footer a {
 .quick-start-chip {
   border: 1px solid #bfd3e8;
   background: #f7fbff;
-  color: #003366;
+  color: #005696;
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
   font-size: 0.78rem;
@@ -1639,7 +1649,7 @@ footer a {
 
 .week-header h2 {
   font-size: 1rem;
-  color: #003366;
+  color: #005696;
   margin: 0;
 }
 
@@ -1673,7 +1683,7 @@ footer a {
 .week-day-name {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #003366;
+  color: #005696;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1724,7 +1734,7 @@ footer a {
 
 .calendar-cta-content strong {
   font-size: 0.875rem;
-  color: #003366;
+  color: #005696;
   display: block;
 }
 
@@ -1754,7 +1764,7 @@ footer a {
 }
 
 .calendar-cta-btn:hover {
-  background: #003366;
+  background: #005696;
 }
 
 .calendar-cta-link {
@@ -1794,7 +1804,7 @@ footer a {
 .calendar-preview-head h2 {
   margin: 0;
   font-size: 1rem;
-  color: #003366;
+  color: #005696;
 }
 
 .calendar-preview-head p {
@@ -1809,7 +1819,7 @@ footer a {
   border: 1px solid #bfd3e8;
   border-radius: 999px;
   background: #f7fbff;
-  color: #003366;
+  color: #005696;
   text-decoration: none;
   font-size: 0.75rem;
   font-weight: 600;
@@ -1948,7 +1958,7 @@ footer a {
 }
 
 .action-card:hover {
-  border-color: #003366;
+  border-color: #005696;
   box-shadow: 0 2px 8px rgba(0, 51, 102, 0.1);
 }
 
@@ -1960,7 +1970,7 @@ footer a {
 .action-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #003366;
+  color: #005696;
 }
 
 .action-hint {
@@ -1986,7 +1996,7 @@ footer a {
 }
 
 .footer-links a {
-  color: #003366;
+  color: #005696;
   text-decoration: none;
 }
 

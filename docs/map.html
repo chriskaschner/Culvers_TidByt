@@ -63,7 +63,7 @@
       </div>
       <div class="brand-chips">
         <button class="brand-chip" data-brand="all">All</button>
-        <button class="brand-chip active" data-brand="culvers" style="background:#003366;border-color:transparent">Culver's</button>
+        <button class="brand-chip active" data-brand="culvers" style="background:#005696;border-color:transparent">Culver's</button>
         <button class="brand-chip" data-brand="kopps">Kopp's</button>
         <button class="brand-chip" data-brand="gilles">Gille's</button>
         <button class="brand-chip" data-brand="hefners">Hefner's</button>
@@ -166,7 +166,7 @@
     const storeIntelCache = new Map(); // slug -> rendered specialty HTML
 
     // Brand chip state
-    const BRAND_CHIP_COLORS = { culvers: '#003366', ...BRAND_COLORS };
+    const BRAND_CHIP_COLORS = { culvers: '#005696', ...BRAND_COLORS };
     const activeBrands = new Set(['culvers']);
 
     const ALL_BRANDS = ['culvers', 'kopps', 'gilles', 'hefners', 'kraverz', 'oscars'];
@@ -216,8 +216,8 @@
     }
 
     function markerBrandColor(brand) {
-      if (!brand || brand === 'culvers') return '#003366';
-      return BRAND_COLORS[brand] || '#003366';
+      if (!brand || brand === 'culvers') return '#005696';
+      return BRAND_COLORS[brand] || '#005696';
     }
 
     function buildConeMarkerIcon(store, hasFlavorFilter) {
