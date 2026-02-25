@@ -26,8 +26,8 @@
       <div class="location-bar-inner">
         <div class="location-input-wrap">
           <input type="text" id="store-search" placeholder="Find your store..." autocomplete="off">
-          <button id="geo-btn" class="location-geo-btn" title="Use my location">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <button id="geo-btn" class="location-geo-btn" title="Use my location" aria-label="Use my location">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="3"/>
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
             </svg>
@@ -114,7 +114,7 @@
             <span id="today-badge" class="day-card-badge"></span>
           </div>
           <div class="today-flavor-body">
-            <div class="today-flavor-cone" id="today-cone"></div>
+            <div class="today-flavor-cone" id="today-cone" aria-hidden="true"></div>
             <div class="today-flavor-content">
               <div class="today-flavor-name" id="today-flavor"></div>
               <div class="today-flavor-desc" id="today-desc"></div>

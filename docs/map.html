@@ -48,8 +48,8 @@
           <label for="location-input">Location</label>
           <div class="location-row">
             <input type="text" id="location-input" placeholder="Zip code or city...">
-            <button id="geolocate-btn" title="Use my location" class="icon-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <button id="geolocate-btn" title="Use my location" aria-label="Use my location" class="icon-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
               </svg>
@@ -61,7 +61,7 @@
           <button id="search-btn" class="btn btn-search">Search</button>
         </div>
       </div>
-      <div class="brand-chips">
+      <div class="brand-chips" role="group" aria-label="Filter by brand">
         <button class="brand-chip" data-brand="all">All</button>
         <button class="brand-chip active" data-brand="culvers" style="background:#005696;border-color:transparent">Culver's</button>
         <button class="brand-chip" data-brand="kopps">Kopp's</button>
@@ -70,7 +70,7 @@
         <button class="brand-chip" data-brand="kraverz">Kraverz</button>
         <button class="brand-chip" data-brand="oscars">Oscar's</button>
       </div>
-      <div class="flavor-family-chips" id="flavor-family-chips" hidden>
+      <div class="flavor-family-chips" id="flavor-family-chips" role="group" aria-label="Filter by flavor family" hidden>
         <span class="chips-label">Flavor family:</span>
         <button class="flavor-chip active" data-family="all">All</button>
         <button class="flavor-chip" data-family="mint">Mint</button>

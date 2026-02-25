@@ -2460,3 +2460,19 @@ footer a {
 .btn-retry:hover {
   background: #b71c1c;
 }
+
+/* Focus visibility (WCAG 2.4.7 Focus Visible) */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
