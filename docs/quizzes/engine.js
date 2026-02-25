@@ -7,6 +7,7 @@ const QUIZ_CONFIG_PATHS = [
   'quizzes/quiz-build-scoop-v1.json',
   'quizzes/quiz-compatibility-v1.json',
   'quizzes/quiz-trivia-v1.json',
+  'quizzes/quiz-mad-libs-v1.json',
 ];
 const QUESTION_COUNT = 5;
 const DYNAMIC_QUIZ_TTL_MS = 15 * 60 * 1000;
@@ -767,7 +768,7 @@ async function runQuiz(evt) {
   els.resultSection.hidden = true;
 
   try {
-    const { traitScores, commentaries, trivia } = collectAnswers(state.activeQuiz, els.form);
+    const { traitScores, selected, commentaries, trivia } = collectAnswers(state.activeQuiz, els.form);
     const archetype = chooseArchetype(traitScores);
     if (!archetype) {
       throw new Error('Could not determine an archetype from the selected answers.');
@@ -922,9 +923,26 @@ async function runQuiz(evt) {
       }
     }
 
-    // Build narrative "train of thought" from answer commentaries
+    // Build narrative — madlib story if template present, otherwise commentary train-of-thought
     if (els.resultNarrative) {
-      if (commentaries.length >= 2) {
+      const esc = window.CustardPlanner.escapeHtml;
+      const madlibTemplate = state.activeQuiz && state.activeQuiz.madlib_template;
+      if (madlibTemplate) {
+        const activeQs = getActiveQuestions(state.activeQuiz);
+        let story = madlibTemplate;
+        activeQs.forEach((q, i) => {
+          const selId = selected && selected[q.id];
+          const selOpt = (q.options || []).find((o) => o.id === selId);
+          if (selOpt) {
+            const word = selOpt.madlib_label || selOpt.label;
+            story = story.replace(`{q${i + 1}}`, `<strong>${esc(word)}</strong>`);
+          }
+        });
+        const flavorLabel = displayFlavor || 'something special';
+        story = story.replace('{flavor}', `<strong>${esc(flavorLabel)}</strong>`);
+        els.resultNarrative.innerHTML = story;
+        els.resultNarrative.hidden = false;
+      } else if (commentaries.length >= 2) {
         // Pick 3 commentaries (first, middle, last) for variety
         const picks = [commentaries[0]];
         if (commentaries.length >= 3) picks.push(commentaries[Math.floor(commentaries.length / 2)]);

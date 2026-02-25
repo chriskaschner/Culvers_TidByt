@@ -1,0 +1,180 @@
+{
+  "id": "mad-libs-v1",
+  "name": "Custard Mad Libs",
+  "title": "Custard Mad Libs",
+  "description": "Pick your words. Get a custard story.",
+  "question_count": 5,
+  "madlib_template": "It was a {q1} kind of day. I had been {q2} all afternoon, so I did the obvious thing: drove {q3} and got in line. The person ahead of me ordered {q4}. Classic. I went with my instincts and got {flavor}. {q5}",
+  "questions": [
+    {
+      "id": "ml-day",
+      "prompt": "What kind of day is it?",
+      "options": [
+        {
+          "id": "sunny-slow",
+          "label": "Sunny and slow",
+          "madlib_label": "sunny and slow",
+          "commentary": "unhurried, no agenda",
+          "traits": { "calm": 2, "classic": 1 }
+        },
+        {
+          "id": "hectic-electric",
+          "label": "Hectic and electric",
+          "madlib_label": "hectic and electric",
+          "commentary": "wired and in motion",
+          "traits": { "energetic": 2, "bold": 1 }
+        },
+        {
+          "id": "foggy-introspective",
+          "label": "Foggy and introspective",
+          "madlib_label": "foggy and introspective",
+          "commentary": "deep in thought",
+          "traits": { "analytical": 2, "calm": 1 }
+        },
+        {
+          "id": "warm-social",
+          "label": "Warm and social",
+          "madlib_label": "warm and social",
+          "commentary": "already texting everyone",
+          "traits": { "social": 2, "romantic": 1 }
+        }
+      ]
+    },
+    {
+      "id": "ml-afternoon",
+      "prompt": "What had you been doing all afternoon?",
+      "options": [
+        {
+          "id": "errands",
+          "label": "Running errands that kept multiplying",
+          "madlib_label": "running errands that kept multiplying",
+          "commentary": "the list never ends",
+          "traits": { "classic": 1, "social": 1 }
+        },
+        {
+          "id": "meetings",
+          "label": "Sitting in back-to-back meetings",
+          "madlib_label": "sitting in back-to-back meetings",
+          "commentary": "too many tabs open",
+          "traits": { "analytical": 2 }
+        },
+        {
+          "id": "avoiding",
+          "label": "Aggressively avoiding responsibilities",
+          "madlib_label": "aggressively avoiding responsibilities",
+          "commentary": "the tasks can wait",
+          "traits": { "adventurous": 2, "bold": 1 }
+        },
+        {
+          "id": "overthinking",
+          "label": "Overthinking a completely normal decision",
+          "madlib_label": "overthinking a completely normal decision",
+          "commentary": "spreadsheet energy",
+          "traits": { "analytical": 2, "calm": 1 }
+        }
+      ]
+    },
+    {
+      "id": "ml-drive",
+      "prompt": "How did you get there?",
+      "options": [
+        {
+          "id": "straight-there",
+          "label": "Straight there, zero detour",
+          "madlib_label": "straight there, zero detour",
+          "commentary": "efficient, no notes",
+          "traits": { "classic": 2, "calm": 1 }
+        },
+        {
+          "id": "long-way",
+          "label": "The long way, windows down",
+          "madlib_label": "the long way, windows down",
+          "commentary": "took the scenic route",
+          "traits": { "adventurous": 2, "romantic": 1 }
+        },
+        {
+          "id": "out-of-way",
+          "label": "30 minutes out of my way",
+          "madlib_label": "30 minutes out of the way",
+          "commentary": "no distance too far",
+          "traits": { "bold": 2, "adventurous": 1 }
+        },
+        {
+          "id": "through-traffic",
+          "label": "Through traffic, zero regrets",
+          "madlib_label": "through traffic, zero regrets",
+          "commentary": "committed from the start",
+          "traits": { "energetic": 1, "bold": 2 }
+        }
+      ]
+    },
+    {
+      "id": "ml-order",
+      "prompt": "The person ahead of you ordered...",
+      "options": [
+        {
+          "id": "turtle",
+          "label": "Turtle",
+          "madlib_label": "Turtle",
+          "commentary": "a Wisconsin classic",
+          "traits": { "classic": 3 }
+        },
+        {
+          "id": "snickers-swirl",
+          "label": "Snickers Swirl",
+          "madlib_label": "Snickers Swirl",
+          "commentary": "crowd-pleaser energy",
+          "traits": { "social": 2, "energetic": 2 }
+        },
+        {
+          "id": "andes-mint",
+          "label": "Andes Mint Avalanche",
+          "madlib_label": "Andes Mint Avalanche",
+          "commentary": "composed, deliberate",
+          "traits": { "calm": 3, "analytical": 1 }
+        },
+        {
+          "id": "caramel-cashew",
+          "label": "Caramel Cashew",
+          "madlib_label": "Caramel Cashew",
+          "commentary": "quiet confidence",
+          "traits": { "analytical": 2, "bold": 1 }
+        }
+      ]
+    },
+    {
+      "id": "ml-after",
+      "prompt": "After your scoop, you...",
+      "options": [
+        {
+          "id": "plan-next",
+          "label": "Were already planning the next visit",
+          "madlib_label": "Already planning the next one.",
+          "commentary": "next visit already in the calendar",
+          "traits": { "energetic": 1, "social": 2 }
+        },
+        {
+          "id": "no-notes",
+          "label": "Had zero notes, zero complaints",
+          "madlib_label": "Zero notes. No complaints.",
+          "commentary": "no changes requested",
+          "traits": { "calm": 2, "classic": 1 }
+        },
+        {
+          "id": "sent-location",
+          "label": "Sent everyone the location",
+          "madlib_label": "Everyone got the location sent to their phone.",
+          "commentary": "mandatory group field trip declared",
+          "traits": { "social": 3 }
+        },
+        {
+          "id": "cone-ratio",
+          "label": "Quietly noted the cone-to-scoop ratio",
+          "madlib_label": "Quietly noted the cone-to-scoop ratio for future reference.",
+          "commentary": "data noted for future analysis",
+          "traits": { "analytical": 3 }
+        }
+      ]
+    }
+  ]
+}
