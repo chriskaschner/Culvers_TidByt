@@ -175,12 +175,24 @@ var SEED_PROFILES = {
   'crazy for cookie dough':      { base:'vanilla',        ribbon:'fudge',         toppings:['cookie_dough'],                         density:'standard' },
   'chocolate heath crunch':      { base:'chocolate',      ribbon:null,            toppings:['heath'],                                density:'standard' },
   'double butter pecan':         { base:'vanilla',        ribbon:null,            toppings:['pecan'],                                density:'double' },
+  // Added to match catalog entries
+  'blackberry cobbler':          { base:'blackberry',     ribbon:null,            toppings:['pie_crust'],                            density:'standard' },
+  'brownie thunder':             { base:'chocolate',      ribbon:'marshmallow',   toppings:['brownie'],                              density:'standard' },
+  'chocolate oreo volcano':      { base:'chocolate',      ribbon:'marshmallow',   toppings:['oreo','dove'],                          density:'explosion' },
+  'lemon berry layer cake':      { base:'lemon',          ribbon:null,            toppings:['blueberry','cake'],                     density:'standard' },
+  'lemon dash cookie':           { base:'lemon',          ribbon:null,            toppings:['oreo'],                                 density:'standard' },
+  'oreo cheesecake':             { base:'cheesecake',     ribbon:null,            toppings:['oreo','cheesecake_bits'],               density:'standard' },
+  'peanut butter cup':           { base:'chocolate',      ribbon:'peanut_butter', toppings:['reeses'],                              density:'standard' },
+  'salted caramel pecan pie':    { base:'caramel',        ribbon:null,            toppings:['pecan','salt','pie_crust'],             density:'explosion' },
+  'strawberry cheesecake':       { base:'cheesecake',     ribbon:null,            toppings:['strawberry_bits','cheesecake_bits'],    density:'standard' },
+  'vanilla':                     { base:'vanilla',        ribbon:null,            toppings:[],                                      density:'pure' },
 };
 
 var SEED_BASE = {
   vanilla:'#F5DEB3', chocolate:'#6F4E37', dark_chocolate:'#3B1F0B',
   mint:'#2ECC71', mint_andes:'#1A8A4A', strawberry:'#FF6B9D',
-  cheesecake:'#FFF5E1', caramel:'#C68E17', butter_pecan:'#F2E7D1', peach:'#FFE5B4'
+  cheesecake:'#FFF5E1', caramel:'#C68E17', butter_pecan:'#F2E7D1', peach:'#FFE5B4',
+  lemon:'#FFF176', blackberry:'#6B3FA0'
 };
 var SEED_RIBBON = {
   caramel:'#DAA520', peanut_butter:'#D4A017', marshmallow:'#FFFFFF',
@@ -191,7 +203,8 @@ var SEED_TOPPING = {
   cashew:'#D4C4A8', heath:'#DAA520', butterfinger:'#E6A817', cookie_dough:'#C4A882',
   strawberry_bits:'#FF1744', raspberry:'#E91E63', peach_bits:'#FF9800',
   salt:'#FFFFFF', snickers:'#C4A060', cake:'#4A2800', cheesecake_bits:'#FFF8DC',
-  m_and_m:'#FF4444', reeses:'#D4A017'
+  m_and_m:'#FF4444', reeses:'#D4A017',
+  brownie:'#2D1700', blueberry:'#3B1F6B', pie_crust:'#C4966A'
 };
 var SEED_CONE = { waffle:'#D2691E', waffle_dark:'#B8860B' };
 var CONE_TIP = '#8B5A2B';
@@ -207,23 +220,21 @@ var SEED_CATALOG = [
   { title:'Caramel Turtle',               description:'Caramel Fresh Frozen Custard with pecan pieces and fudge.' },
   { title:'Chocolate Caramel Twist',      description:'Chocolate and Vanilla Fresh Frozen Custard with caramel.' },
   { title:'Chocolate Heath Crunch',       description:'Chocolate Fresh Frozen Custard with Heath bar pieces.' },
-  { title:'Chocolate Oreo Volcano',       description:'Chocolate Fresh Frozen Custard with OREO cookie pieces and marshmallow.' },
+  { title:'Chocolate Oreo Volcano',       description:'Chocolate Fresh Frozen Custard with OREO cookie pieces and marshmallow.', historical:true },
   { title:'Chocolate Volcano',            description:'Chocolate Fresh Frozen Custard with fudge and marshmallow.' },
   { title:'Crazy for Cookie Dough',       description:'Vanilla Fresh Frozen Custard with cookie dough pieces and fudge.' },
   { title:'Dark Chocolate Decadence',     description:'Dark Chocolate Fresh Frozen Custard with fudge and chocolate chips.' },
   { title:'Dark Chocolate PB Crunch',     description:'Dark Chocolate Fresh Frozen Custard with peanut butter and chocolate crunch.' },
-  { title:'Georgia Peach Pecan',          description:'Peach Fresh Frozen Custard with pecan pieces.' },
   { title:'Lemon Berry Layer Cake',       description:'Lemon Fresh Frozen Custard with blueberries and cake pieces.' },
   { title:'Lemon Dash Cookie',            description:'Lemon Fresh Frozen Custard with cookie pieces.' },
   { title:'Mint Cookie',                  description:'Mint Fresh Frozen Custard with cookie pieces.' },
   { title:'Mint Explosion',               description:'Mint Fresh Frozen Custard with OREO cookie pieces and fudge.' },
   { title:'OREO Cheesecake',              description:'Cheesecake Fresh Frozen Custard with OREO cookie pieces.' },
   { title:'OREO Cookie Cheesecake',       description:'Cheesecake Fresh Frozen Custard with OREO cookie pieces.' },
-  { title:'OREO Cookies and Cream',       description:'Vanilla Fresh Frozen Custard with OREO cookie pieces.' },
-  { title:'Peanut Butter Cup',            description:'Chocolate Fresh Frozen Custard with peanut butter cup pieces.' },
+  { title:'Peanut Butter Cup',            description:"Chocolate Fresh Frozen Custard with peanut butter cup pieces. Culver's name through 2021; now called Really Reese's.", historical:true },
   { title:'Raspberry Cheesecake',         description:'Cheesecake Fresh Frozen Custard with raspberry sauce.' },
   { title:"Really Reese's",               description:"Chocolate Fresh Frozen Custard with Reese's peanut butter cup pieces." },
-  { title:'Salted Caramel Pecan Pie',     description:'Salted Caramel Fresh Frozen Custard with pecan pie pieces.' },
+  { title:'Salted Caramel Pecan Pie',     description:'Salted Caramel Fresh Frozen Custard with pecan pie pieces.', historical:true },
   { title:'Snickers Swirl',               description:'Chocolate Fresh Frozen Custard with Snickers bar pieces and caramel.' },
   { title:'Strawberry Cheesecake',        description:'Cheesecake Fresh Frozen Custard with strawberry sauce.' },
   { title:'Turtle',                       description:'Vanilla Fresh Frozen Custard with pecan pieces, caramel, and fudge.' },
@@ -233,21 +244,26 @@ var SEED_CATALOG = [
 ];
 
 var COLLISIONS = [
-  { label:'Chocolate name split',
-    a:{ name:'Chocolate Volcano',       has_profile:true,  where:'flavor-colors.js profile + catalog' },
-    b:{ name:'Chocolate Oreo Volcano',  has_profile:false, where:'catalog, flavor-matcher.js, archetypes' } },
-  { label:'Georgia Peach name split',
-    a:{ name:'Georgia Peach',           has_profile:true,  where:'flavor-colors.js profile only' },
-    b:{ name:'Georgia Peach Pecan',     has_profile:false, where:'catalog, flavor-matcher.js pecan group, map fallback' } },
-  { label:'Salted Caramel name split',
-    a:{ name:'Salted Double Caramel Pecan', has_profile:true,  where:'flavor-colors.js profile only' },
-    b:{ name:'Salted Caramel Pecan Pie',    has_profile:false, where:'catalog, flavor-matcher.js caramel group' } },
-  { label:'OREO Cheesecake variants',
-    a:{ name:'OREO Cookie Cheesecake',  has_profile:true,  where:'flavor-colors.js profile + catalog' },
-    b:{ name:'OREO Cheesecake',         has_profile:false, where:'catalog only (separate entry)' } },
-  { label:"Reese's / PB Cup names",
-    a:{ name:"Really Reese's",          has_profile:true,  where:'flavor-colors.js profile + catalog' },
-    b:{ name:'Peanut Butter Cup',       has_profile:false, where:'catalog, flavor-matcher.js peanutButter group' } },
+  { label:'Chocolate Volcano / Chocolate Oreo Volcano',
+    verdict:'Distinct flavors — no same-day co-occurrence at any store. Chocolate Oreo Volcano retired July 2023; tagged historical.',
+    a:{ name:'Chocolate Volcano',       has_profile:true, where:'active — profile + catalog' },
+    b:{ name:'Chocolate Oreo Volcano',  has_profile:true, where:'historical — profile + catalog (retired 2023)' } },
+  { label:'Georgia Peach / Georgia Peach Pecan',
+    verdict:'Georgia Peach Pecan had 0 rows across all databases — fabricated entry, removed from catalog.',
+    a:{ name:'Georgia Peach',           has_profile:true, where:'profile-only (not in catalog)' },
+    b:{ name:'Georgia Peach Pecan',     has_profile:false, where:'deleted — 0 rows, never a real flavor' } },
+  { label:'Salted Double Caramel Pecan / Salted Caramel Pecan Pie',
+    verdict:'Distinct flavors — no same-day co-occurrence. Salted Caramel Pecan Pie last seen March 2025; tagged historical.',
+    a:{ name:'Salted Double Caramel Pecan', has_profile:true, where:'active — profile only (not in alerts catalog)' },
+    b:{ name:'Salted Caramel Pecan Pie',    has_profile:true, where:'historical — profile + catalog (last 2025-03)' } },
+  { label:'OREO Cookie Cheesecake / OREO Cheesecake',
+    verdict:'Distinct flavors — no same-day co-occurrence. OREO Cheesecake is current Gille\'s name; OREO Cookie Cheesecake is current Culver\'s name.',
+    a:{ name:'OREO Cookie Cheesecake',  has_profile:true, where:'active Culver\'s name — profile + catalog' },
+    b:{ name:'OREO Cheesecake',         has_profile:true, where:'active Gille\'s name — profile + catalog' } },
+  { label:"Really Reese's / Peanut Butter Cup",
+    verdict:"Same product — Culver's called it Peanut Butter Cup through April 2021, then renamed to Really Reese's. 80 stores, zero same-day overlap. PB Cup tagged historical.",
+    a:{ name:"Really Reese's",          has_profile:true, where:"active Culver's name — profile + catalog" },
+    b:{ name:'Peanut Butter Cup',       has_profile:true, where:"historical — profile + catalog (retired 2021)" } },
 ];
 
 // ---------------------------------------------------------------------------
@@ -277,8 +293,8 @@ function bCol(name) {
   if(k.includes('caramel')) return bc.caramel||SEED_BASE.caramel;
   if(k.includes('peach')) return bc.peach||SEED_BASE.peach;
   if(k.includes('butter pecan')) return bc.butter_pecan||SEED_BASE.butter_pecan;
-  if(k.includes('lemon')) return '#F2E96B';
-  if(k.includes('blackberry')) return '#6B3F8C';
+  if(k.includes('lemon')) return bc.lemon||SEED_BASE.lemon||'#FFF176';
+  if(k.includes('blackberry')) return bc.blackberry||SEED_BASE.blackberry||'#6B3FA0';
   return bc.vanilla||SEED_BASE.vanilla;
 }
 function lh(hex,a) { var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return '#'+[r,g,b].map(function(c){return Math.round(c+(255-c)*a).toString(16).padStart(2,'0');}).join('').toUpperCase(); }
@@ -330,7 +346,8 @@ function hdCone(name,s) {
 function buildCollisions() {
   document.getElementById('col-grid').innerHTML = COLLISIONS.map(function(col) {
     var side=function(s){ return '<div class="col-side"><div class="cname">'+s.name+'</div>'+(s.has_profile?'<span class="badge b-ok">profile</span>':'<span class="badge b-err">no profile</span>')+hdCone(s.name,3)+'<div class="cwhere">'+s.where+'</div></div>'; };
-    return '<div class="col-pair"><h3>'+col.label+'</h3><div class="col-sides">'+side(col.a)+side(col.b)+'</div></div>';
+    var verdict=col.verdict?'<div style="font-size:11px;color:#9EC5E8;margin:8px 0 4px;line-height:1.4;">'+col.verdict+'</div>':'';
+    return '<div class="col-pair"><h3>'+col.label+'</h3>'+verdict+'<div class="col-sides">'+side(col.a)+side(col.b)+'</div></div>';
   }).join('');
 }
 
@@ -343,13 +360,15 @@ function profileTitle(id) {
 
 function buildRow(flavor) {
   var name=flavor.title, desc=flavor.description||'', hasP=!!getP(name), profileOnly=!!flavor._profileOnly;
+  var isHistorical=!!flavor.historical;
   var status, badge;
   if(hasP && !profileOnly)  { status='s-ok';   badge='<span class="badge b-ok">profile + catalog</span>'; }
   else if(!hasP)             { status='s-warn';  badge='<span class="badge b-err">no profile</span>'; }
   else                       { status='s-info';  badge='<span class="badge b-info">profile-only</span>'; }
+  var histBadge=isHistorical?'<span class="badge" style="background:#2a1a3e;color:#c084fc;margin-left:4px">historical</span>':'';
 
   var ac=bCol(name);
-  var c1='<div class="c c-name"><span class="ftitle">'+name+'</span>'+(desc?'<span class="fdesc">'+desc+'</span>':'')+badge+'</div>';
+  var c1='<div class="c c-name"><span class="ftitle">'+name+'</span>'+(desc?'<span class="fdesc">'+desc+'</span>':'')+badge+histBadge+'</div>';
   var c2='<div class="c">'+miniCone(name,5)+'</div>';
   var c3='<div class="c"><div class="mw"><div class="mp" style="border-color:'+ac+'">'+miniCone(name,4)+'</div></div></div>';
   var c4='<div class="c">'+hdCone(name,4)+'</div>';

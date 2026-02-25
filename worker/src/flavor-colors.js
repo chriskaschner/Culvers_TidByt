@@ -17,6 +17,8 @@ export const BASE_COLORS = {
   caramel: '#C68E17',
   butter_pecan: '#F2E7D1',
   peach: '#FFE5B4',
+  lemon: '#FFF176',
+  blackberry: '#6B3FA0',
 };
 
 export const RIBBON_COLORS = {
@@ -45,6 +47,9 @@ export const TOPPING_COLORS = {
   cheesecake_bits: '#FFF8DC',
   m_and_m: '#FF4444',
   reeses: '#D4A017',
+  brownie: '#2D1700',
+  blueberry: '#3B1F6B',
+  pie_crust: '#C4966A',
 };
 
 export const CONE_COLORS = {
@@ -86,6 +91,17 @@ export const FLAVOR_PROFILES = {
   'crazy for cookie dough': { base: 'vanilla', ribbon: 'fudge', toppings: ['cookie_dough'], density: 'standard' },
   'chocolate heath crunch': { base: 'chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
   'double butter pecan': { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' },
+  // Catalog entries without prior profiles
+  'blackberry cobbler': { base: 'blackberry', ribbon: null, toppings: ['pie_crust'], density: 'standard' },
+  'brownie thunder': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['brownie'], density: 'standard' },
+  'chocolate oreo volcano': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['oreo', 'dove'], density: 'explosion' },
+  'lemon berry layer cake': { base: 'lemon', ribbon: null, toppings: ['blueberry', 'cake'], density: 'standard' },
+  'lemon dash cookie': { base: 'lemon', ribbon: null, toppings: ['oreo'], density: 'standard' },
+  'oreo cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['oreo', 'cheesecake_bits'], density: 'standard' },
+  'peanut butter cup': { base: 'chocolate', ribbon: 'peanut_butter', toppings: ['reeses'], density: 'standard' },
+  'salted caramel pecan pie': { base: 'caramel', ribbon: null, toppings: ['pecan', 'salt', 'pie_crust'], density: 'explosion' },
+  'strawberry cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['strawberry_bits', 'cheesecake_bits'], density: 'standard' },
+  'vanilla': { base: 'vanilla', ribbon: null, toppings: [], density: 'pure' },
 };
 
 export const CONE_TIP_COLOR = '#8B5A2B';
