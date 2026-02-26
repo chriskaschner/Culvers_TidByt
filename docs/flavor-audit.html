@@ -46,7 +46,7 @@
   #fcount { font-size: 12px; color: var(--muted); margin-left: auto; }
 
   /* Col headers */
-  .ch { display: grid; grid-template-columns: 180px 58px 65px 72px 94px 148px 1fr; padding: 0 10px; margin-bottom: 6px; }
+  .ch { display: grid; grid-template-columns: 180px 58px 65px 72px 94px 148px 148px 1fr; padding: 0 10px; margin-bottom: 6px; }
   .ch span { font-size: 10px; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.3; }
   .ch span:first-child { text-align: left; }
 
@@ -54,7 +54,7 @@
   .fgrid { display: flex; flex-direction: column; gap: 3px; }
   .frow {
     display: grid;
-    grid-template-columns: 180px 58px 65px 72px 94px 148px 1fr;
+    grid-template-columns: 180px 58px 65px 72px 94px 148px 148px 1fr;
     align-items: center;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -73,10 +73,14 @@
   .ftitle { font-weight: 500; font-size: 13px; }
   .fdesc { font-size: 10px; color: var(--muted); max-width: 190px; line-height: 1.3; }
   .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
-  .b-ok   { background: var(--ok);   color: var(--ok-t); }
-  .b-warn { background: var(--warn); color: var(--warn-t); }
-  .b-err  { background: var(--err);  color: var(--err-t); }
-  .b-info { background: var(--info); color: var(--info-t); }
+  .b-ok      { background: var(--ok);   color: var(--ok-t); }
+  .b-warn    { background: var(--warn); color: var(--warn-t); }
+  .b-err     { background: var(--err);  color: var(--err-t); }
+  .b-info    { background: var(--info); color: var(--info-t); }
+  .b-changed { background: #2a1a3e; color: #c084fc; }
+
+  .c-before { position: relative; flex-direction: column; gap: 4px; }
+  .c-before .badge { position: absolute; top: 4px; right: 4px; }
 
   /* Map marker */
   .mw { width: 46px; height: 54px; display: flex; align-items: flex-start; justify-content: center; }
@@ -163,6 +167,7 @@
     <span>Widget<br>mini ×5</span>
     <span>Map<br>dark/light</span>
     <span>Radar<br>HD ×5</span>
+    <span>Before<br>HD ×8</span>
     <span>Hero / OG<br>HD ×8</span>
     <span>Quality + Colors</span>
   </div>
@@ -175,48 +180,93 @@
 // Embedded seed data (from worker/src/flavor-colors.js + flavor-catalog.js)
 // Page works fully offline; API calls upgrade to live data if available.
 // ---------------------------------------------------------------------------
+// Snapshot of profiles BEFORE the spec-driven update (2026-02-26).
+// Used by the "Before" HD×8 column in the audit grid for comparison.
+var LEGACY_PROFILES = {
+  'dark chocolate pb crunch':    { base:'dark_chocolate',    ribbon:'peanut_butter',   toppings:['butterfinger'],                        density:'standard' },
+  'chocolate caramel twist':     { base:'chocolate',         ribbon:'caramel',         toppings:['dove'],                               density:'standard' },
+  'mint explosion':              { base:'mint',              ribbon:null,              toppings:['oreo','andes','dove'],                 density:'explosion' },
+  'turtle dove':                 { base:'vanilla',           ribbon:'marshmallow',     toppings:['pecan','dove'],                       density:'standard' },
+  'double strawberry':           { base:'strawberry',        ribbon:null,              toppings:['strawberry_bits'],                    density:'double' },
+  'turtle cheesecake':           { base:'cheesecake',        ribbon:'caramel',         toppings:['dove','pecan','cheesecake_bits'],      density:'explosion' },
+  'caramel turtle':              { base:'caramel',           ribbon:null,              toppings:['pecan','dove'],                       density:'standard' },
+  'andes mint avalanche':        { base:'mint_andes',        ribbon:null,              toppings:['andes','andes','dove'],               density:'standard' },
+  'oreo cookie cheesecake':      { base:'cheesecake',        ribbon:null,              toppings:['oreo','cheesecake_bits'],             density:'standard' },
+  "devil's food cake":           { base:'dark_chocolate',    ribbon:null,              toppings:['cake','dove'],                        density:'standard' },
+  'caramel cashew':              { base:'vanilla',           ribbon:'caramel',         toppings:['cashew'],                             density:'standard' },
+  'butter pecan':                { base:'butter_pecan',      ribbon:null,              toppings:['pecan'],                              density:'standard' },
+  'caramel chocolate pecan':     { base:'chocolate_custard', ribbon:'caramel',         toppings:['pecan','pecan','dove','pecan'],        density:'explosion' },
+  'dark chocolate decadence':    { base:'dark_chocolate',    ribbon:null,              toppings:[],                                     density:'pure' },
+  'caramel fudge cookie dough':  { base:'vanilla',           ribbon:'fudge',           toppings:['cookie_dough'],                       density:'standard' },
+  'mint cookie':                 { base:'mint',              ribbon:null,              toppings:['oreo'],                               density:'double' },
+  'caramel pecan':               { base:'caramel',           ribbon:null,              toppings:['pecan'],                              density:'standard' },
+  "really reese's":              { base:'chocolate',         ribbon:'peanut_butter',   toppings:['reeses'],                             density:'standard' },
+  'raspberry cheesecake':        { base:'cheesecake',        ribbon:null,              toppings:['raspberry','cheesecake_bits'],         density:'standard' },
+  'chocolate covered strawberry':{ base:'vanilla',           ribbon:null,              toppings:['strawberry_bits','dove'],             density:'standard' },
+  'caramel peanut buttercup':    { base:'vanilla',           ribbon:'peanut_butter',   toppings:['dove'],                               density:'standard' },
+  'turtle':                      { base:'vanilla',           ribbon:'caramel',         toppings:['dove','pecan'],                       density:'standard' },
+  'georgia peach':               { base:'peach',             ribbon:null,              toppings:['peach_bits'],                         density:'standard' },
+  'snickers swirl':              { base:'chocolate',         ribbon:'caramel',         toppings:['snickers'],                           density:'standard' },
+  'chocolate volcano':           { base:'chocolate',         ribbon:'chocolate_syrup', toppings:['oreo','dove','m_and_m'],              density:'explosion' },
+  'oreo cookie overload':        { base:'chocolate',         ribbon:'chocolate_syrup', toppings:['oreo'],                               density:'overload' },
+  'salted double caramel pecan': { base:'vanilla',           ribbon:'caramel',         toppings:['pecan','salt'],                       density:'double' },
+  'crazy for cookie dough':      { base:'vanilla',           ribbon:'fudge',           toppings:['cookie_dough'],                       density:'standard' },
+  'chocolate heath crunch':      { base:'chocolate',         ribbon:null,              toppings:['heath'],                              density:'standard' },
+  'double butter pecan':         { base:'vanilla',           ribbon:null,              toppings:['pecan'],                              density:'double' },
+  'blackberry cobbler':          { base:'blackberry',        ribbon:null,              toppings:['pie_crust','pie_crust','pie_crust'],  density:'standard' },
+  'brownie thunder':             { base:'chocolate',         ribbon:'marshmallow',     toppings:['brownie'],                            density:'standard' },
+  'chocolate oreo volcano':      { base:'chocolate',         ribbon:'marshmallow',     toppings:['oreo','dove'],                        density:'explosion' },
+  'lemon berry layer cake':      { base:'lemon',             ribbon:null,              toppings:['blueberry','cake'],                   density:'standard' },
+  'lemon dash cookie':           { base:'lemon',             ribbon:null,              toppings:['oreo'],                               density:'standard' },
+  'oreo cheesecake':             { base:'cheesecake',        ribbon:null,              toppings:['oreo','cheesecake_bits'],             density:'standard' },
+  'peanut butter cup':           { base:'chocolate',         ribbon:'peanut_butter',   toppings:['reeses'],                             density:'standard' },
+  'salted caramel pecan pie':    { base:'caramel',           ribbon:null,              toppings:['pecan','salt','pie_crust'],           density:'explosion' },
+  'strawberry cheesecake':       { base:'cheesecake',        ribbon:null,              toppings:['strawberry_bits','cheesecake_bits'],  density:'standard' },
+  'vanilla':                     { base:'vanilla',           ribbon:null,              toppings:[],                                     density:'pure' },
+};
+
+// Current profiles — synced with worker/src/flavor-colors.js (post spec-driven update)
 var SEED_PROFILES = {
-  'dark chocolate pb crunch':    { base:'dark_chocolate', ribbon:'peanut_butter', toppings:['butterfinger'],                           density:'standard' },
-  'chocolate caramel twist':     { base:'chocolate',      ribbon:'caramel',       toppings:['dove'],                                  density:'standard' },
-  'mint explosion':              { base:'mint',           ribbon:null,            toppings:['oreo','andes','dove'],                   density:'explosion' },
-  'turtle dove':                 { base:'vanilla',        ribbon:'marshmallow',   toppings:['pecan','dove'],                          density:'standard' },
-  'double strawberry':           { base:'strawberry',     ribbon:null,            toppings:['strawberry_bits'],                       density:'double' },
-  'turtle cheesecake':           { base:'cheesecake',     ribbon:'caramel',       toppings:['dove','pecan','cheesecake_bits'],        density:'explosion' },
-  'caramel turtle':              { base:'caramel',        ribbon:null,            toppings:['pecan','dove'],                          density:'standard' },
-  'andes mint avalanche':        { base:'mint_andes',     ribbon:'chocolate_syrup',toppings:['andes','dove'],                         density:'standard' },
-  'oreo cookie cheesecake':      { base:'cheesecake',     ribbon:null,            toppings:['oreo','cheesecake_bits'],                density:'standard' },
-  "devil's food cake":           { base:'dark_chocolate', ribbon:null,            toppings:['cake','dove'],                           density:'standard' },
-  'caramel cashew':              { base:'vanilla',        ribbon:'caramel',       toppings:['cashew'],                               density:'standard' },
-  'butter pecan':                { base:'butter_pecan',   ribbon:null,            toppings:['pecan'],                                density:'standard' },
-  'caramel chocolate pecan':     { base:'chocolate',      ribbon:'caramel',       toppings:['pecan','dove'],                          density:'standard' },
-  'dark chocolate decadence':    { base:'dark_chocolate', ribbon:null,            toppings:[],                                       density:'pure' },
-  'caramel fudge cookie dough':  { base:'vanilla',        ribbon:'fudge',         toppings:['cookie_dough'],                         density:'standard' },
-  'mint cookie':                 { base:'mint',           ribbon:null,            toppings:['oreo'],                                 density:'double' },
-  'caramel pecan':               { base:'vanilla',        ribbon:'caramel',       toppings:['pecan'],                                density:'standard' },
-  "really reese's":              { base:'chocolate',      ribbon:'peanut_butter', toppings:['reeses'],                               density:'standard' },
-  'raspberry cheesecake':        { base:'cheesecake',     ribbon:null,            toppings:['raspberry','cheesecake_bits'],           density:'standard' },
-  'chocolate covered strawberry':{ base:'vanilla',        ribbon:null,            toppings:['strawberry_bits','dove'],                density:'standard' },
-  'caramel peanut buttercup':    { base:'vanilla',        ribbon:'peanut_butter', toppings:['dove'],                                 density:'standard' },
-  'turtle':                      { base:'vanilla',        ribbon:'caramel',       toppings:['dove','pecan'],                         density:'standard' },
-  'georgia peach':               { base:'peach',          ribbon:null,            toppings:['peach_bits'],                           density:'standard' },
-  'snickers swirl':              { base:'chocolate',      ribbon:'caramel',       toppings:['snickers'],                             density:'standard' },
-  'chocolate volcano':           { base:'chocolate',      ribbon:'chocolate_syrup',toppings:['oreo','dove','m_and_m'],               density:'explosion' },
-  'oreo cookie overload':        { base:'chocolate',      ribbon:'chocolate_syrup',toppings:['oreo'],                                density:'overload' },
-  'salted double caramel pecan': { base:'vanilla',        ribbon:'caramel',       toppings:['pecan','salt'],                         density:'double' },
-  'crazy for cookie dough':      { base:'vanilla',        ribbon:'fudge',         toppings:['cookie_dough'],                         density:'standard' },
-  'chocolate heath crunch':      { base:'chocolate',      ribbon:null,            toppings:['heath'],                                density:'standard' },
-  'double butter pecan':         { base:'vanilla',        ribbon:null,            toppings:['pecan'],                                density:'double' },
-  // Added to match catalog entries
-  'blackberry cobbler':          { base:'blackberry',     ribbon:null,            toppings:['pie_crust'],                            density:'standard' },
-  'brownie thunder':             { base:'chocolate',      ribbon:'marshmallow',   toppings:['brownie'],                              density:'standard' },
-  'chocolate oreo volcano':      { base:'chocolate',      ribbon:'marshmallow',   toppings:['oreo','dove'],                          density:'explosion' },
-  'lemon berry layer cake':      { base:'lemon',          ribbon:null,            toppings:['blueberry','cake'],                     density:'standard' },
-  'lemon dash cookie':           { base:'lemon',          ribbon:null,            toppings:['oreo'],                                 density:'standard' },
-  'oreo cheesecake':             { base:'cheesecake',     ribbon:null,            toppings:['oreo','cheesecake_bits'],               density:'standard' },
-  'peanut butter cup':           { base:'chocolate',      ribbon:'peanut_butter', toppings:['reeses'],                              density:'standard' },
-  'salted caramel pecan pie':    { base:'caramel',        ribbon:null,            toppings:['pecan','salt','pie_crust'],             density:'explosion' },
-  'strawberry cheesecake':       { base:'cheesecake',     ribbon:null,            toppings:['strawberry_bits','cheesecake_bits'],    density:'standard' },
-  'vanilla':                     { base:'vanilla',        ribbon:null,            toppings:[],                                      density:'pure' },
+  'dark chocolate pb crunch':    { base:'dark_chocolate',    ribbon:'peanut_butter',   toppings:['butterfinger'],                        density:'standard' },
+  'chocolate caramel twist':     { base:'chocolate',         ribbon:'caramel',         toppings:['dove'],                               density:'standard' },
+  'mint explosion':              { base:'mint',              ribbon:null,              toppings:['oreo','andes','dove'],                 density:'explosion' },
+  'turtle dove':                 { base:'vanilla',           ribbon:'marshmallow',     toppings:['pecan','dove'],                       density:'standard' },
+  'double strawberry':           { base:'strawberry',        ribbon:null,              toppings:['strawberry_bits'],                    density:'double' },
+  'turtle cheesecake':           { base:'cheesecake',        ribbon:'caramel',         toppings:['pecan','dove','pecan'],               density:'explosion' },
+  'caramel turtle':              { base:'caramel',           ribbon:'fudge',           toppings:['pecan','dove','pecan'],               density:'explosion' },
+  'andes mint avalanche':        { base:'mint_andes',        ribbon:null,              toppings:['andes','andes','dove'],               density:'standard' },
+  'oreo cookie cheesecake':      { base:'cheesecake',        ribbon:null,              toppings:['oreo'],                               density:'double' },
+  "devil's food cake":           { base:'chocolate_custard', ribbon:null,              toppings:['cake','dove'],                        density:'standard' },
+  'caramel cashew':              { base:'vanilla',           ribbon:'caramel',         toppings:['cashew'],                             density:'standard' },
+  'butter pecan':                { base:'butter_pecan',      ribbon:null,              toppings:['pecan'],                              density:'standard' },
+  'caramel chocolate pecan':     { base:'chocolate_custard', ribbon:'caramel',         toppings:['pecan','pecan','dove','pecan'],        density:'explosion' },
+  'dark chocolate decadence':    { base:'dark_chocolate',    ribbon:null,              toppings:[],                                     density:'pure' },
+  'caramel fudge cookie dough':  { base:'vanilla',           ribbon:'fudge',           toppings:['cookie_dough'],                       density:'standard' },
+  'mint cookie':                 { base:'mint',              ribbon:null,              toppings:['oreo'],                               density:'double' },
+  'caramel pecan':               { base:'caramel',           ribbon:null,              toppings:['pecan'],                              density:'standard' },
+  "really reese's":              { base:'chocolate',         ribbon:'peanut_butter',   toppings:['reeses'],                             density:'standard' },
+  'raspberry cheesecake':        { base:'cheesecake',        ribbon:null,              toppings:['raspberry'],                          density:'double' },
+  'chocolate covered strawberry':{ base:'vanilla',           ribbon:null,              toppings:['strawberry_bits','dove'],             density:'standard' },
+  'caramel peanut buttercup':    { base:'vanilla',           ribbon:'peanut_butter',   toppings:['dove'],                               density:'standard' },
+  'turtle':                      { base:'vanilla',           ribbon:'caramel',         toppings:['pecan','dove'],                       density:'standard' },
+  'georgia peach':               { base:'peach',             ribbon:null,              toppings:['peach_bits'],                         density:'standard' },
+  'snickers swirl':              { base:'chocolate',         ribbon:'caramel',         toppings:['snickers'],                           density:'standard' },
+  'chocolate volcano':           { base:'chocolate',         ribbon:'chocolate_syrup', toppings:['oreo','dove','m_and_m'],              density:'explosion' },
+  'oreo cookie overload':        { base:'chocolate',         ribbon:'chocolate_syrup', toppings:['oreo'],                               density:'overload' },
+  'salted double caramel pecan': { base:'vanilla',           ribbon:'caramel',         toppings:['pecan','salt'],                       density:'double' },
+  'crazy for cookie dough':      { base:'vanilla',           ribbon:'fudge',           toppings:['cookie_dough'],                       density:'standard' },
+  'chocolate heath crunch':      { base:'chocolate',         ribbon:null,              toppings:['heath'],                              density:'standard' },
+  'double butter pecan':         { base:'vanilla',           ribbon:null,              toppings:['pecan'],                              density:'double' },
+  'blackberry cobbler':          { base:'blackberry',        ribbon:null,              toppings:['pie_crust','pie_crust','pie_crust'],  density:'standard' },
+  'brownie thunder':             { base:'chocolate',         ribbon:'marshmallow',     toppings:['brownie','dove','brownie'],            density:'explosion' },
+  'chocolate oreo volcano':      { base:'chocolate',         ribbon:'marshmallow',     toppings:['oreo','dove'],                        density:'explosion' },
+  'lemon berry layer cake':      { base:'lemon',             ribbon:null,              toppings:['blueberry','cake'],                   density:'standard' },
+  'lemon dash cookie':           { base:'lemon',             ribbon:null,              toppings:['oreo'],                               density:'standard' },
+  'oreo cheesecake':             { base:'cheesecake',        ribbon:null,              toppings:['oreo'],                               density:'double' },
+  'peanut butter cup':           { base:'chocolate',         ribbon:'peanut_butter',   toppings:['reeses'],                             density:'standard' },
+  'salted caramel pecan pie':    { base:'caramel',           ribbon:null,              toppings:['pecan','salt','pie_crust'],           density:'explosion' },
+  'strawberry cheesecake':       { base:'cheesecake',        ribbon:null,              toppings:['strawberry_bits'],                    density:'double' },
+  'vanilla':                     { base:'vanilla',           ribbon:null,              toppings:[],                                     density:'pure' },
 };
 
 var SEED_BASE = {
@@ -368,6 +418,26 @@ function hdCone(name,s) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(18*s)+' '+(22*s)+'" width="'+(18*s)+'" height="'+(22*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
 }
 
+// Render HD cone using LEGACY_PROFILES (before-state for comparison column)
+function hdLegacy(name, s) {
+  var saved = colorData.profiles;
+  colorData.profiles = LEGACY_PROFILES;
+  var svg = hdCone(name, s);
+  colorData.profiles = saved;
+  return svg;
+}
+
+// Profile equality check for "changed" badge
+function profileChanged(name) {
+  var k = nfk(name);
+  var cur = (colorData.profiles||{})[k];
+  var leg = LEGACY_PROFILES[k];
+  if (!cur && !leg) return false;
+  if (!cur || !leg) return true;
+  return cur.base !== leg.base || cur.ribbon !== leg.ribbon || cur.density !== leg.density ||
+    JSON.stringify(cur.toppings) !== JSON.stringify(leg.toppings);
+}
+
 // ---------------------------------------------------------------------------
 // Build collision section
 // ---------------------------------------------------------------------------
@@ -454,6 +524,11 @@ function buildRow(flavor) {
   // c5: HD ×5 (radar cards)
   var c5='<div class="c">'+hdCone(name,5)+'</div>';
 
+  // c5b: Before HD ×8 (legacy profile snapshot for comparison)
+  var changed=profileChanged(name);
+  var legacySvg=LEGACY_PROFILES[nfk(name)]?hdLegacy(name,8):'<div style="color:var(--muted);font-size:10px;text-align:center">new</div>';
+  var c5b='<div class="c c-before" style="padding:4px;">'+legacySvg+(changed?'<span class="badge b-changed">changed</span>':'')+'</div>';
+
   // c6: HD ×8 (hero/OG — documented scale for social cards)
   var c6='<div class="c" style="padding:4px;">'+hdCone(name,8)+'</div>';
 
@@ -478,7 +553,7 @@ function buildRow(flavor) {
   row.dataset.name=name.toLowerCase();
   row.dataset.status=status;
   row.dataset.flagged=flags.length?'1':'0';
-  row.innerHTML=c1+c2+c3+c4+c5+c6+c7;
+  row.innerHTML=c1+c2+c3+c4+c5+c5b+c6+c7;
   return row;
 }
 
