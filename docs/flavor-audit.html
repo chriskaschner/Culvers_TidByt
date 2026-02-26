@@ -46,7 +46,7 @@
   #fcount { font-size: 12px; color: var(--muted); margin-left: auto; }
 
   /* Col headers */
-  .ch { display: grid; grid-template-columns: 210px 70px 70px 90px 108px 1fr; padding: 0 10px; margin-bottom: 6px; }
+  .ch { display: grid; grid-template-columns: 180px 58px 65px 72px 94px 148px 1fr; padding: 0 10px; margin-bottom: 6px; }
   .ch span { font-size: 10px; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.3; }
   .ch span:first-child { text-align: left; }
 
@@ -54,7 +54,7 @@
   .fgrid { display: flex; flex-direction: column; gap: 3px; }
   .frow {
     display: grid;
-    grid-template-columns: 210px 70px 70px 90px 108px 1fr;
+    grid-template-columns: 180px 58px 65px 72px 94px 148px 1fr;
     align-items: center;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -97,6 +97,22 @@
   .mt.d-pure      { color: #aaa; }
 
   .noprof { color: var(--err-t); font-size: 11px; max-width: 180px; line-height: 1.4; }
+
+  /* Tidbyt pixel zoom */
+  .tidbyt-wrap { display: flex; align-items: center; justify-content: center; width: 45px; height: 55px; }
+  .tidbyt-inner { image-rendering: pixelated; image-rendering: crisp-edges; transform-origin: top left; }
+
+  /* Map dual-bg */
+  .map-pair { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .map-bg-d { background: var(--surface2); padding: 3px; border-radius: 3px; }
+  .map-bg-l { background: #e8edf5; padding: 3px; border-radius: 3px; }
+
+  /* Quality flags */
+  .qflags { display: flex; flex-direction: column; gap: 3px; }
+  .qf { font-size: 9px; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+  .qf-warn { background: var(--warn); color: var(--warn-t); }
+  .qf-info { background: var(--info); color: var(--info-t); }
+  .qf-err  { background: var(--err);  color: var(--err-t); }
 </style>
 </head>
 <body>
@@ -108,6 +124,7 @@
     <span class="stat ok"><b id="s-ok">0</b> aligned</span>
     <span class="stat warn"><b id="s-warn">0</b> no profile</span>
     <span class="stat err"><b id="s-info">0</b> profile-only</span>
+    <span class="stat warn"><b id="s-flagged">0</b> quality flags</span>
   </div>
   <span id="api-note">seed data — try the live API for updated catalog</span>
 </header>
@@ -125,15 +142,17 @@
     <label><input type="checkbox" id="f-ok" checked> Aligned</label>
     <label><input type="checkbox" id="f-warn" checked> No profile</label>
     <label><input type="checkbox" id="f-info" checked> Profile-only</label>
+    <label><input type="checkbox" id="f-flagged" checked> Flagged</label>
     <span id="fcount"></span>
   </div>
   <div class="ch">
     <span style="text-align:left">Flavor + description</span>
+    <span>Tidbyt<br>px ×1→6</span>
     <span>Widget<br>mini ×5</span>
-    <span>Map<br>mini ×4</span>
-    <span>Radar/Card<br>HD ×4</span>
-    <span>OG / Social<br>HD ×5</span>
-    <span>Colors + Profile</span>
+    <span>Map<br>dark/light</span>
+    <span>Radar<br>HD ×5</span>
+    <span>Hero / OG<br>HD ×8</span>
+    <span>Quality + Colors</span>
   </div>
   <div class="fgrid" id="fgrid"></div>
 </section>
@@ -358,6 +377,23 @@ function profileTitle(id) {
   return id.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ').replace(/\bOreo\b/g,'OREO');
 }
 
+// Quality flag analysis for a flavor
+function qualityFlags(name) {
+  var p=getP(name), tc=colorData.topping_colors||{}, flags=[];
+  if(!p) return flags;
+  var tops=p.toppings||[], den=p.density||'standard';
+  // Sparse: explosion/overload density but few toppings
+  if((den==='explosion'||den==='overload') && tops.length < 3)
+    flags.push({cls:'qf-warn', label:'sparse toppings ('+den+' but '+tops.length+' defined)'});
+  // Unknown topping color
+  tops.forEach(function(k){ if(!(tc[k]||SEED_TOPPING[k])) flags.push({cls:'qf-err', label:'unknown topping color: '+k}); });
+  // Long name (Tidbyt abbreviation needed)
+  if(name.length > 24) flags.push({cls:'qf-info', label:'long name ('+name.length+' chars) — Tidbyt will abbreviate'});
+  // Pure with toppings defined
+  if(den==='pure' && tops.length > 0) flags.push({cls:'qf-warn', label:'pure density but toppings listed (ignored in render)'});
+  return flags;
+}
+
 function buildRow(flavor) {
   var name=flavor.title, desc=flavor.description||'', hasP=!!getP(name), profileOnly=!!flavor._profileOnly;
   var isHistorical=!!flavor.historical;
@@ -366,15 +402,34 @@ function buildRow(flavor) {
   else if(!hasP)             { status='s-warn';  badge='<span class="badge b-err">no profile</span>'; }
   else                       { status='s-info';  badge='<span class="badge b-info">profile-only</span>'; }
   var histBadge=isHistorical?'<span class="badge" style="background:#2a1a3e;color:#c084fc;margin-left:4px">historical</span>':'';
+  var flags=qualityFlags(name);
 
   var ac=bCol(name);
+
+  // c1: name
   var c1='<div class="c c-name"><span class="ftitle">'+name+'</span>'+(desc?'<span class="fdesc">'+desc+'</span>':'')+badge+histBadge+'</div>';
-  var c2='<div class="c">'+miniCone(name,5)+'</div>';
-  var c3='<div class="c"><div class="mw"><div class="mp" style="border-color:'+ac+'">'+miniCone(name,4)+'</div></div></div>';
-  var c4='<div class="c">'+hdCone(name,4)+'</div>';
+
+  // c2: Tidbyt pixel view — mini cone at scale 1, CSS scaled ×6 with pixelated rendering
+  var tdSvg=miniCone(name,1);
+  // scale 1 SVG is 9×11px; zoom ×5 = 45×55px, fits in 58px column
+  var c2='<div class="c"><div class="tidbyt-wrap"><div class="tidbyt-inner" style="transform:scale(5)">' + tdSvg + '</div></div></div>';
+
+  // c3: widget mini ×5
+  var c3='<div class="c">'+miniCone(name,5)+'</div>';
+
+  // c4: map marker on dark and light backgrounds
+  var mkrD='<div class="mp" style="border-color:'+ac+'">'+miniCone(name,4)+'</div>';
+  var mkrL='<div class="mp" style="border-color:'+ac+';background:#e8edf5">'+miniCone(name,4)+'</div>';
+  var c4='<div class="c"><div class="map-pair"><div class="map-bg-d">'+mkrD+'</div><div class="map-bg-l">'+mkrL+'</div></div></div>';
+
+  // c5: HD ×5 (radar cards)
   var c5='<div class="c">'+hdCone(name,5)+'</div>';
 
-  var c6;
+  // c6: HD ×8 (hero/OG — documented scale for social cards)
+  var c6='<div class="c" style="padding:4px;">'+hdCone(name,8)+'</div>';
+
+  // c7: quality flags + colors
+  var c7;
   if(hasP) {
     var p=getP(name), bc=colorData.base_colors||{}, tc=colorData.topping_colors||{}, rc=colorData.ribbon_colors||{};
     var sw='';
@@ -383,16 +438,18 @@ function buildRow(flavor) {
     (p?p.toppings||[]:[] ).forEach(function(k){if(seen[k])return;seen[k]=1;var col=tc[k]||SEED_TOPPING[k];if(col)sw+='<div class="swg"><div class="sw" style="background:'+col+'" title="'+k+'"></div><div class="swl">'+k+'</div></div>';});
     if(p&&p.ribbon){var rcol=rc[p.ribbon]||SEED_RIBBON[p.ribbon];if(rcol)sw+='<div class="swg"><div class="sw" style="background:'+rcol+';border:2px dashed rgba(255,255,255,.3)" title="ribbon: '+p.ribbon+'"></div><div class="swl">'+p.ribbon+'</div></div>';}
     var den=p?p.density||'standard':'standard';
-    c6='<div class="c c-meta"><div class="swr">'+sw+'</div><div class="mtags"><span class="mt d-'+den+'">'+den+'</span>'+(p&&p.ribbon?'<span class="mt">ribbon: '+p.ribbon+'</span>':'')+'</div></div>';
+    var flagHtml=flags.map(function(f){return '<span class="qf '+f.cls+'">'+f.label+'</span>';}).join('');
+    c7='<div class="c c-meta">'+(flagHtml?'<div class="qflags" style="margin-bottom:5px">'+flagHtml+'</div>':'')+'<div class="swr">'+sw+'</div><div class="mtags"><span class="mt d-'+den+'">'+den+'</span>'+(p&&p.ribbon?'<span class="mt">ribbon: '+p.ribbon+'</span>':'')+'</div></div>';
   } else {
-    c6='<div class="c c-meta"><div class="noprof">No cone profile — rendering will use color fallback on all surfaces.</div></div>';
+    c7='<div class="c c-meta"><div class="noprof">No cone profile — rendering will use color fallback on all surfaces.</div></div>';
   }
 
   var row=document.createElement('div');
-  row.className='frow '+status;
+  row.className='frow '+status+(flags.length?' s-flagged':'');
   row.dataset.name=name.toLowerCase();
   row.dataset.status=status;
-  row.innerHTML=c1+c2+c3+c4+c5+c6;
+  row.dataset.flagged=flags.length?'1':'0';
+  row.innerHTML=c1+c2+c3+c4+c5+c6+c7;
   return row;
 }
 
@@ -404,18 +461,21 @@ function applyFilters() {
   var fok=document.getElementById('f-ok').checked;
   var fwarn=document.getElementById('f-warn').checked;
   var finfo=document.getElementById('f-info').checked;
+  var fflag=document.getElementById('f-flagged').checked;
   var total=0,vis=0;
   document.querySelectorAll('.frow').forEach(function(row){
     total++;
     var match=(!q||row.dataset.name.includes(q));
-    var st=row.dataset.status;
+    var st=row.dataset.status;   // e.g. "s-ok" or "s-warn"
+    var isFlagged=row.dataset.flagged==='1';
     var typeOk=(st==='s-ok'&&fok)||(st==='s-warn'&&fwarn)||(st==='s-info'&&finfo);
-    row.style.display=(match&&typeOk)?'':'none';
-    if(match&&typeOk) vis++;
+    var flagOk=!isFlagged||(isFlagged&&fflag);
+    row.style.display=(match&&typeOk&&flagOk)?'':'none';
+    if(match&&typeOk&&flagOk) vis++;
   });
   document.getElementById('fcount').textContent=vis+' of '+total+' shown';
 }
-['search','f-ok','f-warn','f-info'].forEach(function(id){
+['search','f-ok','f-warn','f-info','f-flagged'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener(id==='search'?'input':'change',applyFilters);
 });
@@ -431,14 +491,15 @@ function buildGrid(catalog) {
   Object.keys(profiles).forEach(function(id){ if(!seen[id]) all.push({title:profileTitle(id),description:'',_profileOnly:true}); });
   all.sort(function(a,b){return a.title.localeCompare(b.title);});
 
-  var okC=0,warnC=0,infoC=0;
-  all.forEach(function(f){ var hp=!!getP(f.title); if(hp&&!f._profileOnly) okC++; else if(!hp) warnC++; else infoC++; });
+  var okC=0,warnC=0,infoC=0,flagC=0;
+  all.forEach(function(f){ var hp=!!getP(f.title); if(hp&&!f._profileOnly) okC++; else if(!hp) warnC++; else infoC++; if(qualityFlags(f.title).length) flagC++; });
 
   document.getElementById('s-prof').textContent=Object.keys(profiles).length;
   document.getElementById('s-cat').textContent=catalog.length;
   document.getElementById('s-ok').textContent=okC;
   document.getElementById('s-warn').textContent=warnC;
   document.getElementById('s-info').textContent=infoC;
+  document.getElementById('s-flagged').textContent=flagC;
 
   buildCollisions();
 
