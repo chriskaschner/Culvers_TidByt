@@ -9,6 +9,7 @@
 export const BASE_COLORS = {
   vanilla: '#F5DEB3',
   chocolate: '#6F4E37',
+  chocolate_custard: '#5A3825',
   dark_chocolate: '#3B1F0B',
   mint: '#2ECC71',
   mint_andes: '#1A8A4A',
@@ -22,7 +23,7 @@ export const BASE_COLORS = {
 };
 
 export const RIBBON_COLORS = {
-  caramel: '#DAA520',
+  caramel: '#D38B2C',
   peanut_butter: '#D4A017',
   marshmallow: '#FFFFFF',
   chocolate_syrup: '#1A0A00',
@@ -32,8 +33,8 @@ export const RIBBON_COLORS = {
 export const TOPPING_COLORS = {
   oreo: '#1A1A1A',
   andes: '#1FAE7A',
-  dove: '#3B1F0B',
-  pecan: '#8B6914',
+  dove: '#2B1A12',
+  pecan: '#8B5A2B',
   cashew: '#D4C4A8',
   heath: '#DAA520',
   butterfinger: '#E6A817',
@@ -68,16 +69,16 @@ export const FLAVOR_PROFILES = {
   'double strawberry': { base: 'strawberry', ribbon: null, toppings: ['strawberry_bits'], density: 'double' },
   'turtle cheesecake': { base: 'cheesecake', ribbon: 'caramel', toppings: ['dove', 'pecan', 'cheesecake_bits'], density: 'explosion' },
   'caramel turtle': { base: 'caramel', ribbon: null, toppings: ['pecan', 'dove'], density: 'standard' },
-  'andes mint avalanche': { base: 'mint_andes', ribbon: 'chocolate_syrup', toppings: ['andes', 'andes', 'dove'], density: 'standard' },
+  'andes mint avalanche': { base: 'mint_andes', ribbon: null, toppings: ['andes', 'andes', 'dove'], density: 'standard' },
   'oreo cookie cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['oreo', 'cheesecake_bits'], density: 'standard' },
   "devil's food cake": { base: 'dark_chocolate', ribbon: null, toppings: ['cake', 'dove'], density: 'standard' },
   'caramel cashew': { base: 'vanilla', ribbon: 'caramel', toppings: ['cashew'], density: 'standard' },
   'butter pecan': { base: 'butter_pecan', ribbon: null, toppings: ['pecan'], density: 'standard' },
-  'caramel chocolate pecan': { base: 'chocolate', ribbon: 'caramel', toppings: ['pecan', 'dove'], density: 'standard' },
+  'caramel chocolate pecan': { base: 'chocolate_custard', ribbon: 'caramel', toppings: ['pecan', 'pecan', 'dove', 'pecan'], density: 'explosion' },
   'dark chocolate decadence': { base: 'dark_chocolate', ribbon: null, toppings: [], density: 'pure' },
   'caramel fudge cookie dough': { base: 'vanilla', ribbon: 'fudge', toppings: ['cookie_dough'], density: 'standard' },
   'mint cookie': { base: 'mint', ribbon: null, toppings: ['oreo'], density: 'double' },
-  'caramel pecan': { base: 'vanilla', ribbon: 'caramel', toppings: ['pecan'], density: 'standard' },
+  'caramel pecan': { base: 'caramel', ribbon: null, toppings: ['pecan'], density: 'standard' },
   "really reese's": { base: 'chocolate', ribbon: 'peanut_butter', toppings: ['reeses'], density: 'standard' },
   'raspberry cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['raspberry', 'cheesecake_bits'], density: 'standard' },
   'chocolate covered strawberry': { base: 'vanilla', ribbon: null, toppings: ['strawberry_bits', 'dove'], density: 'standard' },
@@ -197,11 +198,11 @@ export function renderConeSVG(flavorName, scale = 1) {
     }
   }
 
-  // Fixed topping slots (T1-T4) per Tidbyt cone_spec
-  // T1: (2,1), T2: (6,1), T3: (3,3), T4: (5,2) -- skip T4 if ribbon present
-  const tSlots = [[2,1],[6,1],[3,3],[5,2]];
+  // Fixed topping slots (T1-T4): distributed across rows 1-4 so toppings
+  // span the full scoop height rather than clustering in a horizontal band.
+  // T1:(3,1) T2:(6,2) T3:(3,3) T4:(5,4) -- no ribbon collision with any slot
+  const tSlots = [[3,1],[6,2],[3,3],[5,4]];
   for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
-    if (i === 3 && hasRibbon) continue; // T4 collision with R3
     const color = TOPPING_COLORS[toppingSlots[i]];
     if (!color) continue;
     const [tx, ty] = tSlots[i];
@@ -343,8 +344,11 @@ export function renderConeHDSVG(flavorName, scale = 1) {
     rects.push(`<rect x="${hx * s}" y="${hy * s}" width="${s}" height="${s}" fill="${highlightColor}"/>`);
   }
 
-  // Fixed topping slots (T1-T8), intentionally asymmetric for a less mirrored scoop.
-  const tSlots = [[4,2],[12,1],[6,3],[14,5],[3,6],[11,7],[5,9],[13,8]];
+  // Fixed topping slots (T1-T8): distributed top-to-bottom so toppings span
+  // the full scoop height. Standard density uses first 6 (rows 0,1,3,4,6,7);
+  // explosion density uses all 8 (adds rows 9,10). Asymmetric placement avoids
+  // mirrored look.
+  const tSlots = [[5,0],[11,1],[4,3],[13,4],[5,6],[12,7],[4,9],[11,10]];
   for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
     const color = TOPPING_COLORS[toppingSlots[i]];
     if (!color) continue;

@@ -21,6 +21,7 @@
 var FALLBACK_BASE_COLORS = {
   vanilla: '#F5DEB3',
   chocolate: '#7B4A2E',
+  chocolate_custard: '#5A3825',
   dark_chocolate: '#4B2E2E',
   mint: '#8FD9A8',
   strawberry: '#E88AAE',
@@ -37,8 +38,9 @@ var FALLBACK_TOPPING_COLORS = {
   andes: '#1FAE7A',
   cookie_dough: '#C48A5A',
   brownie: '#4B2E2E',
+  dove: '#2B1A12',
   peanut_butter_cup: '#7B4A2E',
-  pecan: '#A56A43',
+  pecan: '#8B5A2B',
   caramel_bits: '#C58A45',
   heath: '#C58A45',
   raspberry: '#B24A64',
@@ -46,7 +48,7 @@ var FALLBACK_TOPPING_COLORS = {
 };
 
 var FALLBACK_RIBBON_COLORS = {
-  caramel: '#C58A45',
+  caramel: '#D38B2C',
   fudge: '#4B2E2E',
   peanut_butter: '#9B6A3A',
   marshmallow: '#EDE3D1',
@@ -207,10 +209,10 @@ function renderMiniConeSVG(flavorName, scale) {
     }
   }
 
-  // Fixed topping slots: T1(2,1) T2(6,1) T3(3,3) T4(5,2)
-  var tSlots = [[2,1],[6,1],[3,3],[5,2]];
+  // Fixed topping slots T1-T4: distributed across rows 1-4 so toppings span
+  // the full scoop height. T1:(3,1) T2:(6,2) T3:(3,3) T4:(5,4)
+  var tSlots = [[3,1],[6,2],[3,3],[5,4]];
   for (var ti = 0; ti < tSlotKeys.length && ti < tSlots.length; ti++) {
-    if (ti === 3 && hasRibbon) continue;
     var tColor = toppingColors[tSlotKeys[ti]] || FALLBACK_TOPPING_COLORS[tSlotKeys[ti]];
     if (!tColor) continue;
     rects.push('<rect x="' + (tSlots[ti][0]*s) + '" y="' + (tSlots[ti][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + tColor + '"/>');
@@ -277,8 +279,10 @@ function renderMiniConeHDSVG(flavorName, scale) {
     rects.push('<rect x="' + (hlSlots[hi][0]*s) + '" y="' + (hlSlots[hi][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + highlightColor + '"/>');
   }
 
-  // Topping slots T1-T8
-  var tSlots = [[4,2],[12,1],[6,3],[14,5],[3,6],[11,7],[5,9],[13,8]];
+  // Topping slots T1-T8: distributed top-to-bottom so toppings span the full
+  // scoop height. Standard density uses first 6 (rows 0,1,3,4,6,7);
+  // explosion density uses all 8 (adds rows 9,10).
+  var tSlots = [[5,0],[11,1],[4,3],[13,4],[5,6],[12,7],[4,9],[11,10]];
   for (var ti = 0; ti < tSlotKeys.length && ti < tSlots.length; ti++) {
     var tColor = toppingColors[tSlotKeys[ti]] || FALLBACK_TOPPING_COLORS[tSlotKeys[ti]];
     if (!tColor) continue;

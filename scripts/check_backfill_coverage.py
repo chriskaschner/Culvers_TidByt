@@ -18,7 +18,6 @@ import json
 import sqlite3
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 D1_DATABASE_NAME = "custard-snapshots"
@@ -53,21 +52,20 @@ def local_count(slug: str) -> int:
 
 
 def d1_query(sql: str) -> list[dict] | None:
-    """Execute a SQL query against D1 via wrangler. Returns rows or None on error."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as tmp:
-        tmp.write(sql)
-        tmp_path = Path(tmp.name)
+    """Execute a SQL query against D1 via wrangler. Returns rows or None on error.
 
+    Uses --command (not --file) for SELECT queries: wrangler --file returns
+    execution stats in the results array, not row data, for SELECT statements.
+    """
     result = subprocess.run(
         [
             "npx", "wrangler", "d1", "execute", D1_DATABASE_NAME,
-            "--remote", "--file", str(tmp_path), "--json",
+            "--remote", "--command", sql, "--json",
         ],
         capture_output=True,
         text=True,
         cwd=WORKER_DIR,
     )
-    tmp_path.unlink(missing_ok=True)
 
     if result.returncode != 0:
         return None

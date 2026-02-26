@@ -2,19 +2,22 @@
   "id": "mad-libs-v1",
   "name": "Custard Mad Libs",
   "title": "Custard Mad Libs",
-  "description": "Pick your words. Get a custard story.",
+  "description": "Write your own words. Get a custard story.",
   "question_count": 5,
   "madlib_template": "It was a {q1} kind of day. I had been {q2} all afternoon, so I did the obvious thing: drove {q3} and got in line. The person ahead of me ordered {q4}. Classic. I went with my instincts and got {flavor}. {q5}",
   "questions": [
     {
       "id": "ml-day",
+      "type": "fill_in_madlib",
       "prompt": "What kind of day is it?",
+      "placeholder": "sunny, stressful, foggy, whatever...",
       "options": [
         {
           "id": "sunny-slow",
           "label": "Sunny and slow",
           "madlib_label": "sunny and slow",
           "commentary": "unhurried, no agenda",
+          "keywords": ["sunny", "slow", "relaxed", "lazy", "chill", "easy", "peaceful", "mellow", "pleasant", "breezy", "light"],
           "traits": { "calm": 2, "classic": 1 }
         },
         {
@@ -22,6 +25,7 @@
           "label": "Hectic and electric",
           "madlib_label": "hectic and electric",
           "commentary": "wired and in motion",
+          "keywords": ["hectic", "electric", "busy", "crazy", "stressful", "stress", "rush", "rushing", "chaotic", "wild", "intense", "insane", "non-stop", "nonstop"],
           "traits": { "energetic": 2, "bold": 1 }
         },
         {
@@ -29,6 +33,7 @@
           "label": "Foggy and introspective",
           "madlib_label": "foggy and introspective",
           "commentary": "deep in thought",
+          "keywords": ["foggy", "fog", "introspective", "tired", "sleepy", "reflective", "thoughtful", "pensive", "gloomy", "weird", "grey", "gray", "overcast", "rainy", "blah", "contemplative"],
           "traits": { "analytical": 2, "calm": 1 }
         },
         {
@@ -36,19 +41,23 @@
           "label": "Warm and social",
           "madlib_label": "warm and social",
           "commentary": "already texting everyone",
+          "keywords": ["warm", "social", "fun", "great", "wonderful", "fantastic", "lovely", "perfect", "beautiful", "happy", "excited", "good", "awesome", "great"],
           "traits": { "social": 2, "romantic": 1 }
         }
       ]
     },
     {
       "id": "ml-afternoon",
+      "type": "fill_in_madlib",
       "prompt": "What had you been doing all afternoon?",
+      "placeholder": "running errands, in meetings, avoiding things...",
       "options": [
         {
           "id": "errands",
           "label": "Running errands that kept multiplying",
           "madlib_label": "running errands that kept multiplying",
           "commentary": "the list never ends",
+          "keywords": ["errand", "errands", "shopping", "store", "grocery", "groceries", "chores", "tasks", "running around", "driving around", "target", "costco"],
           "traits": { "classic": 1, "social": 1 }
         },
         {
@@ -56,6 +65,7 @@
           "label": "Sitting in back-to-back meetings",
           "madlib_label": "sitting in back-to-back meetings",
           "commentary": "too many tabs open",
+          "keywords": ["meeting", "meetings", "work", "office", "call", "calls", "zoom", "teams", "conference", "presentation", "email", "emails", "inbox"],
           "traits": { "analytical": 2 }
         },
         {
@@ -63,6 +73,7 @@
           "label": "Aggressively avoiding responsibilities",
           "madlib_label": "aggressively avoiding responsibilities",
           "commentary": "the tasks can wait",
+          "keywords": ["avoiding", "procrastinating", "procrastinated", "scrolling", "netflix", "napping", "nap", "relaxing", "nothing", "not much", "vibing", "chilling", "doing nothing"],
           "traits": { "adventurous": 2, "bold": 1 }
         },
         {
@@ -70,19 +81,23 @@
           "label": "Overthinking a completely normal decision",
           "madlib_label": "overthinking a completely normal decision",
           "commentary": "spreadsheet energy",
+          "keywords": ["overthinking", "overthought", "thinking", "second-guessing", "worrying", "worried", "anxious", "anxiety", "deciding", "planning", "researching", "comparing"],
           "traits": { "analytical": 2, "calm": 1 }
         }
       ]
     },
     {
       "id": "ml-drive",
+      "type": "fill_in_madlib",
       "prompt": "How did you get there?",
+      "placeholder": "direct, scenic route, 30 min out of the way...",
       "options": [
         {
           "id": "straight-there",
           "label": "Straight there, zero detour",
           "madlib_label": "straight there, zero detour",
           "commentary": "efficient, no notes",
+          "keywords": ["straight", "direct", "quick", "fast", "efficient", "directly", "no stops", "shortest", "fastest", "ten minutes", "five minutes"],
           "traits": { "classic": 2, "calm": 1 }
         },
         {
@@ -90,6 +105,7 @@
           "label": "The long way, windows down",
           "madlib_label": "the long way, windows down",
           "commentary": "took the scenic route",
+          "keywords": ["long way", "scenic", "windows", "detour", "cruise", "cruised", "meandered", "wandered", "back roads", "leisurely", "enjoyed the drive"],
           "traits": { "adventurous": 2, "romantic": 1 }
         },
         {
@@ -97,6 +113,7 @@
           "label": "30 minutes out of my way",
           "madlib_label": "30 minutes out of the way",
           "commentary": "no distance too far",
+          "keywords": ["far", "out of the way", "worth it", "drove far", "extra miles", "miles away", "distance", "long drive", "hour", "45 minutes", "30 minutes"],
           "traits": { "bold": 2, "adventurous": 1 }
         },
         {
@@ -104,19 +121,23 @@
           "label": "Through traffic, zero regrets",
           "madlib_label": "through traffic, zero regrets",
           "commentary": "committed from the start",
+          "keywords": ["traffic", "rush hour", "construction", "stop and go", "slow", "jammed", "backup", "congestion", "red light", "highway"],
           "traits": { "energetic": 1, "bold": 2 }
         }
       ]
     },
     {
       "id": "ml-order",
-      "prompt": "The person ahead of you ordered...",
+      "type": "fill_in_madlib",
+      "prompt": "What would the person ahead of you order?",
+      "placeholder": "Turtle, Mint Explosion, Chocolate...",
       "options": [
         {
           "id": "turtle",
           "label": "Turtle",
           "madlib_label": "Turtle",
           "commentary": "a Wisconsin classic",
+          "keywords": ["turtle", "caramel pecan", "pecan", "the classic", "classic", "reliable", "always turtle", "safe choice", "traditional"],
           "traits": { "classic": 3 }
         },
         {
@@ -124,6 +145,7 @@
           "label": "Snickers Swirl",
           "madlib_label": "Snickers Swirl",
           "commentary": "crowd-pleaser energy",
+          "keywords": ["snickers", "peanut butter", "chocolate peanut", "candy", "candy bar", "crowd", "popular", "sweet", "chocolate"],
           "traits": { "social": 2, "energetic": 2 }
         },
         {
@@ -131,6 +153,7 @@
           "label": "Andes Mint Avalanche",
           "madlib_label": "Andes Mint Avalanche",
           "commentary": "composed, deliberate",
+          "keywords": ["mint", "minty", "andes", "cool", "refreshing", "chocolate mint", "cool mint", "peppermint"],
           "traits": { "calm": 3, "analytical": 1 }
         },
         {
@@ -138,19 +161,23 @@
           "label": "Caramel Cashew",
           "madlib_label": "Caramel Cashew",
           "commentary": "quiet confidence",
+          "keywords": ["cashew", "caramel cashew", "sophisticated", "nutty", "subtle", "understated", "interesting"],
           "traits": { "analytical": 2, "bold": 1 }
         }
       ]
     },
     {
       "id": "ml-after",
-      "prompt": "After your scoop, you...",
+      "type": "fill_in_madlib",
+      "prompt": "What did you do after your scoop?",
+      "placeholder": "planned the next visit, sent everyone the location...",
       "options": [
         {
           "id": "plan-next",
           "label": "Were already planning the next visit",
           "madlib_label": "Already planning the next one.",
           "commentary": "next visit already in the calendar",
+          "keywords": ["plan", "planning", "already", "next", "next time", "when", "return", "come back", "excited", "when can", "next visit", "soon"],
           "traits": { "energetic": 1, "social": 2 }
         },
         {
@@ -158,6 +185,7 @@
           "label": "Had zero notes, zero complaints",
           "madlib_label": "Zero notes. No complaints.",
           "commentary": "no changes requested",
+          "keywords": ["perfect", "satisfied", "content", "happy", "no notes", "done", "complete", "exactly right", "nothing", "just ate", "enjoyed", "savored", "appreciated"],
           "traits": { "calm": 2, "classic": 1 }
         },
         {
@@ -165,6 +193,7 @@
           "label": "Sent everyone the location",
           "madlib_label": "Everyone got the location sent to their phone.",
           "commentary": "mandatory group field trip declared",
+          "keywords": ["sent", "share", "shared", "tell", "text", "texted", "phone", "everyone", "friends", "group", "announced", "told", "posted", "instagram", "snapchat"],
           "traits": { "social": 3 }
         },
         {
@@ -172,6 +201,7 @@
           "label": "Quietly noted the cone-to-scoop ratio",
           "madlib_label": "Quietly noted the cone-to-scoop ratio for future reference.",
           "commentary": "data noted for future analysis",
+          "keywords": ["noted", "note", "ratio", "analyze", "analysis", "data", "research", "curious", "calculated", "noticed", "observed", "thought about", "considered"],
           "traits": { "analytical": 3 }
         }
       ]

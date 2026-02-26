@@ -65,13 +65,13 @@ export async function sendConfirmationEmail({ email, storeName, favorites, confi
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
-  <h2 style="color: #003366;">Confirm your Custard Calendar alerts</h2>
+  <h2 style="color: #005696;">Confirm your Custard Calendar alerts</h2>
   <p>You're signing up for flavor alerts at <strong>${escapeHtml(storeName)}</strong>.</p>
   <p>Your favorites:</p>
   <ul>${favList}</ul>
   <p>
     <a href="${escapeHtml(confirmUrl)}"
-       style="display: inline-block; padding: 12px 24px; background: #003366; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">
+       style="display: inline-block; padding: 12px 24px; background: #005696; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">
       Confirm my alerts
     </a>
   </p>
@@ -139,15 +139,24 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
-  <h2 style="color: #003366;">A favorite flavor is coming up!</h2>
+  <h2 style="color: #005696;">A favorite flavor is coming up!</h2>
   <p style="color: #888; font-style: italic;">${escapeHtml(quip)}</p>
   <p>\u{1F4CD} <strong>${escapeHtml(storeName)}</strong>${storeAddress ? ` \u2014 ${escapeHtml(storeAddress)}` : ''}</p>
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     ${matchRows}
   </table>
   ${signalBlock}
+  <div style="margin: 20px 0; padding: 14px; background: #f8f9fa; border-radius: 6px; font-size: 13px;">
+    <strong style="color: #333;">Also from Custard Calendar:</strong>
+    <span style="margin: 0 8px; color: #ccc;">|</span>
+    <a href="https://custard.chriskaschner.com/radar.html" style="color: #005696; text-decoration: none;">Flavor Radar</a>
+    &nbsp;&mdash; track your favorites across time
+    <span style="margin: 0 8px; color: #ccc;">|</span>
+    <a href="https://custard.chriskaschner.com/map.html" style="color: #005696; text-decoration: none;">Custard Map</a>
+    &nbsp;&mdash; find nearby stores
+  </div>
   <p>
-    <a href="${escapeHtml(statusUrl)}" style="color: #003366; text-decoration: underline;">Manage preferences</a>
+    <a href="${escapeHtml(statusUrl)}" style="color: #005696; text-decoration: underline;">Manage preferences</a>
     &nbsp;&middot;&nbsp;
     <a href="${escapeHtml(unsubscribeUrl)}" style="color: #666; text-decoration: underline;">Unsubscribe</a>
   </p>
@@ -268,7 +277,7 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
-  <h2 style="color: #003366;">Your Weekly Flavor Forecast</h2>
+  <h2 style="color: #005696;">Your Weekly Flavor Forecast</h2>
   <p style="color: #888; font-style: italic;">${escapeHtml(quip)}</p>
   <p>\u{1F4CD} <strong>${escapeHtml(storeName)}</strong>${storeAddress ? ` \u2014 ${escapeHtml(storeAddress)}` : ''}</p>
   ${matchSummary}
@@ -287,8 +296,20 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
     </tbody>
   </table>
   <p style="color: #888; font-size: 13px;">\u2b50 = one of your favorites</p>
+  <div style="margin: 20px 0; padding: 14px; background: #f8f9fa; border-radius: 6px; font-size: 13px;">
+    <strong style="color: #333;">Also from Custard Calendar:</strong>
+    <span style="margin: 0 8px; color: #ccc;">|</span>
+    <a href="https://custard.chriskaschner.com/radar.html" style="color: #005696; text-decoration: none;">Flavor Radar</a>
+    &nbsp;&mdash; track frequency and rarity
+    <span style="margin: 0 8px; color: #ccc;">|</span>
+    <a href="https://custard.chriskaschner.com/map.html" style="color: #005696; text-decoration: none;">Custard Map</a>
+    &nbsp;&mdash; find nearby stores
+    <span style="margin: 0 8px; color: #ccc;">|</span>
+    <a href="https://custard.chriskaschner.com/widget.html" style="color: #005696; text-decoration: none;">iOS Widget</a>
+    &nbsp;&mdash; today's flavor on your home screen
+  </div>
   <p>
-    <a href="${escapeHtml(statusUrl)}" style="color: #003366; text-decoration: underline;">Manage preferences</a>
+    <a href="${escapeHtml(statusUrl)}" style="color: #005696; text-decoration: underline;">Manage preferences</a>
     &nbsp;&middot;&nbsp;
     <a href="${escapeHtml(unsubscribeUrl)}" style="color: #666; text-decoration: underline;">Unsubscribe</a>
   </p>

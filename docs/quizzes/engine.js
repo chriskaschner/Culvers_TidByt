@@ -427,6 +427,15 @@ async function renderQuestions(quiz) {
       textInput.placeholder = question.placeholder || 'Type your answer...';
       textInput.autocomplete = 'off';
       fieldset.appendChild(textInput);
+    } else if (questionType === 'fill_in_madlib') {
+      // Free-text input; keyword scoring in collectAnswers maps user text to an option.
+      const textInput = document.createElement('input');
+      textInput.type = 'text';
+      textInput.name = question.id;
+      textInput.className = 'quiz-fill-in-input quiz-fill-in-madlib';
+      textInput.placeholder = question.placeholder || 'Write anything...';
+      textInput.autocomplete = 'off';
+      fieldset.appendChild(textInput);
     } else {
       // Default: multiple_choice
       const grid = document.createElement('div');
@@ -477,6 +486,29 @@ function getQuizById(id) {
   return state.quizzes.find((quiz) => quiz.id === id) || null;
 }
 
+/**
+ * Score free-text input against each option's keyword list.
+ * Returns the best-matching option, or null if nothing matches.
+ */
+function scoreTextAgainstOptions(text, options) {
+  if (!Array.isArray(options) || options.length === 0) return null;
+  const normalized = text.toLowerCase();
+  let bestScore = 0;
+  let bestOption = null;
+  for (const option of options) {
+    const keywords = Array.isArray(option.keywords) ? option.keywords : [];
+    let score = 0;
+    for (const kw of keywords) {
+      if (normalized.includes(kw.toLowerCase())) score += 1;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestOption = option;
+    }
+  }
+  return bestScore > 0 ? bestOption : null;
+}
+
 function collectAnswers(quiz, formEl) {
   const data = new FormData(formEl);
   const traitScores = {};
@@ -504,6 +536,28 @@ function collectAnswers(quiz, formEl) {
           trivia.correct += 1;
         }
         trivia.answerFeedback.push(`Answer: ${question.correct_answer}`);
+      }
+    } else if (questionType === 'fill_in_madlib') {
+      // Free-text write-in: score against option keywords to determine traits + madlib label.
+      const answer = String(data.get(question.id) || '').trim();
+      if (!answer) {
+        throw new Error('Please answer all questions before running your custard forecast.');
+      }
+      const bestOption = scoreTextAgainstOptions(answer, question.options);
+      if (bestOption) {
+        // Keyword match: store option id so narrative builder finds madlib_label
+        selected[question.id] = bestOption.id;
+        if (bestOption.commentary) commentaries.push(bestOption.commentary);
+        const deltas = bestOption.traits || {};
+        for (const [trait, delta] of Object.entries(deltas)) {
+          if (typeof traitScores[trait] !== 'number') traitScores[trait] = 0;
+          const value = Number(delta);
+          if (!Number.isFinite(value)) continue;
+          traitScores[trait] += value;
+        }
+      } else {
+        // No keyword match: store raw text — narrative builder uses it as literal substitution
+        selected[question.id] = answer;
       }
     } else if (questionType === 'ranking') {
       const orderStr = String(data.get(question.id) || '');
@@ -937,6 +991,9 @@ async function runQuiz(evt) {
           if (selOpt) {
             const word = selOpt.madlib_label || selOpt.label;
             story = story.replace(`{q${i + 1}}`, `<strong>${esc(word)}</strong>`);
+          } else if (typeof selId === 'string' && selId) {
+            // fill_in_madlib with no keyword match: use user's raw text directly
+            story = story.replace(`{q${i + 1}}`, `<strong>${esc(selId)}</strong>`);
           }
         });
         const flavorLabel = displayFlavor || 'something special';
