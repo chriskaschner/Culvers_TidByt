@@ -405,6 +405,26 @@
 
     .result-map-link:hover { background: #e3f1ff; }
 
+    .result-share {
+      margin-top: 0.75rem;
+    }
+
+    .result-share-btn {
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      border: 2px solid #005696;
+      background: #fff;
+      color: #005696;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .result-share-btn:hover {
+      background: #f0f7ff;
+    }
+
     @media (max-width: 840px) {
       .quiz-controls {
         grid-template-columns: 1fr 1fr;
@@ -502,6 +522,7 @@
         <p id="result-traits" class="result-traits"></p>
       </details>
 
+      <div id="result-share" class="result-share"></div>
       <a id="result-map-link" class="result-map-link" href="map.html">Open in Map</a>
     </section>
   </main>

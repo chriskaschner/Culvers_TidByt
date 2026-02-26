@@ -2447,7 +2447,7 @@ footer a {
   text-decoration: underline;
 }
 
-/* Share button */
+/* Share button -- generic page footer */
 .share-btn {
   display: inline-flex;
   align-items: center;

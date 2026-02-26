@@ -46,6 +46,7 @@ const els = {
   resultCtas: document.getElementById('result-ctas'),
   resultNearestOutside: document.getElementById('result-nearest-outside'),
   resultNearestAny: document.getElementById('result-nearest-any'),
+  resultShare: document.getElementById('result-share'),
 };
 
 function setStatus(message, tone = 'neutral') {
@@ -1110,6 +1111,36 @@ async function runQuiz(evt) {
 
     els.resultSection.hidden = false;
     els.resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Update URL so this result is shareable/bookmarkable
+    const resultParams = new URLSearchParams({ archetype: archetype.id });
+    if (displayFlavor) resultParams.set('flavor', displayFlavor);
+    history.replaceState(null, '', '?' + resultParams.toString());
+
+    // Mount a share button for this specific result
+    if (els.resultShare) {
+      els.resultShare.innerHTML = '';
+      const shareBtn = document.createElement('button');
+      shareBtn.className = 'share-btn result-share-btn';
+      shareBtn.textContent = 'Share your result';
+      const shareTitle = displayFlavor
+        ? `${archetype.name}: ${displayFlavor} -- Custard Personality Engine`
+        : `${archetype.name} -- Custard Personality Engine`;
+      const shareUrl = window.location.href;
+      shareBtn.addEventListener('click', function () {
+        if (navigator.share) {
+          navigator.share({ title: shareTitle, url: shareUrl }).catch(function () {});
+        } else {
+          navigator.clipboard.writeText(shareUrl).then(function () {
+            shareBtn.textContent = 'Link copied!';
+            setTimeout(function () { shareBtn.textContent = 'Share your result'; }, 2000);
+          }).catch(function () {
+            window.prompt('Copy this link:', shareUrl);
+          });
+        }
+      });
+      els.resultShare.appendChild(shareBtn);
+    }
 
     // Non-blocking: load community flavor leaderboard for user's state
     fetchStateLeaderboard(state.cfState).then((data) => {
