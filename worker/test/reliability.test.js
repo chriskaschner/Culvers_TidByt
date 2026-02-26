@@ -13,6 +13,7 @@ import {
 
 function isoDate(daysAgo) {
   const d = new Date();
+  d.setHours(12, 0, 0, 0); // match reliability.js noon normalization
   d.setDate(d.getDate() - daysAgo);
   return d.toISOString().slice(0, 10);
 }
