@@ -463,6 +463,142 @@ describe('GET /api/metrics/context/store/{slug} — specialty_flavor', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Flavor hierarchy endpoint tests
+// ---------------------------------------------------------------------------
+
+describe('GET /api/v1/metrics/flavor-hierarchy', () => {
+  const CORS = { 'Access-Control-Allow-Origin': '*' };
+
+  // Build a mock D1 that returns pre-set dates for any slug IN (...) + normalized_flavor query.
+  function createHierarchyMockD1(datesBySlug) {
+    // datesBySlug: { [slug]: ['2025-01-01', ...], ... }
+    return {
+      prepare: vi.fn((sql) => ({
+        bind: vi.fn((...args) => ({
+          all: vi.fn(async () => {
+            // Last arg is the normalized_flavor; rest are slugs
+            const normalizedFlavor = args[args.length - 1];
+            const slugArgs = args.slice(0, args.length - 1);
+            const dates = [];
+            for (const slug of slugArgs) {
+              for (const d of (datesBySlug[slug] || [])) {
+                dates.push({ date: d });
+              }
+            }
+            dates.sort((a, b) => a.date.localeCompare(b.date));
+            return { results: dates };
+          }),
+          first: vi.fn(async () => null),
+        })),
+        all: vi.fn(async () => ({ results: [] })),
+        first: vi.fn(async () => null),
+      })),
+    };
+  }
+
+  function makeUrl(flavor, slug) {
+    return new URL(`https://example.com/api/v1/metrics/flavor-hierarchy?flavor=${encodeURIComponent(flavor)}&slug=${encodeURIComponent(slug)}`);
+  }
+
+  it('returns 400 when flavor or slug is missing', async () => {
+    const url = new URL('https://example.com/api/v1/metrics/flavor-hierarchy?flavor=Turtle');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', {}, CORS, url);
+    expect(res.status).toBe(400);
+  });
+
+  it('effective_scope = store when store appearances >= 30', async () => {
+    // mt-horeb is in Madison metro, WI
+    const storeDates = Array.from({ length: 40 }, (_, i) => {
+      const d = new Date('2024-01-01');
+      d.setDate(d.getDate() + i * 9);
+      return d.toISOString().slice(0, 10);
+    });
+    const db = createHierarchyMockD1({ 'mt-horeb': storeDates });
+    const url = makeUrl('Caramel Cashew', 'mt-horeb');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', { DB: db }, CORS, url);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.effective_scope).toBe('store');
+    expect(body.scopes.store.appearances).toBe(40);
+    expect(body.scopes.store.avg_gap_days).toBe(9);
+  });
+
+  it('effective_scope = metro when store < 30 but metro >= 30', async () => {
+    // mt-horeb (store) has 5 appearances; verona (same Madison metro) has 30
+    const storeDates5 = ['2024-01-01', '2024-02-01', '2024-03-01', '2024-04-01', '2024-05-01'];
+    const veronaDates30 = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date('2024-01-01');
+      d.setDate(d.getDate() + i * 12);
+      return d.toISOString().slice(0, 10);
+    });
+    // verona is in Madison metro (city="Verona"), so it should be included
+    const db = createHierarchyMockD1({ 'mt-horeb': storeDates5, 'verona': veronaDates30 });
+    const url = makeUrl('Caramel Cashew', 'mt-horeb');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', { DB: db }, CORS, url);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.scopes.store.appearances).toBe(5);
+    expect(body.scopes.metro).not.toBeNull();
+    expect(body.scopes.metro.metro).toBe('madison');
+    expect(body.scopes.metro.appearances).toBeGreaterThanOrEqual(30);
+    expect(body.effective_scope).toBe('metro');
+  });
+
+  it('effective_scope = state when store < 30 and metro is null (non-WI store)', async () => {
+    // Use a store in a state without metro mapping (non-WI)
+    // auburn-al-university-dr is in AL, no metro mapping
+    const storeDates5 = ['2024-01-01', '2024-02-01', '2024-03-01', '2024-04-01', '2024-05-01'];
+    // Simulate other AL stores all having data
+    const alDates40 = Array.from({ length: 40 }, (_, i) => {
+      const d = new Date('2024-01-01');
+      d.setDate(d.getDate() + i * 5);
+      return d.toISOString().slice(0, 10);
+    });
+    // Build datesBySlug with all AL slugs mapped to alDates40
+    // For simplicity, just give one extra AL slug data
+    const db = createHierarchyMockD1({
+      'auburn-al-university-dr': storeDates5,
+      'decatur-al-6th-ave': alDates40,
+    });
+    const url = makeUrl('Turtle', 'auburn-al-university-dr');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', { DB: db }, CORS, url);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.scopes.metro).toBeNull(); // AL has no metro mapping
+    expect(body.scopes.state).not.toBeNull();
+    expect(body.scopes.state.state).toBe('AL');
+    // effective_scope depends on total AL appearances >= 30
+    // (state query includes all AL slugs; at least decatur contributes 40)
+    expect(['state', 'national']).toContain(body.effective_scope);
+  });
+
+  it('effective_scope = national when all scopes < 30', async () => {
+    // Store with only 5 appearances, no other stores in DB
+    const db = createHierarchyMockD1({ 'mt-horeb': ['2024-01-01', '2024-02-01', '2024-03-01'] });
+    const url = makeUrl('Caramel Cashew', 'mt-horeb');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', { DB: db }, CORS, url);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.scopes.store.appearances).toBe(3);
+    // National from seed should have many appearances (Caramel Cashew is common)
+    expect(body.scopes.national).not.toBeNull();
+    expect(body.scopes.national.appearances).toBeGreaterThan(1000);
+    expect(body.effective_scope).toBe('national');
+  });
+
+  it('handles missing flavor gracefully with null scopes and national fallback', async () => {
+    const db = createHierarchyMockD1({});
+    const url = makeUrl('Completely Unknown Flavor XYZ', 'mt-horeb');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', { DB: db }, CORS, url);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.scopes.store.appearances).toBe(0);
+    expect(body.scopes.national).toBeNull(); // not in seed
+    expect(body.effective_scope).toBe('national'); // fallback even if national is null
+  });
+});
+
 describe('detectStreaks', () => {
   it('detects a streak of 3 consecutive same-flavor days', () => {
     const history = [

@@ -530,6 +530,8 @@
     const flavorMetricsInflight = new Map();
     const flavorStatsCache = new Map();
     const flavorStatsInflight = new Map();
+    const flavorHierarchyCache = new Map(); // keyed by `${slug}:${flavorName}`
+    const flavorHierarchyInflight = new Map();
     let cachedStoreMetrics = null;
     let cachedStoreMetricsSlug = null;
     let storeFlavorCounts = new Map();
@@ -1102,12 +1104,63 @@
     function rarityBadge(flavorName) {
       // Use avg_gap_days (per-store cadence) so the badge is consistent with
       // the "Every N days" cadence text shown alongside it.
+      // If store appearances < 30, fall back to hierarchy data (metro/state/national).
       if (!selectedSlug) return null;
-      const cacheKey = flavorStatsKey(selectedSlug, flavorName);
-      if (!cacheKey) return null;
-      const stats = flavorStatsCache.get(cacheKey);
-      if (!stats) return null;
-      return CustardPlanner.rarityLabelFromGapDays(stats.avg_gap_days);
+      const statsKey = flavorStatsKey(selectedSlug, flavorName);
+      if (!statsKey) return null;
+      const stats = flavorStatsCache.get(statsKey);
+
+      // Prefer store-level if appearances are sufficient
+      if (stats && Number(stats.appearances || 0) >= 30) {
+        return CustardPlanner.rarityLabelFromGapDays(stats.avg_gap_days);
+      }
+
+      // Fall back to hierarchy cache if available
+      const hierKey = selectedSlug + ':' + flavorName;
+      const hier = flavorHierarchyCache.get(hierKey);
+      if (hier) {
+        const scope = hier.effective_scope;
+        const scopeData = hier.scopes && hier.scopes[scope];
+        const label = CustardPlanner.rarityLabelFromGapDays(scopeData && scopeData.avg_gap_days);
+        if (!label) return null;
+        if (scope === 'store') return label;
+        if (scope === 'metro') {
+          const metro = scopeData.metro;
+          const metroLabel = metro === 'madison' ? 'Madison area'
+            : metro === 'milwaukee' ? 'Milwaukee area'
+            : metro ? metro + ' area' : null;
+          return metroLabel ? label + ' (' + metroLabel + ')' : label;
+        }
+        if (scope === 'state') return label + ' (' + (scopeData.state || 'statewide') + ')';
+        if (scope === 'national') return label + ' (nationally)';
+        return label;
+      }
+
+      // If hierarchy not yet fetched, trigger async fetch and return store label in meantime
+      fetchFlavorHierarchy(selectedSlug, flavorName);
+      if (stats) return CustardPlanner.rarityLabelFromGapDays(stats.avg_gap_days);
+      return null;
+    }
+
+    function fetchFlavorHierarchy(slug, flavorName) {
+      const key = slug + ':' + flavorName;
+      if (flavorHierarchyCache.has(key) || flavorHierarchyInflight.has(key)) return;
+      const p = fetch(
+        WORKER_BASE + '/api/v1/metrics/flavor-hierarchy' +
+        '?flavor=' + encodeURIComponent(flavorName) +
+        '&slug=' + encodeURIComponent(slug)
+      )
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          flavorHierarchyInflight.delete(key);
+          if (data) {
+            flavorHierarchyCache.set(key, data);
+            // Re-render timeline to pick up the hierarchy label
+            if (slug === selectedSlug) renderTimeline();
+          }
+        })
+        .catch(function() { flavorHierarchyInflight.delete(key); });
+      flavorHierarchyInflight.set(key, p);
     }
 
     function streakBadge(flavorName) {

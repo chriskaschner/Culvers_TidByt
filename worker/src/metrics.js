@@ -9,6 +9,8 @@
  */
 
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
+import { STORE_INDEX } from './store-index.js';
+import { WI_METRO_MAP } from './leaderboard.js';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
   'August', 'September', 'October', 'November', 'December'];
@@ -52,18 +54,180 @@ function getFlavorRank(seed) {
   return value;
 }
 
+// ---------------------------------------------------------------------------
+// Flavor hierarchy helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute appearances + avg_gap_days from a sorted array of date strings.
+ * Dates must be sorted ASC; duplicates are allowed (collapsed to same-day).
+ */
+function computeGapStats(dates) {
+  const deduped = [...new Set(dates)].sort();
+  const appearances = deduped.length;
+  if (appearances < 2) return { appearances, avg_gap_days: null };
+  let totalGap = 0;
+  for (let i = 1; i < deduped.length; i++) {
+    totalGap += (new Date(deduped[i]) - new Date(deduped[i - 1])) / 86400000;
+  }
+  return { appearances, avg_gap_days: Math.round(totalGap / (deduped.length - 1)) };
+}
+
+/**
+ * Query all appearance dates for a flavor across a set of slugs.
+ * Batches into groups of 98 slugs to stay under D1's 100-bind limit.
+ */
+async function queryDatesForSlugs(db, slugs, normalizedFlavor) {
+  if (!db || !slugs.length) return [];
+  const SLUG_BATCH = 98; // leave 2 slots: 1 for flavor, 1 safety margin
+  const allDates = [];
+  for (let i = 0; i < slugs.length; i += SLUG_BATCH) {
+    const batch = slugs.slice(i, i + SLUG_BATCH);
+    const placeholders = batch.map(() => '?').join(',');
+    try {
+      const result = await db.prepare(
+        `SELECT date FROM snapshots WHERE slug IN (${placeholders}) AND normalized_flavor = ? ORDER BY date ASC`,
+      ).bind(...batch, normalizedFlavor).all();
+      for (const row of (result?.results || [])) {
+        allDates.push(row.date);
+      }
+    } catch {
+      // Partial failure: continue with what we have
+    }
+  }
+  return allDates;
+}
+
+/**
+ * GET /api/v1/metrics/flavor-hierarchy?flavor=X&slug=Y
+ *
+ * Returns avg_gap_days + appearances at 4 scopes (store, metro, state, national)
+ * for a flavor+store pair. effective_scope = first scope with >= 30 appearances.
+ *
+ * Scopes:
+ *   store    — appearances at this specific store (D1)
+ *   metro    — appearances across WI metro area (D1; WI stores only)
+ *   state    — appearances across all stores in the same state (D1)
+ *   national — from TRIVIA_METRICS_SEED planner_features.flavor_lookup
+ */
+async function handleFlavorHierarchyMetrics(rawFlavor, rawSlug, env, corsHeaders) {
+  const flavor = String(rawFlavor || '').trim();
+  const slug = String(rawSlug || '').trim().toLowerCase();
+  const normalizedFlavor = normalizeFlavorKey(flavor);
+
+  if (!flavor || !slug || !normalizedFlavor) {
+    return Response.json(
+      { error: 'flavor and slug query params are required' },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  // --- Store entry lookup ---
+  const storeEntry = STORE_INDEX.find((s) => s.slug === slug);
+  const storeCity = (storeEntry?.city || '').toLowerCase().trim();
+  const storeState = storeEntry?.state || null;
+
+  const db = env.DB || null;
+  const scopes = {};
+
+  // --- Store scope ---
+  {
+    const dates = db ? await queryDatesForSlugs(db, [slug], normalizedFlavor) : [];
+    const stats = computeGapStats(dates);
+    scopes.store = { appearances: stats.appearances, avg_gap_days: stats.avg_gap_days };
+  }
+
+  // --- Metro scope (WI only) ---
+  const metro = storeCity ? (WI_METRO_MAP[storeCity] || null) : null;
+  if (metro && metro !== 'other') {
+    const metroSlugs = STORE_INDEX
+      .filter((s) => WI_METRO_MAP[(s.city || '').toLowerCase().trim()] === metro)
+      .map((s) => s.slug);
+    const dates = db ? await queryDatesForSlugs(db, metroSlugs, normalizedFlavor) : [];
+    const stats = computeGapStats(dates);
+    scopes.metro = { appearances: stats.appearances, avg_gap_days: stats.avg_gap_days, metro };
+  } else {
+    scopes.metro = null;
+  }
+
+  // --- State scope ---
+  if (storeState) {
+    const stateSlugs = STORE_INDEX
+      .filter((s) => s.state === storeState)
+      .map((s) => s.slug);
+    const dates = db ? await queryDatesForSlugs(db, stateSlugs, normalizedFlavor) : [];
+    const stats = computeGapStats(dates);
+    scopes.state = { appearances: stats.appearances, avg_gap_days: stats.avg_gap_days, state: storeState };
+  } else {
+    scopes.state = null;
+  }
+
+  // --- National scope (from seed; no D1 query) ---
+  {
+    const seed = TRIVIA_METRICS_SEED || {};
+    const lookup = seed?.planner_features?.flavor_lookup || {};
+    const seedRow = lookup[normalizedFlavor] || null;
+    if (seedRow) {
+      const appearances = Number(seedRow.appearances || 0);
+      const storeCount = Number(seedRow.store_count || 1);
+      const summary = seed.dataset_summary || {};
+      let avg_gap_days = null;
+      if (appearances > 0 && storeCount > 0 && summary.min_date && summary.max_date) {
+        const spanDays = (new Date(summary.max_date) - new Date(summary.min_date)) / 86400000;
+        // Avg appearances per store = appearances / store_count
+        // Avg gap at a typical store = span_days / (appearances / store_count)
+        const appsPerStore = appearances / storeCount;
+        if (appsPerStore > 0) {
+          avg_gap_days = Math.round(spanDays / appsPerStore);
+        }
+      }
+      scopes.national = { appearances, avg_gap_days };
+    } else {
+      scopes.national = null;
+    }
+  }
+
+  // --- effective_scope: first scope with >= 30 appearances ---
+  const SCOPE_ORDER = ['store', 'metro', 'state', 'national'];
+  const MIN_APPEARANCES = 30;
+  let effectiveScope = 'national';
+  for (const scope of SCOPE_ORDER) {
+    const s = scopes[scope];
+    if (s && Number(s.appearances || 0) >= MIN_APPEARANCES) {
+      effectiveScope = scope;
+      break;
+    }
+  }
+
+  return Response.json(
+    { flavor, slug, scopes, effective_scope: effectiveScope },
+    { headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' } },
+  );
+}
+
 /**
  * Route a metrics request to the appropriate handler.
  * @param {string} path - Canonical path (already normalized)
  * @param {Object} env - Worker env bindings
  * @param {Object} corsHeaders
+ * @param {URL|null} url - Full request URL (for query param access)
  * @returns {Promise<Response|null>}
  */
-export async function handleMetricsRoute(path, env, corsHeaders) {
+export async function handleMetricsRoute(path, env, corsHeaders, url = null) {
   // /api/metrics/intelligence
   // Served from generated metrics seed; does not require D1.
   if (path === '/api/metrics/intelligence') {
     return handleIntelligenceMetrics(corsHeaders);
+  }
+
+  // /api/metrics/flavor-hierarchy?flavor=X&slug=Y
+  if (path === '/api/metrics/flavor-hierarchy') {
+    return handleFlavorHierarchyMetrics(
+      url?.searchParams?.get('flavor') || '',
+      url?.searchParams?.get('slug') || '',
+      env,
+      corsHeaders,
+    );
   }
 
   const contextFlavorMatch = path.match(/^\/api\/metrics\/context\/flavor\/(.+)$/);

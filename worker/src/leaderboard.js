@@ -18,12 +18,13 @@ const DEFAULT_DAYS = 90;
 
 // City-to-metro mapping for Wisconsin intra-state breakdown.
 // Keys are lowercase city names; values are metro slugs.
-const WI_METRO_MAP = {
+export const WI_METRO_MAP = {
   // Madison metro
   'madison': 'madison', 'sun prairie': 'madison', 'middleton': 'madison',
   'verona': 'madison', 'mcfarland': 'madison', 'cottage grove': 'madison',
   'cross plains': 'madison', 'waunakee': 'madison', 'deforest': 'madison',
   'oregon': 'madison', 'fitchburg': 'madison', 'monona': 'madison',
+  'mt. horeb': 'madison', 'stoughton': 'madison', 'mount horeb': 'madison',
   // Milwaukee metro
   'milwaukee': 'milwaukee', 'brookfield': 'milwaukee', 'waukesha': 'milwaukee',
   'glendale': 'milwaukee', 'greenfield': 'milwaukee', 'new berlin': 'milwaukee',
