@@ -240,6 +240,68 @@ async function handleFlavorHierarchyMetrics(rawFlavor, rawSlug, env, corsHeaders
 }
 
 /**
+ * GET /api/v1/metrics/health/{slug}
+ *
+ * Returns D1 row count, date range, and gap statistics for a given store slug.
+ * Useful for diagnosing D1 vs local backfill discrepancies after uploads.
+ */
+async function handleHealthMetrics(db, slug, corsHeaders) {
+  const cleanSlug = String(slug || '').trim().toLowerCase();
+  if (!cleanSlug) {
+    return Response.json({ error: 'slug is required' }, { status: 400, headers: corsHeaders });
+  }
+
+  try {
+    const summary = await db.prepare(
+      'SELECT COUNT(*) AS row_count, MIN(date) AS min_date, MAX(date) AS max_date FROM snapshots WHERE slug = ?',
+    ).bind(cleanSlug).first();
+
+    const rowCount = Number(summary?.row_count || 0);
+    const minDate = summary?.min_date || null;
+    const maxDate = summary?.max_date || null;
+
+    let gapsGt14d = [];
+    let gapCount = 0;
+    if (rowCount > 1) {
+      const dateRows = await db.prepare(
+        'SELECT DISTINCT date FROM snapshots WHERE slug = ? ORDER BY date ASC',
+      ).bind(cleanSlug).all();
+      const dates = (dateRows?.results || []).map((r) => r.date);
+      for (let i = 1; i < dates.length; i++) {
+        const days = (new Date(dates[i]) - new Date(dates[i - 1])) / 86400000;
+        if (days > 14) {
+          gapCount++;
+          if (gapsGt14d.length < 20) {
+            gapsGt14d.push({ from: dates[i - 1], to: dates[i], days: Math.round(days) });
+          }
+        }
+      }
+    }
+
+    const seed = TRIVIA_METRICS_SEED || {};
+    const generatedAt = seed.generated_at || null;
+    let seedAgeDays = null;
+    if (generatedAt) {
+      seedAgeDays = Math.round((Date.now() - new Date(generatedAt).getTime()) / 86400000);
+    }
+
+    return Response.json(
+      {
+        slug: cleanSlug,
+        d1: { row_count: rowCount, date_range: { min: minDate, max: maxDate }, gap_count: gapCount, gaps_gt_14d: gapsGt14d },
+        metrics_seed_age_days: seedAgeDays,
+      },
+      { status: 200, headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' } },
+    );
+  } catch (err) {
+    return Response.json(
+      { error: 'D1 query failed', details: err?.message || 'unknown error' },
+      { status: 503, headers: corsHeaders },
+    );
+  }
+}
+
+/**
  * Route a metrics request to the appropriate handler.
  * @param {string} path - Canonical path (already normalized)
  * @param {Object} env - Worker env bindings
@@ -313,6 +375,12 @@ export async function handleMetricsRoute(path, env, corsHeaders, url = null) {
   // /api/metrics/coverage
   if (path === '/api/metrics/coverage') {
     return handleCoverage(db, corsHeaders);
+  }
+
+  // /api/metrics/health/{slug}
+  const healthMatch = path.match(/^\/api\/metrics\/health\/(.+)$/);
+  if (healthMatch) {
+    return handleHealthMetrics(db, decodeURIComponent(healthMatch[1]), corsHeaders);
   }
 
   return null;

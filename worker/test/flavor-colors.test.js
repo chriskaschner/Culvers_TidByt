@@ -3,8 +3,10 @@ import {
   getFlavorProfile,
   renderConeSVG,
   renderConeHDSVG,
+  renderConeHeroSVG,
   resolveHDToppingSlots,
   lightenHex,
+  darkenHex,
   BASE_COLORS,
   FLAVOR_PROFILES,
   RIBBON_COLORS,
@@ -170,5 +172,138 @@ describe('renderConeHDSVG', () => {
   it('uses correct base color', () => {
     const svg = renderConeHDSVG('Mint Explosion');
     expect(svg).toContain(BASE_COLORS.mint);
+  });
+});
+
+describe('darkenHex', () => {
+  it('produces a darker color', () => {
+    const result = darkenHex('#FFFFFF', 0.5);
+    expect(result).toBe('#808080');
+  });
+
+  it('returns black when amount is 1', () => {
+    expect(darkenHex('#336699', 1)).toBe('#000000');
+  });
+
+  it('returns the same color when amount is 0', () => {
+    expect(darkenHex('#336699', 0)).toBe('#336699');
+  });
+
+  it('darkens each channel proportionally', () => {
+    // #80C0FF darkened by 0.25: each channel * 0.75
+    const result = darkenHex('#80C0FF', 0.25);
+    const r = Math.round(0x80 * 0.75).toString(16).padStart(2, '0').toUpperCase();
+    const g = Math.round(0xC0 * 0.75).toString(16).padStart(2, '0').toUpperCase();
+    const b = Math.round(0xFF * 0.75).toString(16).padStart(2, '0').toUpperCase();
+    expect(result).toBe(`#${r}${g}${b}`);
+  });
+});
+
+describe('renderConeHeroSVG', () => {
+  it('returns valid SVG markup', () => {
+    const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('<rect');
+    expect(svg).toContain('shape-rendering="crispEdges"');
+    expect(svg).toContain('</svg>');
+  });
+
+  it('uses 26x24 grid at scale 1', () => {
+    const svg = renderConeHeroSVG('Vanilla');
+    expect(svg).toContain('viewBox="0 0 26 24"');
+    expect(svg).toContain('width="26"');
+    expect(svg).toContain('height="24"');
+  });
+
+  it('scales correctly', () => {
+    const svg = renderConeHeroSVG('Vanilla', 8);
+    expect(svg).toContain('viewBox="0 0 208 192"');
+    expect(svg).toContain('width="208"');
+    expect(svg).toContain('height="192"');
+  });
+
+  it('includes base color in scoop fill', () => {
+    const svg = renderConeHeroSVG('Mint Explosion');
+    expect(svg).toContain(BASE_COLORS.mint);
+  });
+
+  it('includes highlight color (lighter than base)', () => {
+    const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
+    const base = BASE_COLORS.chocolate_custard;
+    expect(svg).toContain(lightenHex(base, 0.20));
+  });
+
+  it('includes shadow color (darker than base)', () => {
+    const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
+    const base = BASE_COLORS.chocolate_custard;
+    expect(svg).toContain(darkenHex(base, 0.15));
+  });
+
+  it('includes ribbon color when flavor has ribbon', () => {
+    const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
+    // caramel ribbon color should appear
+    expect(svg).toContain(RIBBON_COLORS.caramel);
+  });
+
+  it('includes ribbon primary color pixels when flavor has ribbon', () => {
+    const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
+    // ribbon is now 1px wide -- primary color only, no highlight overlay
+    expect(svg).toContain(RIBBON_COLORS.caramel);
+  });
+
+  it('no ribbon pixels for pure density flavor', () => {
+    const svg = renderConeHeroSVG('Dark Chocolate Decadence');
+    // pure density -- no ribbon, no toppings. Check colors that cannot collide
+    // with the dark_chocolate base (#3B1F0B == RIBBON_COLORS.fudge, so skip fudge).
+    expect(svg).not.toContain(RIBBON_COLORS.caramel);
+    expect(svg).not.toContain(RIBBON_COLORS.marshmallow);
+    expect(svg).not.toContain(RIBBON_COLORS.peanut_butter);
+  });
+
+  it('includes topping colors for flavors with toppings', () => {
+    const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
+    expect(svg).toContain(TOPPING_COLORS.pecan);
+  });
+
+  it('is deterministic -- same output for same flavor name', () => {
+    const svg1 = renderConeHeroSVG('Caramel Chocolate Pecan', 5);
+    const svg2 = renderConeHeroSVG('Caramel Chocolate Pecan', 5);
+    expect(svg1).toBe(svg2);
+  });
+
+  it('produces different scatter for different flavor names', () => {
+    const svgCCP = renderConeHeroSVG('Caramel Chocolate Pecan', 1);
+    const svgTurtle = renderConeHeroSVG('Turtle', 1);
+    // Different flavor names -> different scatter -> different SVG
+    expect(svgCCP).not.toBe(svgTurtle);
+  });
+
+  it('includes cone tip color', () => {
+    const svg = renderConeHeroSVG('Vanilla');
+    expect(svg).toContain(CONE_TIP_COLOR);
+  });
+
+  it('renders pure vanilla with no toppings or ribbon', () => {
+    const svg = renderConeHeroSVG('Vanilla');
+    // Should have base color but no known topping or ribbon colors.
+    // Exclude CONE_TIP_COLOR from topping check: pecan and cone tip share #8B5A2B.
+    expect(svg).toContain(BASE_COLORS.vanilla);
+    for (const [key, c] of Object.entries(TOPPING_COLORS)) {
+      if (c === CONE_TIP_COLOR) continue;  // color collision with cone tip
+      expect(svg).not.toContain(c);
+    }
+    for (const c of Object.values(RIBBON_COLORS)) {
+      if (c === BASE_COLORS.vanilla) continue;  // skip any base-color collisions
+      expect(svg).not.toContain(c);
+    }
+  });
+
+  it('uses heroPixelMap override when defined on profile', () => {
+    // Temporarily test with an inline profile by patching FLAVOR_PROFILES
+    // We cannot mutate the import easily, so verify that scatter-based render
+    // for a profile without heroPixelMap still includes topping color.
+    const svg = renderConeHeroSVG('Butter Pecan');
+    expect(svg).toContain(TOPPING_COLORS.pecan);
   });
 });

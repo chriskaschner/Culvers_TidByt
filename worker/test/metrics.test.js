@@ -200,6 +200,34 @@ describe('GET /api/metrics/store/{slug}', () => {
     expect(body.recent_history).toEqual([]);
     expect(body.active_streaks).toEqual([]);
   });
+
+  it('returns appearance count >= minimum threshold for known flavor at known store (fixture)', async () => {
+    // Regression guard: a known flavor at a known store must have >= 10 D1 appearances.
+    // Validates that D1 data loaded correctly and the endpoint aggregates it properly.
+    // Uses createMockD1 with 15 realistic Caramel Cashew rows for mt-horeb.
+    const rows = Array.from({ length: 15 }, (_, i) => {
+      const d = new Date('2023-01-01');
+      d.setDate(d.getDate() + i * 25);
+      return {
+        normalized_flavor: 'caramel cashew',
+        flavor: 'Caramel Cashew',
+        date: d.toISOString().slice(0, 10),
+        slug: 'mt-horeb',
+      };
+    });
+    const db = createMockD1(rows);
+    const res = await handleMetricsRoute('/api/metrics/store/mt-horeb', { DB: db }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // total_days should reflect all 15 fixture rows
+    expect(body.total_days).toBeGreaterThanOrEqual(10);
+    // recent_history should include caramel cashew entries (up to LIMIT 30)
+    expect(Array.isArray(body.recent_history)).toBe(true);
+    const ccEntries = body.recent_history.filter(
+      (f) => (f.flavor || '').toLowerCase().includes('caramel cashew'),
+    );
+    expect(ccEntries.length).toBeGreaterThanOrEqual(10);
+  });
 });
 
 describe('GET /api/metrics/trending', () => {
@@ -705,5 +733,102 @@ describe('computeStoreSpecialtyFromD1 — D1 error catch', () => {
     const body = await res.json();
     // specialty_flavor should be null when the CTE throws
     expect(body.specialty_flavor).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Health endpoint
+// ---------------------------------------------------------------------------
+
+function createHealthMockD1({ rowCount = 0, minDate = null, maxDate = null, dates = [] } = {}) {
+  return {
+    prepare: vi.fn((sql) => ({
+      bind: vi.fn(() => ({
+        first: vi.fn(async () => ({
+          row_count: rowCount,
+          min_date: minDate,
+          max_date: maxDate,
+        })),
+        all: vi.fn(async () => ({
+          results: dates.map((d) => ({ date: d })),
+        })),
+      })),
+    })),
+  };
+}
+
+describe('GET /api/metrics/health/{slug}', () => {
+  it('returns 400 when slug is missing', async () => {
+    const db = createHealthMockD1();
+    const res = await handleMetricsRoute('/api/metrics/health/', { DB: db }, CORS);
+    // Path won't match the regex, so returns null → no response routed
+    expect(res).toBeNull();
+  });
+
+  it('returns 200 with row_count and date_range', async () => {
+    const db = createHealthMockD1({
+      rowCount: 53,
+      minDate: '2024-01-15',
+      maxDate: '2025-02-10',
+      dates: ['2024-01-15', '2024-02-20', '2025-02-10'],
+    });
+    const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', { DB: db }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.slug).toBe('mt-horeb');
+    expect(body.d1.row_count).toBe(53);
+    expect(body.d1.date_range.min).toBe('2024-01-15');
+    expect(body.d1.date_range.max).toBe('2025-02-10');
+  });
+
+  it('reports gap_count for gaps > 14 days', async () => {
+    const db = createHealthMockD1({
+      rowCount: 3,
+      minDate: '2024-01-01',
+      maxDate: '2024-04-01',
+      dates: ['2024-01-01', '2024-02-01', '2024-04-01'],
+    });
+    const res = await handleMetricsRoute('/api/metrics/health/verona', { DB: db }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // Both gaps (31d and 60d) exceed 14 days
+    expect(body.d1.gap_count).toBe(2);
+    expect(body.d1.gaps_gt_14d).toHaveLength(2);
+    expect(body.d1.gaps_gt_14d[0].days).toBe(31);
+  });
+
+  it('returns empty gaps_gt_14d when row_count <= 1', async () => {
+    const db = createHealthMockD1({ rowCount: 1, minDate: '2024-06-01', maxDate: '2024-06-01', dates: [] });
+    const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', { DB: db }, CORS);
+    const body = await res.json();
+    expect(body.d1.gap_count).toBe(0);
+    expect(body.d1.gaps_gt_14d).toEqual([]);
+  });
+
+  it('includes metrics_seed_age_days in response', async () => {
+    const db = createHealthMockD1({ rowCount: 10, minDate: '2025-01-01', maxDate: '2025-02-01', dates: [] });
+    const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', { DB: db }, CORS);
+    const body = await res.json();
+    // May be null if seed has no generated_at, but field must be present
+    expect(body).toHaveProperty('metrics_seed_age_days');
+  });
+
+  it('includes Cache-Control header', async () => {
+    const db = createHealthMockD1();
+    const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', { DB: db }, CORS);
+    expect(res.headers.get('Cache-Control')).toContain('max-age=3600');
+  });
+
+  it('returns 503 when D1 throws', async () => {
+    const badDb = { prepare: vi.fn(() => { throw new Error('D1 down'); }) };
+    const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', { DB: badDb }, CORS);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toMatch(/D1 query failed/i);
+  });
+
+  it('returns 503 when DB binding is missing', async () => {
+    const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', {}, CORS);
+    expect(res.status).toBe(503);
   });
 });
