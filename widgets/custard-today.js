@@ -11,8 +11,9 @@
 //
 // Small widget:  Cone icon, flavor name, description, rarity badge
 // Medium widget: 3-day cards with cone icons, flavor names, and descriptions
+// Medium widget (MODE="multi"): today's flavor at 3 stores side by side
 
-var API_BASE = "https://custard-calendar.chris-kaschner.workers.dev/api/v1";
+var API_BASE = "https://custard.chriskaschner.com/api/v1";
 var slug = (args.widgetParameter || "mt-horeb").trim();
 
 var BRAND_COLORS = {
@@ -171,6 +172,7 @@ function cityFromStore(storeName) {
 }
 
 // --- Small Widget: Branded header bar + cone + flavor ---
+// Header: date label LEFT, city RIGHT
 
 async function buildSmall() {
   var data = await fetchToday();
@@ -180,20 +182,20 @@ async function buildSmall() {
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
 
-  // Branded header bar
+  // Branded header bar: date LEFT, city RIGHT
   var header = w.addStack();
   header.backgroundColor = new Color(style.bg);
   header.setPadding(6, 16, 6, 16);
   header.layoutHorizontally();
   header.centerAlignContent();
 
-  var cityText = header.addText(city);
-  cityText.font = Font.semiboldSystemFont(11);
-  cityText.textColor = new Color(style.text);
-  header.addSpacer(null);
   var dateText = header.addText(formatDate(data.date));
   dateText.font = Font.systemFont(10);
   dateText.textColor = new Color(style.text, 0.8);
+  header.addSpacer(null);
+  var cityText = header.addText(city);
+  cityText.font = Font.semiboldSystemFont(11);
+  cityText.textColor = new Color(style.text);
 
   // Content area
   var body = w.addStack();
@@ -242,6 +244,7 @@ async function buildSmall() {
 }
 
 // --- Medium Widget: Branded header + 3-day cell rows ---
+// Header: "This Week" LEFT, city RIGHT
 
 async function buildMedium() {
   var data = await fetchFlavors();
@@ -271,20 +274,20 @@ async function buildMedium() {
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
 
-  // Branded header bar
+  // Branded header bar: "This Week" LEFT, city RIGHT
   var header = w.addStack();
   header.backgroundColor = new Color(style.bg);
   header.setPadding(6, 16, 6, 16);
   header.layoutHorizontally();
   header.centerAlignContent();
 
-  var cityText = header.addText(city);
-  cityText.font = Font.semiboldSystemFont(11);
-  cityText.textColor = new Color(style.text);
-  header.addSpacer(null);
   var weekLabel = header.addText("This Week");
   weekLabel.font = Font.systemFont(10);
   weekLabel.textColor = new Color(style.text, 0.8);
+  header.addSpacer(null);
+  var cityText = header.addText(city);
+  cityText.font = Font.semiboldSystemFont(11);
+  cityText.textColor = new Color(style.text);
 
   // Content area
   var body = w.addStack();
@@ -337,13 +340,104 @@ async function buildMedium() {
   return w;
 }
 
+// --- Multi-store Medium Widget: dark header + 3 store rows ---
+// Header: "Today" LEFT, "Your Stores" RIGHT
+// Each row: cone icon | city | flavor name | rarity
+
+async function buildMultiStore(slugs) {
+  var validSlugs = slugs.filter(function(s) { return s !== null && s !== undefined; });
+
+  var results = await Promise.all(validSlugs.map(async function(s) {
+    try {
+      var req = new Request(API_BASE + "/today?slug=" + encodeURIComponent(s));
+      req.timeoutInterval = 10;
+      return await req.loadJSON();
+    } catch(e) { return null; }
+  }));
+
+  var w = new ListWidget();
+  w.backgroundColor = new Color("#1a1a1a");
+  w.setPadding(0, 0, 0, 0);
+
+  // Header: "Today" LEFT, "Your Stores" RIGHT
+  var header = w.addStack();
+  header.backgroundColor = new Color("#222222");
+  header.setPadding(6, 16, 6, 16);
+  header.layoutHorizontally();
+  header.centerAlignContent();
+
+  var todayLbl = header.addText("Today");
+  todayLbl.font = Font.semiboldSystemFont(11);
+  todayLbl.textColor = Color.white();
+  header.addSpacer(null);
+  var storesLbl = header.addText("Your Stores");
+  storesLbl.font = Font.systemFont(10);
+  storesLbl.textColor = new Color("#ffffff", 0.8);
+
+  // Content body: 3 store rows
+  var body = w.addStack();
+  body.setPadding(4, 14, 8, 14);
+  body.layoutVertically();
+
+  for (var i = 0; i < validSlugs.length; i++) {
+    var data = results[i];
+    var storeSlug = validSlugs[i];
+
+    if (i > 0) {
+      var sep = body.addStack();
+      sep.backgroundColor = new Color("#ffffff", 0.1);
+      sep.size = new Size(312, 1);
+      body.addSpacer(2);
+    }
+
+    var row = body.addStack();
+    row.layoutHorizontally();
+    row.centerAlignContent();
+    row.spacing = 6;
+
+    var coneImg = drawConeIcon(data ? data.flavor : null, 26);
+    var coneEl = row.addImage(coneImg);
+    coneEl.imageSize = new Size(26, 26);
+
+    var city = data ? cityFromStore(data.store) : storeSlug;
+    var cityEl = row.addText(city);
+    cityEl.font = Font.systemFont(9);
+    cityEl.textColor = new Color("#ffffff", 0.45);
+    cityEl.lineLimit = 1;
+
+    row.addSpacer(4);
+
+    var flavorName = data ? (data.flavor || "TBD") : "\u2014";
+    var flavorEl = row.addText(flavorName);
+    flavorEl.font = Font.boldSystemFont(12);
+    flavorEl.textColor = Color.white();
+    flavorEl.lineLimit = 1;
+    flavorEl.minimumScaleFactor = 0.7;
+
+    if (data && data.rarity && data.rarity.label) {
+      row.addSpacer(null);
+      var rarityEl = row.addText(data.rarity.label.toUpperCase());
+      rarityEl.font = Font.boldMonospacedSystemFont(8);
+      rarityEl.textColor = new Color("#90CAF9");
+    }
+
+    body.addSpacer(2);
+  }
+
+  return w;
+}
+
 // --- Entry point ---
 
 var widgetSize = (config.widgetFamily || "small");
 var widget;
 
 if (widgetSize === "medium" || widgetSize === "large") {
-  widget = await buildMedium();
+  if (typeof MODE !== "undefined" && MODE === "multi") {
+    widget = await buildMultiStore(slugs);
+  } else {
+    widget = await buildMedium();
+  }
 } else {
   widget = await buildSmall();
 }
@@ -352,7 +446,8 @@ if (config.runsInWidget) {
   Script.setWidget(widget);
 } else {
   // Preview when running in-app
-  if (widgetSize === "medium") {
+  var isMedium = widgetSize === "medium" || (typeof MODE !== "undefined" && MODE === "multi");
+  if (isMedium) {
     widget.presentMedium();
   } else {
     widget.presentSmall();

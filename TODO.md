@@ -172,7 +172,7 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 
 Sibling repositories that depend on the Worker API. Breakages here are silent user-facing failures.
 
-- [ ] **custard-scriptable emergency fix** -- `../custard-scriptable/Custard Calendar.js` uses hardcoded `workers.dev` base URL and calls `/api/flavors` (pre-v1 endpoint). Users get stale data or silent 404s. Fix: update base URL to `custard.chriskaschner.com` and endpoint to `/api/v1/flavors`. Live breakage -- high priority.
+- [x] **custard-scriptable emergency fix** -- fixed base URL (`workers.dev` -> `custard.chriskaschner.com`), endpoint (`/api/flavors` -> `/api/v1/flavors`), and brand color (`#0057B8` -> `#005696`). Also fixed same workers.dev URL bug in `widgets/custard-today.js` (the canonical widget widget.html links to). `Custard Calendar.js` folded into `widgets/custard-scriptable.js`; custard-scriptable repo is now retired. (2026-02-26)
 - [ ] **custard-tidbyt contract smoke test** -- add a test in `../custard-tidbyt` that hits the live `/api/v1/flavors` endpoint and asserts schema version header + required fields (`flavors[].title`, `flavors[].date`, `stores[].slug`). Prevents silent drift if Worker API response shape changes.
 
 ## Now -- Licensing and Testing
