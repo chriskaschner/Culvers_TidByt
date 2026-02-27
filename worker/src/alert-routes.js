@@ -16,6 +16,14 @@ import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
 import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { removeSubscriptionIndex, upsertSubscriptionIndex } from './subscription-store.js';
 
+// M3: Allowed origins for CSRF protection on POST /api/alerts/subscribe
+const ALLOWED_ORIGINS = [
+  'https://custard.today',
+  'https://chriskaschner.github.io',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+];
+
 // Validation constants
 const MAX_FAVORITES = 10;
 const MAX_FAVORITE_LENGTH = 100;
@@ -75,6 +83,16 @@ export async function handleAlertRoute(url, request, env, corsHeaders) {
  * The subscription only activates after the user clicks the confirmation link.
  */
 async function handleSubscribe(request, env, corsHeaders) {
+  // M3: Server-side Origin check — CSRF protection for double opt-in subscribe.
+  // Empty Origin (e.g., server-side curl) is allowed; only reject unknown browser origins.
+  const origin = request.headers.get('Origin') || '';
+  if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
+    return Response.json(
+      { error: 'Forbidden' },
+      { status: 403, headers: corsHeaders },
+    );
+  }
+
   let body;
   try {
     body = await request.json();

@@ -30,7 +30,7 @@ import { handlePlan } from './planner.js';
 import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
-import { getFlavorsCached } from './kv-cache.js';
+import { getFlavorsCached, safeKvPut } from './kv-cache.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
@@ -204,7 +204,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   } else if (canonical === '/api/geolocate') {
     response = await handleApiGeolocate(request, corsHeaders);
   } else if (canonical === '/api/nearby-flavors') {
-    response = await handleApiNearbyFlavors(url, env, corsHeaders);
+    response = await handleApiNearbyFlavors(request, url, env, corsHeaders);
   } else if (canonical.startsWith('/api/events')) {
     const eventsResponse = await handleEventsRoute(canonical, url, request, env, corsHeaders);
     if (eventsResponse) {
@@ -248,9 +248,24 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
       response = reliabilityResponse;
     }
   } else if (canonical.startsWith('/og/')) {
-    const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
-    if (cardResponse) {
-      response = cardResponse;
+    // M4: Per-IP rate limiting on /og/* — SVG generation is expensive
+    const OG_RATE_LIMIT_PER_HOUR = 60;
+    const ogIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const ogHour = new Date().toISOString().slice(0, 13);
+    const ogRlKey = `rl:og:${ogIp}:${ogHour}`;
+    const ogCountRaw = env.FLAVOR_CACHE ? await env.FLAVOR_CACHE.get(ogRlKey) : null;
+    const ogCount = ogCountRaw ? parseInt(ogCountRaw, 10) : 0;
+    if (ogCount >= OG_RATE_LIMIT_PER_HOUR) {
+      response = Response.json(
+        { error: 'Rate limit exceeded. Max 60 /og/ requests per hour.' },
+        { status: 429, headers: corsHeaders },
+      );
+    } else {
+      await safeKvPut(env.FLAVOR_CACHE, ogRlKey, String(ogCount + 1), { expirationTtl: 3600 });
+      const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
+      if (cardResponse) {
+        response = cardResponse;
+      }
     }
   } else if (canonical.startsWith('/api/alerts/')) {
     // Rewrite url.pathname for alert-routes matching

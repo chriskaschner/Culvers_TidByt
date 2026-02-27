@@ -3,6 +3,7 @@ import { safeKvPut } from './kv-cache.js';
 
 const LOCATOR_CACHE_TTL = 3600; // 1 hour
 const NEARBY_CACHE_MAX_AGE = 3600; // 1 hour
+const NEARBY_RATE_LIMIT_PER_HOUR = 20;
 
 /**
  * Transform Culver's locator API response into our store format.
@@ -36,7 +37,22 @@ function transformLocatorData(data) {
  * Proxies to Culver's locator API server-side (bypasses CORS), caches in KV,
  * and optionally filters/ranks by flavor match + similarity.
  */
-export async function handleApiNearbyFlavors(url, env, corsHeaders) {
+export async function handleApiNearbyFlavors(request, url, env, corsHeaders) {
+  // M1: Per-IP rate limiting — 20 req/hr to limit Culver's API proxy abuse
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const hour = new Date().toISOString().slice(0, 13); // "2026-02-27T14"
+  const rlKey = `rl:nearby:${ip}:${hour}`;
+  const kv = env.FLAVOR_CACHE;
+  const countRaw = kv ? await kv.get(rlKey) : null;
+  const count = countRaw ? parseInt(countRaw, 10) : 0;
+  if (count >= NEARBY_RATE_LIMIT_PER_HOUR) {
+    return Response.json(
+      { error: 'Rate limit exceeded. Max 20 nearby requests per hour.' },
+      { status: 429, headers: corsHeaders },
+    );
+  }
+  await safeKvPut(kv, rlKey, String(count + 1), { expirationTtl: 3600 });
+
   const location = url.searchParams.get('location');
   if (!location || !location.trim()) {
     return Response.json(
@@ -49,7 +65,6 @@ export async function handleApiNearbyFlavors(url, env, corsHeaders) {
   const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit')) || 50, 1), 100);
 
   // Check KV cache for this location+limit combo
-  const kv = env.FLAVOR_CACHE;
   const cacheKey = `locator:${location.trim().toLowerCase()}:${limit}`;
   let locatorData;
 
