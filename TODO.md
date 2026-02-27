@@ -133,7 +133,7 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 - [x] **CLAUDE.md doc fixes** -- updated Worker test count (343 -> 574, 21 -> 32 suites), Python test counts (142 -> 179, analytics 99 -> 117), page count (5 -> 9), added analytics_report.py command. Fixed timezone bug in reliability.test.js isoDate helper. (2026-02-25)
 - [x] **CLAUDE.md / Codex consistency** -- audited commands, test counts, and architecture; all updated to match current state. (2026-02-25)
 - [x] **Multi-agent coordination** -- protocol documented in CLAUDE.md: worktree isolation, task claim convention, merge-only-forward rule, TODO.md as cross-session coordination channel, test gate before merge. (2026-02-25)
-- [ ] **Platform architecture review (executive)** -- five principal risks identified; address in order: (1) **Contract drift**: custard-tidbyt and custard-scriptable both implement their own flavor-name parsing, API response mapping, and store-slug resolution -- any Worker API change silently breaks them. Fix: publish a machine-readable API contract (OpenAPI or JSON schema) as part of Worker deploy; add smoke tests in each sibling repo that hit the live API and assert schema version. (2) **Duplicate client implementations**: at least 3 repos each maintain `haversine`, `flavorMatchScore`, and store-lookup logic. Fix: extract a published `@custard/client` npm package (or a single canonical JS module the Worker serves) so all clients share one implementation. (3) **CI asymmetry**: Worker has 450+ tests; GitHub Pages frontend has Playwright smoke tests only; Python pipeline has pytest but no live-API integration gate. Fix: add a nightly integration test that runs the full fetch->calendar->tidbyt pipeline against staging Worker, fails loudly if any leg breaks. (4) **Doc drift**: CLAUDE.md, README, and inline code comments are the only sources of architecture truth, and they diverge. Fix: maintain a lightweight `ARCHITECTURE.md` (data flow diagram + layer contracts) that is required to update before any PR touching cross-layer interfaces. (5) **Monolithic Worker growth**: index.js decomposition started but the Worker is the only deploy unit -- a bad route handler can silently kill the entire platform. Fix: evaluate Worker Services (route isolation) or at minimum enforce per-route unit test coverage gates in CI. Recommended direction: treat custard-calendar Worker as platform kernel; all sibling repos are consumers of its stable v1 API, not peers.
+- [x] **Platform architecture review (executive)** -- five principal risks identified and mitigated. ARCHITECTURE.md created at repo root (data flow diagram, three-layer model, API contract points, risk register). `/api/v1/schema` endpoint added to Worker returning machine-readable API contract with `schema_version` field. `.github/workflows/ci.yml` added: runs Worker tests + Python tests on every push/PR to main. Risks 2 and 5 documented as partial mitigations (monitor, no action needed now). 666 Worker tests pass. (2026-02-26)
 
 ## Strategy -- Marketing and Product Direction
 
@@ -147,7 +147,33 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 **180-day roadmap:**
 - [x] **0-45 days: Focus + Consistency** -- (2) Homepage hero simplified to one primary CTA ("Find your store") + one secondary ("View the map"); quiz CTA removed from hero. (3) User-facing copy already consumer-focused; no enterprise language in HTML pages. (4) `docs/privacy.html` created with data-use explainer (no cookies, anonymous session ID, alert email opt-in, third-party services); Privacy link added to footer of all 9 docs pages. Item (1) (sister repo endpoint unification) tracked separately. (2026-02-25)
 - [x] **45-90 days: Growth Loops** -- (1) [x] Share button on all 9 pages via `CustardPlanner.initShareButton()` in `planner-shared.js`; uses Web Share API with clipboard fallback; reads og:url + og:title meta tags. (2) [x] Quiz results are shareable: `history.replaceState` writes `?archetype=<id>&flavor=<name>` when result renders; "Share your result" button in result section (stronger style than footer share). Deep-links to map (existing result-map-link) and alerts (existing CTAs). (3) [x] Channel cross-promo: alert + digest emails get Radar/Map/Widget return links; email brand color #003366 -> #005696; widget.html gets "More from Custard Calendar" section with Alerts, Calendar, and Radar cards. (2026-02-26) (4) Removed: SEO landing templates moved to Someday/Maybe.
-- [ ] **90-180 days: Personalization + Defensibility** -- (1) "My Custard" state (saved store + favorites) as first-class home. (2) Reframe Radar as decision assistant ("best nearby option today") not feature showcase. (3) Operationalize rarity/seasonality content into recurring editorial/email moments. (4) ML predictions stay as support signal unless confidence/reliability thresholds are met.
+- [ ] **90-180 days: Personalization + Defensibility** -- detailed breakdown below.
+
+  **1. "My Custard" saved state (MVP: localStorage, no auth)**
+  - Persist selected store slug + up to 5 favorite flavors in `localStorage` under keys `custard_store` and `custard_favorites`.
+  - `planner-shared.js` gets four helpers on the `CustardPlanner` class: `getSavedStore()`, `setSavedStore(slug)`, `getFavorites()`, `addFavorite(title)`.
+  - `index.html` calls `getSavedStore()` on DOMContentLoaded; if a store is saved, skip the "find your store" prompt and auto-load that store's forecast.
+  - `alerts.html` pre-fills the store slug field from `getSavedStore()` so the subscription form is one click for return visitors.
+  - No backend changes required. No auth. No cookies. Respects existing privacy policy (localStorage is local-only, not transmitted).
+
+  **2. Radar reframe: decision assistant, not feature showcase**
+  - Add a "Best option today" card above the 7-day grid on `radar.html`.
+  - Copy: "Based on today's confirmed schedule, here's where to go" — not "7-day intelligence outlook".
+  - Call existing `/api/v1/plan` with user's location + radius; render the top result with full CTAs (Directions / Set Alert / Subscribe).
+  - Demote the 7-day grid to a "full outlook" secondary section below.
+  - No new Worker endpoints needed; the planner already returns the right data.
+
+  **3. Recurring editorial email moments**
+  - Weekly digest already ships; add two new content blocks to `sendWeeklyDigestEmail()` in `email-sender.js`:
+    - "Signal of the week" block: top-confidence signal across all subscribed stores for this recipient (pick highest `confidence` from `computeSignalsFromDb()`). Signal type icons already defined in the email template system. Show signal type, flavor name, and one-line explanation.
+    - "Rarity spotlight" block: if any Ultra Rare or Rare flavor appears this week at a subscribed store, surface it with flavor name, avg gap days, and a "Set Alert" link. Pull from D1 snapshots with a `WHERE date BETWEEN ? AND ?` window.
+  - Both blocks are additive to the existing digest; no new endpoint or subscription schema changes.
+
+  **4. ML confidence gates (already shipped — document the policy)**
+  - Certainty tiers (`certainty.js`) already enforce: Confirmed (score cap 1.0), Watch (0.7), Estimated (0.5), None (0.0).
+  - `MIN_PROBABILITY = 0.02` (~3x random), `MIN_HISTORY_DEPTH = 14` days, `MAX_FORECAST_AGE_HOURS = 168`.
+  - Below these thresholds the result is NONE, not a misleading Estimated. This is the policy; no code changes needed.
+  - Document in `ARCHITECTURE.md` Decision Layer section. Revisit threshold values only if Estimated accuracy data from `scripts/evaluate_forecasts.py` shows systematic bias.
 
 **KPI system (formalize weekly operating cadence):**
 - North-star: weekly users who take a planning action (alert subscribe, calendar subscribe, or directions click)
@@ -221,7 +247,7 @@ Known backfill coverage gaps (systematic, not random): 62-93 day holes in spring
 The analytics pipeline's best output isn't predictions -- it's **flavor intelligence**: rarity scores, streak tracking, frequency stats, similarity clusters. All grounded in what actually happened, surfaced as shareable content and discovery tools.
 
 - [x] **Refresh local dataset metrics snapshot** -- recomputed scale/coverage across `backfill`, `backfill-national`, and `backfill-wayback`; combined cleaned corpus now 330,490 rows across 998 stores (2015-08-02 to 2026-03-31). Added pause-point + resume command to WORKLOG. (2026-02-24)
-- [ ] **Add DoW + seasonality features** -- 38 flavors show significant day-of-week bias. Add to FrequencyRecency and MarkovRecency models. Expected +5-8% top-1 accuracy.
+- [x] **Add DoW + seasonality features** -- Added `_compute_dow_bonus()` and `_compute_seasonal_bonus()` to FrequencyRecencyModel. Weight blend updated: freq=0.60, recency=0.20, dow=0.10, seasonal=0.10. Min 5 appearances threshold prevents sparse-store noise. 4 new synthetic-data tests (peak day, insufficient data, seasonal concentration, weights sum to 1). 16 analytics/tests/test_predict.py tests pass. (2026-02-26)
 - [x] **Expand overdue watch-list** -- n_overdue default raised from 3 to 5 in forecast_writer.py. (2026-02-27)
 - [x] **Fix NMF convergence** -- max_iter raised from 500 to 1000 in collaborative.py. Test fixture still warns (sparse synthetic data), production should converge. n_components=5 needs accuracy evaluation. (2026-02-27)
 

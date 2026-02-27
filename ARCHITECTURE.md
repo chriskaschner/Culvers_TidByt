@@ -1,0 +1,160 @@
+# Architecture
+
+Custard Calendar: multi-brand frozen custard observability platform.
+
+---
+
+## Data Flow
+
+```
+Upstream Brand Sites
+(Culver's __NEXT_DATA__,
+ Kopp's / Gille's /
+ Hefner's / Kraverz /
+ Oscar's HTML)
+        |
+        v
+Cloudflare Worker  <---> KV (24h TTL flavor cache)
+(worker/src/)      <---> D1 (snapshots, events, reliability,
+        |                    cron_runs, subscriptions)
+        |
+        +---> .ics feed          (calendar clients)
+        +---> JSON API v1        (all consumers)
+        +---> SVG social cards   (/og/*)
+        +---> Forecast endpoint  (/api/v1/forecast/{slug})
+        |
+   +----+----+
+   |         |
+   v         v
+Python    GitHub Pages
+pipeline  (docs/ — 9 HTML pages)
+(main.py)   |
+   |         +-- planner-shared.js (client hub)
+   |         +-- cone-renderer.js
+   |         +-- quiz engine (engine.js)
+   v
+Google Calendar
+Tidbyt device
+```
+
+---
+
+## Three-Layer Model
+
+### Presentation Layer — `docs/`
+
+Nine HTML pages served via GitHub Pages:
+
+| Page | File | Primary role |
+|---|---|---|
+| Forecast (home) | `index.html` | Today + signal + plan CTA |
+| Custard Map | `map.html` | Leaflet map, flavor fronts |
+| Flavor Radar | `radar.html` | 7-day outlook per store |
+| Flavor Alerts | `alerts.html` | Email subscription |
+| Siri Shortcut | `siri.html` | Voice assistant setup |
+| Calendar Sub | `calendar.html` | .ics subscription guide |
+| Quiz / Mad Lib | `quiz.html` | Flavor personality quiz |
+| Widget Setup | `widget.html` | Scriptable widget guide |
+| Privacy | `privacy.html` | Data use explainer |
+
+Shared client modules:
+- `planner-shared.js` — `CustardPlanner` class: WORKER_BASE constant, haversine, escapeHtml, share button, certainty tiers, signal cards, reliability banners, action CTAs, store search
+- `cone-renderer.js` — browser-side re-export of the four cone render tiers (Mini, HD, Hero, Premium)
+- `style.css` — `:root` CSS tokens (`--brand #005696`, `--brand-dark`, `--text`, `--text-muted`, `--bg`, `--border`, `--radius`)
+
+**Cross-layer interface:** Presentation calls Worker via `WORKER_BASE` (set once in `planner-shared.js`). No direct upstream fetches from browser.
+
+---
+
+### Decision Layer — `worker/src/`
+
+Pure functions; no I/O, no KV/D1 reads. Testable in isolation.
+
+| Module | Role |
+|---|---|
+| `planner.js` | Haversine scoring, certainty-weighted ranking, `/api/v1/plan` |
+| `certainty.js` | Confirmed/Watch/Estimated/None tiers, score caps, threshold constants |
+| `signals.js` | 5 signal types (overdue, dow_pattern, seasonal, active_streak, rare_find), chi-squared gating |
+| `reliability.js` | Per-store Calendar Reliability Index, freshness/missing-window/recovery metrics |
+| `flavor-matcher.js` | FLAVOR_FAMILIES, SIMILARITY_GROUPS, BRAND_COLORS, normalize() |
+
+**Rule:** Decision-layer modules must not import from KV-cache, D1 query helpers, or brand fetchers. New decision logic belongs here first; only promoted to a route handler after tests pass.
+
+---
+
+### Data Layer — `worker/src/`
+
+All I/O: KV reads/writes, D1 queries, upstream brand fetches.
+
+| Module | Role |
+|---|---|
+| `kv-cache.js` | getFlavorsCached(), KV read/write, 24h TTL, D1 snapshot write-through |
+| `brand-registry.js` | BRAND_REGISTRY, getFetcherForSlug(), getBrandForSlug() |
+| `flavor-fetcher.js` | Dispatches to per-brand fetchers |
+| `store-index.js` | Static in-memory store index (slug → name, city, state, lat, lon) |
+| `valid-slugs.js` | Allowlist for store slug validation |
+| `snapshot-targets.js` | resolveSnapshotTargets(), cron cursor |
+
+D1 tables: `snapshots`, `flavor_stats`, `store_reliability`, `interaction_events`, `quiz_events`, `subscriptions`, `alert_subscriptions`, `cron_runs`, `metrics_cache`.
+
+---
+
+## API Contract Points
+
+The canonical machine-readable schema is at `GET /api/v1/schema` (see `worker/src/api-schema.json`).
+
+Key endpoints and their shapes:
+
+### `GET /api/v1/flavors?slug=<slug>`
+```json
+{
+  "name": "Store Name",
+  "flavors": [
+    { "title": "Flavor Name", "date": "2026-02-20", "description": "Optional text" }
+  ]
+}
+```
+
+### `GET /api/v1/today?slug=<slug>`
+```json
+{
+  "store": "Store Name",
+  "slug": "mt-horeb",
+  "brand": "Culver's",
+  "date": "2026-02-20",
+  "flavor": "Flavor Name",
+  "description": "Optional text",
+  "rarity": { "appearances": 12, "avg_gap_days": 47, "label": "Rare" },
+  "spoken": "Today the flavor of the day at ...",
+  "spoken_verbose": "For Thursday..."
+}
+```
+
+### `GET /api/v1/stores?q=<query>`
+```json
+{
+  "stores": [
+    { "slug": "mt-horeb", "name": "Culver's of Mt. Horeb", "brand": "Culver's", "city": "Mt. Horeb", "state": "WI" }
+  ]
+}
+```
+
+**Contract update rule:** Cross-layer interfaces (`/api/v1/*` response shapes, `planner-shared.js` public API) must be updated in this file before merging any PR that changes them.
+
+---
+
+## Asset Layer
+
+Visual asset catalog (formats, resolutions, color profiles) lives at `docs/ASSET_SPEC.md`. This is the reference for any external asset generation work and the blocker for the flavor asset parity audit.
+
+---
+
+## Risk Register
+
+| # | Risk | Mitigation | Status |
+|---|---|---|---|
+| 1 | **Contract drift** — sibling repos (custard-tidbyt, custard-scriptable) implement their own API response mapping; a Worker shape change silently breaks them | Machine-readable schema at `GET /api/v1/schema` (see `worker/src/api-schema.json`); `schema_version` field bumped on breaking changes; sibling repos have smoke tests hitting live API | Mitigated |
+| 2 | **Duplicate client logic** — haversine, flavorMatchScore, and store-lookup exist in multiple repos | `haversine` and `escapeHtml` consolidated into `planner-shared.js`; WORKER_BASE single source in same file. Remaining gap: flavor families in planner-shared.js fallback — monitor, no action needed now | Partial |
+| 3 | **CI asymmetry** — Worker has 595+ tests; Python pipeline has pytest but no live-API integration gate | `ci.yml` runs both `cd worker && npm test` and `uv run pytest` on every push/PR to main | Mitigated |
+| 4 | **Doc drift** — CLAUDE.md and inline comments are sole architecture truth | This file (`ARCHITECTURE.md`) is now the canonical layer contract; required update before any cross-layer interface change | Mitigated |
+| 5 | **Monolithic Worker** — index.js is one deploy unit; a bad handler can silently kill the platform | Decomposed into route-today.js, route-calendar.js, route-nearby.js, kv-cache.js, brand-registry.js; per-file coverage thresholds enforced in vitest.config.js; Worker Services would require paid plan, not pursued now | Partial |

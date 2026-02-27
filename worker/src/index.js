@@ -193,6 +193,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = handleFlavorConfig(corsHeaders);
   } else if (canonical === '/api/flavor-colors') {
     response = handleFlavorColors(corsHeaders);
+  } else if (canonical === '/api/schema') {
+    response = handleApiSchema(corsHeaders);
   } else if (canonical === '/api/today') {
     response = await handleApiToday(url, env, corsHeaders, fetchFlavorsFn);
   } else if (canonical === '/api/flavors') {
@@ -389,6 +391,44 @@ function handleFlavorColors(corsHeaders) {
     topping_colors: TOPPING_COLORS,
     cone_colors: CONE_COLORS,
   }, {
+    headers: {
+      ...corsHeaders,
+      'Cache-Control': 'public, max-age=86400', // 24h
+    },
+  });
+}
+
+/**
+ * Handle GET /api/schema requests.
+ * Returns the machine-readable API contract for v1 endpoints.
+ * Consumers (custard-tidbyt, custard-scriptable) can use schema_version
+ * to detect breaking changes before they manifest as runtime errors.
+ */
+function handleApiSchema(corsHeaders) {
+  const schema = {
+    schema_version: 1,
+    description: 'Custard Calendar Worker API v1 contract. Bump schema_version on any breaking change to a required field.',
+    endpoints: {
+      '/api/v1/flavors': {
+        method: 'GET',
+        params: { slug: 'store slug (required)' },
+        required_response_fields: ['name', 'flavors'],
+        flavors_item_required: ['title', 'date'],
+      },
+      '/api/v1/today': {
+        method: 'GET',
+        params: { slug: 'store slug (required)' },
+        required_response_fields: ['store', 'slug', 'brand', 'date', 'flavor'],
+      },
+      '/api/v1/stores': {
+        method: 'GET',
+        params: { q: 'search query, min 2 chars (required)' },
+        required_response_fields: ['stores'],
+        stores_item_required: ['slug', 'name'],
+      },
+    },
+  };
+  return Response.json(schema, {
     headers: {
       ...corsHeaders,
       'Cache-Control': 'public, max-age=86400', // 24h
