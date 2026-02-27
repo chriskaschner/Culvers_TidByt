@@ -192,10 +192,12 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
  * @param {string} params.unsubscribeUrl
  * @param {string} [params.narrative] - Fun commentary about the week's flavors
  * @param {Array<{headline: string, explanation: string}>} [params.signals] - Up to 2 flavor signals to surface
+ * @param {{type: string, flavor: string, headline: string, explanation: string}|null} [params.signalOfWeek] - Top-confidence signal for prominent display
+ * @param {{flavor: string, avgGapDays: number, alertUrl: string}|null} [params.raritySpotlight] - Rare flavor appearing this week
  * @param {string} apiKey
  * @param {string} fromAddress
  */
-export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative, forecast, signals }, apiKey, fromAddress) {
+export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative, forecast, signals, signalOfWeek, raritySpotlight }, apiKey, fromAddress) {
   const quip = getRandomQuip();
 
   const subject = matches.length > 0
@@ -272,6 +274,32 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
 </div>`
     : '';
 
+  const SIGNAL_TYPE_LABELS = {
+    overdue: 'Overdue',
+    dow_pattern: 'Day Pattern',
+    seasonal: 'Seasonal',
+    active_streak: 'Active Streak',
+    rare_find: 'Rare Find',
+  };
+
+  const signalOfWeekBlock = signalOfWeek
+    ? `<div style="margin-top:16px;border:1px solid #b8daf5;border-left:4px solid #005696;border-radius:8px;padding:14px;background:#f0f7ff;">
+  <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#6a7c90;font-weight:700;margin-bottom:4px;">Signal of the Week${signalOfWeek.type && SIGNAL_TYPE_LABELS[signalOfWeek.type] ? ' \u2014 ' + SIGNAL_TYPE_LABELS[signalOfWeek.type] : ''}</div>
+  <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:2px;">${escapeHtml(signalOfWeek.flavor)}</div>
+  <div style="font-size:13px;color:#555;">${escapeHtml(signalOfWeek.headline)}</div>
+  <div style="font-size:12px;color:#888;margin-top:4px;">${escapeHtml(signalOfWeek.explanation)}</div>
+</div>`
+    : '';
+
+  const raritySpotlightBlock = raritySpotlight
+    ? `<div style="margin-top:12px;border:1px solid #ddd3ff;border-left:4px solid #7b5ea7;border-radius:8px;padding:14px;background:#f8f4ff;">
+  <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#5c3cb0;font-weight:700;margin-bottom:4px;">Rarity Spotlight</div>
+  <div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:2px;">${escapeHtml(raritySpotlight.flavor)}</div>
+  <div style="font-size:13px;color:#555;">Shows up roughly every ${raritySpotlight.avgGapDays} days \u2014 this is a rare one.</div>
+  <div style="margin-top:8px;"><a href="${escapeHtml(raritySpotlight.alertUrl)}" style="display:inline-block;padding:6px 14px;background:#7b5ea7;color:#fff;text-decoration:none;border-radius:4px;font-size:12px;font-weight:600;">Set Alert</a></div>
+</div>`
+    : '';
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -283,6 +311,8 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
   ${matchSummary}
   ${narrativeBlock}
   ${forecastBlock}
+  ${signalOfWeekBlock}
+  ${raritySpotlightBlock}
   ${signalsBlock}
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     <thead>

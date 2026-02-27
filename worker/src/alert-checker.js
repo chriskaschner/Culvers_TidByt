@@ -262,6 +262,8 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
     // Send weekly digest (even if no matches — the full week forecast is the value)
     const forecast = forecastBySlug.get(sub.slug) || null;
     const slugSignals = signalsBySlug.get(sub.slug) || [];
+    const alertsUrl = `${baseUrl}/alerts.html`;
+    const raritySpotlight = await findRaritySpotlightForWeek(sub.slug, weekFlavors, env.DB, alertsUrl);
     try {
       const result = await sendWeeklyDigestEmail(
         {
@@ -275,6 +277,8 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
           narrative: forecast ? forecast.prose : null,
           forecast,
           signals: slugSignals.slice(0, 2),
+          signalOfWeek: slugSignals[0] || null,
+          raritySpotlight,
         },
         apiKey,
         fromAddress,
@@ -299,6 +303,46 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
   }
 
   return { sent, checked: subscriptions.length, errors };
+}
+
+/**
+ * Query D1 for the rarest flavor appearing in the week's schedule.
+ * Returns the flavor with avg_gap_days > 60 (Ultra Rare or Rare), or null.
+ *
+ * @param {string} slug - Store slug
+ * @param {Array<{title: string}>} weekFlavors - Confirmed flavors for the week
+ * @param {Object} db - D1 binding
+ * @param {string} alertUrl - URL to set an alert for this flavor
+ * @returns {Promise<{flavor: string, avgGapDays: number, alertUrl: string}|null>}
+ */
+async function findRaritySpotlightForWeek(slug, weekFlavors, db, alertUrl) {
+  if (!db || !slug || !weekFlavors.length) return null;
+  const flavors = [...new Set(weekFlavors.map((f) => f.title).filter(Boolean))];
+  if (!flavors.length) return null;
+  try {
+    const placeholders = flavors.map(() => '?').join(',');
+    const result = await db.prepare(
+      `SELECT flavor,
+        CASE WHEN COUNT(date) < 2 THEN NULL
+             ELSE CAST(julianday(MAX(date)) - julianday(MIN(date)) AS REAL) / (COUNT(date) - 1)
+        END as avg_gap_days
+       FROM snapshots
+       WHERE slug = ? AND flavor IN (${placeholders})
+       GROUP BY flavor
+       HAVING avg_gap_days IS NOT NULL AND avg_gap_days > 60
+       ORDER BY avg_gap_days DESC
+       LIMIT 1`
+    ).bind(slug, ...flavors).all();
+    const row = result?.results?.[0];
+    if (!row) return null;
+    return {
+      flavor: row.flavor,
+      avgGapDays: Math.round(row.avg_gap_days),
+      alertUrl,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**

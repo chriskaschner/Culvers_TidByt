@@ -88,8 +88,14 @@
       <div id="selected-flavors" class="selected-badges"></div>
     </section>
 
+    <section id="best-today-section" hidden>
+      <h2>Best option today</h2>
+      <p class="hint">Based on today's confirmed schedule, here's where to go.</p>
+      <div id="best-today-card"></div>
+    </section>
+
     <section id="timeline-section" hidden>
-      <h2>7-Day Outlook</h2>
+      <h2>Full Outlook</h2>
       <p class="hint">Confirmed cards show store schedule data. Watch cards flag reliability concerns. Estimated cards are model-based.</p>
       <div id="timeline" class="day-cards"></div>
       <div id="trust-banner" class="trust-banner" hidden></div>
@@ -184,11 +190,39 @@
       margin-top: 0.5rem;
     }
 
-    #radar-empty-state, #flavor-section, #timeline-section, #radar-actions-section, #radar-historical-context-section, #next-best-section, #accuracy-section, #favorites-section {
+    #radar-empty-state, #flavor-section, #best-today-section, #timeline-section, #radar-actions-section, #radar-historical-context-section, #next-best-section, #accuracy-section, #favorites-section {
       margin-top: 2rem;
     }
 
-    #flavor-section h2, #timeline-section h2, #radar-actions-section h2, #radar-historical-context-section h2, #next-best-section h2, #accuracy-section h2 {
+    .best-today-card {
+      border: 1px solid #b8daf5;
+      border-left: 4px solid #005696;
+      border-radius: 8px;
+      padding: 1rem;
+      background: #f0f7ff;
+      margin-top: 0.75rem;
+    }
+
+    .best-today-flavor {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 0.25rem;
+    }
+
+    .best-today-store {
+      font-size: 0.875rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+
+    .best-today-meta {
+      font-size: 0.75rem;
+      color: #6a7c90;
+      margin-bottom: 0.5rem;
+    }
+
+    #flavor-section h2, #best-today-section h2, #timeline-section h2, #radar-actions-section h2, #radar-historical-context-section h2, #next-best-section h2, #accuracy-section h2 {
       font-size: 1rem;
       color: #005696;
       margin-bottom: 0.5rem;
@@ -492,6 +526,8 @@
     const radarQuickStartWrap = document.getElementById('radar-quick-start-wrap');
     const radarQuickStartStores = document.getElementById('radar-quick-start-stores');
     const flavorSection = document.getElementById('flavor-section');
+    const bestTodaySection = document.getElementById('best-today-section');
+    const bestTodayCard = document.getElementById('best-today-card');
     const flavorSearch = document.getElementById('flavor-search');
     const flavorResults = document.getElementById('flavor-results');
     const selectedFlavorsEl = document.getElementById('selected-flavors');
@@ -656,6 +692,7 @@
       }
 
       flavorSection.hidden = true;
+      bestTodaySection.hidden = true;
       timelineSection.hidden = true;
       radarActionsSection.hidden = true;
       radarHistoricalContextSection.hidden = true;
@@ -1506,6 +1543,53 @@
       return CustardPlanner.buildTimeline(confirmedFlavors, forecast, today, { maxPredictions: 5 });
     }
 
+    async function fetchAndRenderBestToday() {
+      if (!bestTodaySection || !bestTodayCard) return;
+      const store = findStoreBySlug(selectedSlug);
+      if (!store || !Number.isFinite(Number(store.lat)) || !Number.isFinite(Number(store.lng))) {
+        bestTodaySection.hidden = true;
+        return;
+      }
+
+      const lat = Number(store.lat);
+      const lng = Number(store.lng);
+      const radius = 25;
+      const planUrl = WORKER_BASE + '/api/v1/plan?location=' + lat + ',' + lng
+        + '&radius=' + radius + '&lat=' + lat + '&lon=' + lng;
+
+      try {
+        const resp = await fetch(planUrl);
+        if (!resp.ok) {
+          bestTodaySection.hidden = true;
+          return;
+        }
+        const data = await resp.json();
+        const recs = (data.recommendations || []).filter((r) => r.certainty_tier === 'CONFIRMED');
+        if (recs.length === 0) {
+          bestTodaySection.hidden = true;
+          return;
+        }
+        const top = recs[0];
+        const distText = top.distance_miles != null ? ' \u2014 ' + top.distance_miles + ' mi' : '';
+        const ctaHtml = CustardPlanner.actionCTAsHTML({
+          slug: top.slug,
+          storeName: top.name,
+          lat: top.lat || null,
+          lon: top.lon || null,
+          workerBase: WORKER_BASE,
+          actions: top.actions || ['directions', 'alert', 'calendar'],
+        });
+        bestTodayCard.innerHTML =
+          '<div class="best-today-flavor">' + escapeHtml(top.flavor) + '</div>'
+          + '<div class="best-today-store">' + escapeHtml(top.name) + distText + '</div>'
+          + '<div class="best-today-meta">' + (top.address ? escapeHtml(top.address) : '') + '</div>'
+          + ctaHtml;
+        bestTodaySection.hidden = false;
+      } catch (_) {
+        bestTodaySection.hidden = true;
+      }
+    }
+
     async function fetchAndRenderTimeline() {
       if (!selectedSlug) return;
       timelineSection.hidden = false;
@@ -1559,6 +1643,9 @@
 
         // Fetch flavor signals
         fetchRadarSignals(selectedSlug);
+
+        // Best option today card (non-blocking)
+        fetchAndRenderBestToday();
 
       } catch (err) {
         console.error('Timeline fetch error:', err);

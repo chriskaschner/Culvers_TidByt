@@ -147,33 +147,17 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 **180-day roadmap:**
 - [x] **0-45 days: Focus + Consistency** -- (2) Homepage hero simplified to one primary CTA ("Find your store") + one secondary ("View the map"); quiz CTA removed from hero. (3) User-facing copy already consumer-focused; no enterprise language in HTML pages. (4) `docs/privacy.html` created with data-use explainer (no cookies, anonymous session ID, alert email opt-in, third-party services); Privacy link added to footer of all 9 docs pages. Item (1) (sister repo endpoint unification) tracked separately. (2026-02-25)
 - [x] **45-90 days: Growth Loops** -- (1) [x] Share button on all 9 pages via `CustardPlanner.initShareButton()` in `planner-shared.js`; uses Web Share API with clipboard fallback; reads og:url + og:title meta tags. (2) [x] Quiz results are shareable: `history.replaceState` writes `?archetype=<id>&flavor=<name>` when result renders; "Share your result" button in result section (stronger style than footer share). Deep-links to map (existing result-map-link) and alerts (existing CTAs). (3) [x] Channel cross-promo: alert + digest emails get Radar/Map/Widget return links; email brand color #003366 -> #005696; widget.html gets "More from Custard Calendar" section with Alerts, Calendar, and Radar cards. (2026-02-26) (4) Removed: SEO landing templates moved to Someday/Maybe.
-- [ ] **90-180 days: Personalization + Defensibility** -- detailed breakdown below.
+- [x] **90-180 days: Personalization + Defensibility** -- Items 1-4 implemented (2026-02-27).
 
-  **1. "My Custard" saved state (MVP: localStorage, no auth)**
-  - Persist selected store slug + up to 5 favorite flavors in `localStorage` under keys `custard_store` and `custard_favorites`.
-  - `planner-shared.js` gets four helpers on the `CustardPlanner` class: `getSavedStore()`, `setSavedStore(slug)`, `getFavorites()`, `addFavorite(title)`.
-  - `index.html` calls `getSavedStore()` on DOMContentLoaded; if a store is saved, skip the "find your store" prompt and auto-load that store's forecast.
-  - `alerts.html` pre-fills the store slug field from `getSavedStore()` so the subscription form is one click for return visitors.
-  - No backend changes required. No auth. No cookies. Respects existing privacy policy (localStorage is local-only, not transmitted).
+  **1. "My Custard" saved state (MVP: localStorage, no auth)** -- `planner-shared.js` gains `getSavedStore()`, `setSavedStore()`, `getFavorites()`, `addFavorite()`, `removeFavorite()` using `custard-favorites` key. `alerts.html` pre-fills saved favorites on catalog load and persists add/remove actions. `index.html` already auto-loaded saved store. (2026-02-27)
 
-  **2. Radar reframe: decision assistant, not feature showcase**
-  - Add a "Best option today" card above the 7-day grid on `radar.html`.
-  - Copy: "Based on today's confirmed schedule, here's where to go" — not "7-day intelligence outlook".
-  - Call existing `/api/v1/plan` with user's location + radius; render the top result with full CTAs (Directions / Set Alert / Subscribe).
-  - Demote the 7-day grid to a "full outlook" secondary section below.
-  - No new Worker endpoints needed; the planner already returns the right data.
+  **2. Radar reframe: decision assistant, not feature showcase** -- "Best option today" card added above 7-day grid on `radar.html`. Calls `/api/v1/plan?location=lat,lng&radius=25`, renders top Confirmed result with `CustardPlanner.actionCTAsHTML()`. 7-day section renamed "Full Outlook". Hidden if no Confirmed results or no store coordinates. (2026-02-27)
 
-  **3. Recurring editorial email moments**
-  - Weekly digest already ships; add two new content blocks to `sendWeeklyDigestEmail()` in `email-sender.js`:
-    - "Signal of the week" block: top-confidence signal across all subscribed stores for this recipient (pick highest `confidence` from `computeSignalsFromDb()`). Signal type icons already defined in the email template system. Show signal type, flavor name, and one-line explanation.
-    - "Rarity spotlight" block: if any Ultra Rare or Rare flavor appears this week at a subscribed store, surface it with flavor name, avg gap days, and a "Set Alert" link. Pull from D1 snapshots with a `WHERE date BETWEEN ? AND ?` window.
-  - Both blocks are additive to the existing digest; no new endpoint or subscription schema changes.
+  **3. Recurring editorial email moments** -- `sendWeeklyDigestEmail()` in `email-sender.js` gains two new blocks: (1) `signalOfWeekBlock` — top signal (signals[0]) rendered with signal type label in a blue-bordered card above the existing signals section; (2) `raritySpotlightBlock` — `findRaritySpotlightForWeek()` in `alert-checker.js` queries D1 for week flavors with avg_gap_days > 60, passes result as `raritySpotlight` param, rendered in a purple-bordered card with Set Alert link. Both blocks are additive; no schema changes. (2026-02-27)
 
-  **4. ML confidence gates (already shipped — document the policy)**
-  - Certainty tiers (`certainty.js`) already enforce: Confirmed (score cap 1.0), Watch (0.7), Estimated (0.5), None (0.0).
-  - `MIN_PROBABILITY = 0.02` (~3x random), `MIN_HISTORY_DEPTH = 14` days, `MAX_FORECAST_AGE_HOURS = 168`.
-  - Below these thresholds the result is NONE, not a misleading Estimated. This is the policy; no code changes needed.
-  - Document in `ARCHITECTURE.md` Decision Layer section. Revisit threshold values only if Estimated accuracy data from `scripts/evaluate_forecasts.py` shows systematic bias.
+  **4. ML confidence gates (already shipped — document the policy)** -- Certainty thresholds (`MIN_PROBABILITY = 0.02`, `MIN_HISTORY_DEPTH = 14`, `MAX_FORECAST_AGE_HOURS = 168`) documented in `ARCHITECTURE.md` Decision Layer section. (2026-02-27)
+
+- [ ] **Greenfield target architecture: formalize layer discipline** -- `ARCHITECTURE.md` now documents target state, current gaps, and migration rule. Current gaps: rarity query inline in alert-checker (move to flavor-stats.js), brand-specific locator logic in planner.js (multi-brand abstraction when needed). See ARCHITECTURE.md "Greenfield Target Architecture" section.
 
 **KPI system (formalize weekly operating cadence):**
 - North-star: weekly users who take a planning action (alert subscribe, calendar subscribe, or directions click)
@@ -197,7 +181,7 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 - [x] **custard-scriptable emergency fix** -- fixed base URL (`workers.dev` -> `custard.chriskaschner.com`), endpoint (`/api/flavors` -> `/api/v1/flavors`), and brand color (`#0057B8` -> `#005696`). Also fixed same workers.dev URL bug in `widgets/custard-today.js` (the canonical widget widget.html links to). `Custard Calendar.js` folded into `widgets/custard-scriptable.js`; custard-scriptable repo is now retired. (2026-02-26)
 - [x] **Scriptable widget UX polish** -- cone colors aligned to `#D2691E`/`#F5DEB3` canonical palette; `w.url` added to all builders in both custard-scriptable.js and custard-today.js so tapping opens `custard.chriskaschner.com?store=SLUG`; multi-store falls back to root. (2026-02-27)
 - [x] **custard-tidbyt contract smoke test** -- `tests/test_api_contract.py` in custard-tidbyt: 9 live smoke tests covering /api/v1/flavors (title/date shape), /api/v1/stores (slug/name shape), API-Version header. Fixed WORKER_BASE from workers.dev to custard.chriskaschner.com. SKIP_LIVE_API=1 to skip in offline CI. (2026-02-26)
-- [ ] **Tidbyt daily deploy not running** -- the daily push workflow is not deploying to the device each day. Investigate: check `.github/workflows/` for the Tidbyt cron job, verify `TIDBYT_API_TOKEN` and `TIDBYT_DEVICE_ID` secrets are set in repo settings, check recent Actions run history for failures or skips, confirm `deploy_tidbyt.sh` / `main.py --tidbyt-only` path is wired correctly.
+- [x] **Tidbyt daily deploy not running** -- root cause: `TIDBYT_API_TOKEN` and `TIDBYT_DEVICE_ID` secrets were not set in GitHub repo. `main.py` was also swallowing the missing-token error and exiting 0 (silent false success). Fixed: secrets added, `device_id` moved from hardcoded workflow value to `TIDBYT_DEVICE_ID` secret, `--tidbyt-only` now exits 1 on push failure. (2026-02-27)
 
 ## Now -- Licensing and Testing
 

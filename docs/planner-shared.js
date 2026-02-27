@@ -15,6 +15,8 @@ var CustardPlanner = (function () {
 
   var WORKER_BASE = 'https://custard.chriskaschner.com';
   var PRIMARY_STORE_KEY = 'custard-primary';
+  var FAVORITES_KEY = 'custard-favorites';
+  var MAX_FAVORITES = 10;
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -89,6 +91,56 @@ var CustardPlanner = (function () {
       } else {
         localStorage.setItem(PRIMARY_STORE_KEY, clean);
       }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function getSavedStore() {
+    return getPrimaryStoreSlug();
+  }
+
+  function setSavedStore(slug) {
+    return setPrimaryStoreSlug(slug);
+  }
+
+  function getFavorites() {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      var raw = localStorage.getItem(FAVORITES_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(function (f) { return f && typeof f === 'string'; });
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function addFavorite(title) {
+    if (!title || typeof title !== 'string') return false;
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      var clean = title.trim();
+      if (!clean) return false;
+      var favs = getFavorites();
+      if (favs.indexOf(clean) !== -1) return false;
+      if (favs.length >= MAX_FAVORITES) return false;
+      favs.push(clean);
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function removeFavorite(title) {
+    if (!title) return false;
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      var favs = getFavorites().filter(function (f) { return f !== title; });
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
       return true;
     } catch (_) {
       return false;
@@ -932,6 +984,11 @@ var CustardPlanner = (function () {
     escapeHtml: escapeHtml,
     getPrimaryStoreSlug: getPrimaryStoreSlug,
     setPrimaryStoreSlug: setPrimaryStoreSlug,
+    getSavedStore: getSavedStore,
+    setSavedStore: setSavedStore,
+    getFavorites: getFavorites,
+    addFavorite: addFavorite,
+    removeFavorite: removeFavorite,
     rarityLabelFromGapDays: rarityLabelFromGapDays,
     rarityLabelFromPercentile: rarityLabelFromPercentile,
     rarityLabelFromRank: rarityLabelFromRank,

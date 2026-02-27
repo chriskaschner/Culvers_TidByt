@@ -300,6 +300,15 @@
         const resp = await fetch(WORKER_BASE + '/api/v1/flavors/catalog');
         const data = await resp.json();
         flavorCatalog = data.flavors || [];
+        // Pre-fill saved favorites
+        const saved = CustardPlanner.getFavorites ? CustardPlanner.getFavorites() : [];
+        for (const title of saved) {
+          if (selectedFlavors.size < 10) selectedFlavors.add(title);
+        }
+        if (selectedFlavors.size > 0) {
+          renderSelectedFlavors();
+          updateEmailSection();
+        }
       } catch (err) {
         console.error('Failed to load flavor catalog:', err);
       }
@@ -410,6 +419,7 @@
     function addFlavor(title) {
       if (selectedFlavors.size >= 10) return;
       selectedFlavors.add(title);
+      if (CustardPlanner.addFavorite) CustardPlanner.addFavorite(title);
       flavorSearch.value = '';
       flavorResults.hidden = true;
       renderSelectedFlavors();
@@ -418,6 +428,7 @@
 
     function removeFlavor(title) {
       selectedFlavors.delete(title);
+      if (CustardPlanner.removeFavorite) CustardPlanner.removeFavorite(title);
       renderSelectedFlavors();
       updateEmailSection();
     }

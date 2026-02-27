@@ -158,3 +158,50 @@ Visual asset catalog (formats, resolutions, color profiles) lives at `docs/ASSET
 | 3 | **CI asymmetry** — Worker has 595+ tests; Python pipeline has pytest but no live-API integration gate | `ci.yml` runs both `cd worker && npm test` and `uv run pytest` on every push/PR to main | Mitigated |
 | 4 | **Doc drift** — CLAUDE.md and inline comments are sole architecture truth | This file (`ARCHITECTURE.md`) is now the canonical layer contract; required update before any cross-layer interface change | Mitigated |
 | 5 | **Monolithic Worker** — index.js is one deploy unit; a bad handler can silently kill the platform | Decomposed into route-today.js, route-calendar.js, route-nearby.js, kv-cache.js, brand-registry.js; per-file coverage thresholds enforced in vitest.config.js; Worker Services would require paid plan, not pursued now | Partial |
+
+---
+
+## Greenfield Target Architecture
+
+The goal is clean layer separation: Presentation never touches storage, Decision layer has no I/O, Data layer has no scoring logic. The current codebase is 70–80% there. This section documents the target state and the gap.
+
+### Target State
+
+**Presentation Layer (`docs/`)**
+- All state lives in `localStorage` via `CustardPlanner` helpers (`getSavedStore`, `getFavorites`, etc.)
+- All API calls go through `WORKER_BASE` — no direct upstream fetches from browser
+- Zero business logic: rendering, event handling, and CTA assembly only
+- `planner-shared.js` is the only shared module; no cross-page duplication
+
+**Decision Layer (`worker/src/`)**
+- `planner.js`, `certainty.js`, `signals.js`, `reliability.js` are pure functions — no I/O
+- All scoring logic lives here; route handlers only marshal I/O and call into this layer
+- The certainty policy is encoded in constants, not hidden in conditional branches:
+  - `MIN_PROBABILITY = 0.02` (~3x random baseline)
+  - `MIN_HISTORY_DEPTH = 14` days
+  - `MAX_FORECAST_AGE_HOURS = 168` (7 days)
+  - Below any threshold → `NONE`, not a misleading `Estimated`
+- New decision logic always gets a unit test before it touches a route handler
+
+**Data Layer (`worker/src/`)**
+- `kv-cache.js` owns all KV reads/writes; no other module writes to KV
+- `brand-registry.js` owns all upstream fetchers; no route handler fetches upstream directly
+- D1 queries are encapsulated in module-level helpers; no inline SQL in route handlers
+
+### Current Gaps (incremental migration targets)
+
+| Gap | Location | Migration path |
+|---|---|---|
+| Rarity query inline in `alert-checker.js` | `findRaritySpotlightForWeek()` | Move to a `flavor-stats.js` module with a named export |
+| Brand-specific logic in `index.js` (`transformLocatorData`) | `worker/src/index.js` | Extract to `planner.js` or `store-index.js` |
+| Calendar preview JS inline in `index.html` | `docs/index.html` | Move to `planner-shared.js` if reused; leave inline if not |
+| Planner hits Culver's upstream directly | `worker/src/planner.js` | Add multi-brand locator abstraction when other brands need it |
+
+### Migration rule
+
+**Incremental migration, not rewrite.** When touching a file:
+1. Move any scoring/decision logic into the Decision layer.
+2. Move any KV/D1 I/O into named helpers in the Data layer.
+3. Do not rewrite working code; only move boundaries.
+
+A PR that adds new Decision-layer logic without tests, or adds I/O to an existing Decision-layer module, requires explicit justification in the PR description.
