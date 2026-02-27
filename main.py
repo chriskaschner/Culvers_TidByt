@@ -303,7 +303,10 @@ def main():
 
     # Step 3: Tidbyt render + push
     if run_tidbyt:
-        step_tidbyt_render_push(cache_data, config, dry_run=args.tidbyt_dry_run)
+        ok = step_tidbyt_render_push(cache_data, config, dry_run=args.tidbyt_dry_run)
+        if not ok and args.tidbyt_only:
+            print("ERROR: Tidbyt push failed", file=sys.stderr)
+            sys.exit(1)
 
     logger.info("=" * 60)
     logger.info("Done!")
