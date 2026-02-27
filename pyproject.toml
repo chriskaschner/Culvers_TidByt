@@ -28,3 +28,9 @@ analytics = [
 dev = [
     "pillow>=12.1.1",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

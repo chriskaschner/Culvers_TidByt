@@ -41,4 +41,5 @@ jobs:
       - name: Run Python tests
         env:
           SKIP_LIVE_API: '1'
+          SKIP_BROWSER_TESTS: '1'
         run: uv run pytest tests/ scripts/tests/ analytics/tests/ -v

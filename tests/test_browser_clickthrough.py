@@ -7,6 +7,13 @@ import socket
 import subprocess
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("SKIP_BROWSER_TESTS") == "1",
+    reason="SKIP_BROWSER_TESTS=1 — no Chrome in this environment",
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKER_DIR = REPO_ROOT / "worker"
 PLAYWRIGHT_CONFIG = WORKER_DIR / "playwright.config.mjs"

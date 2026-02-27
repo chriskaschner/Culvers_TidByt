@@ -8,7 +8,7 @@ from analytics.data_loader import DEFAULT_DB, load_clean
 from analytics.evaluate import compare_models, evaluate_model, time_split
 from analytics.predict import FrequencyRecencyModel, MarkovRecencyModel
 
-pytestmark = pytest.mark.skipif(
+_DB_SKIPIF = pytest.mark.skipif(
     not DEFAULT_DB.exists(), reason=f"Backfill database not found at {DEFAULT_DB}",
 )
 
@@ -32,6 +32,8 @@ def markov_model(train_test):
 
 
 class TestTimeSplit:
+    pytestmark = _DB_SKIPIF
+
     def test_no_leakage(self, train_test):
         train, test = train_test
         assert train["flavor_date"].max() < pd.Timestamp("2026-01-01")
@@ -43,6 +45,8 @@ class TestTimeSplit:
 
 
 class TestFrequencyRecencyModel:
+    pytestmark = _DB_SKIPIF
+
     def test_predict_proba_sums_to_one(self, freq_model):
         assert abs(freq_model.predict_proba("mt-horeb", pd.Timestamp("2026-02-15")).sum() - 1.0) < 1e-10
 
@@ -58,6 +62,8 @@ class TestFrequencyRecencyModel:
 
 
 class TestMarkovRecencyModel:
+    pytestmark = _DB_SKIPIF
+
     def test_predict_proba_sums_to_one(self, markov_model):
         assert abs(markov_model.predict_proba("mt-horeb", pd.Timestamp("2026-02-15")).sum() - 1.0) < 1e-10
 
@@ -66,6 +72,8 @@ class TestMarkovRecencyModel:
 
 
 class TestEvaluation:
+    pytestmark = _DB_SKIPIF
+
     def test_evaluate_frequency_model(self, freq_model, train_test):
         _, test = train_test
         m = evaluate_model(freq_model, test, max_samples=100)
@@ -185,3 +193,30 @@ class TestDowSeasonalBonuses:
         # Predict for a Saturday in July (both DoW and seasonal bonuses may fire)
         proba = model.predict_proba("test-store", pd.Timestamp("2025-07-05"))
         assert abs(proba.sum() - 1.0) < 1e-10, f"Probabilities sum to {proba.sum()}, expected 1.0"
+
+    def test_seasonal_window_wraps_january_to_include_february(self):
+        """January seasonal window should include Dec/Jan/Feb (not Nov/Dec/Jan)."""
+        entries = [
+            ("WinterFlavor", "2025-12-10"),
+            ("WinterFlavor", "2025-12-17"),
+            ("WinterFlavor", "2026-01-07"),
+            ("WinterFlavor", "2026-01-14"),
+            ("WinterFlavor", "2026-02-04"),
+            ("WinterFlavor", "2026-02-11"),
+            ("OffWindowFlavor", "2025-11-05"),
+            ("OffWindowFlavor", "2025-11-12"),
+            ("OffWindowFlavor", "2025-11-19"),
+            ("OffWindowFlavor", "2025-11-26"),
+            ("OffWindowFlavor", "2025-11-28"),
+            ("OffWindowFlavor", "2025-11-30"),
+        ]
+        df = _make_synthetic_df("test-store", entries)
+        model = FrequencyRecencyModel()
+        model.fit(df)
+
+        historical = df[df["store_slug"] == "test-store"]
+        jan_bonuses = model._compute_seasonal_bonus(historical, 1)  # January target
+
+        assert jan_bonuses.get("WinterFlavor", 0.0) > jan_bonuses.get("OffWindowFlavor", 0.0), (
+            "Expected Jan window to reward Dec/Jan/Feb flavor more than Nov-only flavor"
+        )
