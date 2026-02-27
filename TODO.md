@@ -195,6 +195,7 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 Sibling repositories that depend on the Worker API. Breakages here are silent user-facing failures.
 
 - [x] **custard-scriptable emergency fix** -- fixed base URL (`workers.dev` -> `custard.chriskaschner.com`), endpoint (`/api/flavors` -> `/api/v1/flavors`), and brand color (`#0057B8` -> `#005696`). Also fixed same workers.dev URL bug in `widgets/custard-today.js` (the canonical widget widget.html links to). `Custard Calendar.js` folded into `widgets/custard-scriptable.js`; custard-scriptable repo is now retired. (2026-02-26)
+- [ ] **Scriptable widget UX polish** -- (1) color consistency pass: audit all colors against canonical `#005696` brand blue and `#005696`/`#D2691E` palette; (2) tap action: tapping the widget should open `https://custard.chriskaschner.com?store=<slug>` (or the correct store deep-link) in Safari so the user lands on flavor details for the selected store(s). Use Scriptable's `widget.url` for single-store or `item.url` per row for multi-store layouts.
 - [x] **custard-tidbyt contract smoke test** -- `tests/test_api_contract.py` in custard-tidbyt: 9 live smoke tests covering /api/v1/flavors (title/date shape), /api/v1/stores (slug/name shape), API-Version header. Fixed WORKER_BASE from workers.dev to custard.chriskaschner.com. SKIP_LIVE_API=1 to skip in offline CI. (2026-02-26)
 
 ## Now -- Licensing and Testing
