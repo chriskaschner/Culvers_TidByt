@@ -197,6 +197,7 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 - [x] **custard-scriptable emergency fix** -- fixed base URL (`workers.dev` -> `custard.chriskaschner.com`), endpoint (`/api/flavors` -> `/api/v1/flavors`), and brand color (`#0057B8` -> `#005696`). Also fixed same workers.dev URL bug in `widgets/custard-today.js` (the canonical widget widget.html links to). `Custard Calendar.js` folded into `widgets/custard-scriptable.js`; custard-scriptable repo is now retired. (2026-02-26)
 - [x] **Scriptable widget UX polish** -- cone colors aligned to `#D2691E`/`#F5DEB3` canonical palette; `w.url` added to all builders in both custard-scriptable.js and custard-today.js so tapping opens `custard.chriskaschner.com?store=SLUG`; multi-store falls back to root. (2026-02-27)
 - [x] **custard-tidbyt contract smoke test** -- `tests/test_api_contract.py` in custard-tidbyt: 9 live smoke tests covering /api/v1/flavors (title/date shape), /api/v1/stores (slug/name shape), API-Version header. Fixed WORKER_BASE from workers.dev to custard.chriskaschner.com. SKIP_LIVE_API=1 to skip in offline CI. (2026-02-26)
+- [ ] **Tidbyt daily deploy not running** -- the daily push workflow is not deploying to the device each day. Investigate: check `.github/workflows/` for the Tidbyt cron job, verify `TIDBYT_API_TOKEN` and `TIDBYT_DEVICE_ID` secrets are set in repo settings, check recent Actions run history for failures or skips, confirm `deploy_tidbyt.sh` / `main.py --tidbyt-only` path is wired correctly.
 
 ## Now -- Licensing and Testing
 
