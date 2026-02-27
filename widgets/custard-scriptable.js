@@ -118,7 +118,7 @@ function drawConeImage(size) {
   dc.opaque = false;
   dc.respectScreenScale = true;
 
-  // Cone (triangle)
+  // Cone (triangle) — #D2691E matches the Worker SVG renderer and custard-today.js
   const conePath = new Path();
   const coneTop = h * 0.45;
   const coneBottom = h * 0.95;
@@ -129,10 +129,10 @@ function drawConeImage(size) {
   conePath.addLine(new Point(centerX, coneBottom));
   conePath.closeSubpath();
   dc.addPath(conePath);
-  dc.setFillColor(new Color("#D4A843"));
+  dc.setFillColor(new Color("#D2691E"));
   dc.fillPath();
 
-  // Scoop
+  // Scoop — #F5DEB3 (vanilla/wheat) matches custard-today.js default scoopColor()
   const scoopRadius = w * 0.3;
   const scoopCenterY = coneTop - scoopRadius * 0.4;
   const scoopRect = new Rect(
@@ -141,11 +141,11 @@ function drawConeImage(size) {
     scoopRadius * 2,
     scoopRadius * 2
   );
-  dc.setFillColor(new Color("#FFF5CC"));
+  dc.setFillColor(new Color("#F5DEB3"));
   dc.fillEllipse(scoopRect);
 
   // Scoop outline
-  dc.setStrokeColor(new Color("#D4A843", 0.4));
+  dc.setStrokeColor(new Color("#D2691E", 0.4));
   dc.setLineWidth(1);
   dc.strokeEllipse(scoopRect);
 
@@ -158,7 +158,7 @@ function buildSmall(data, slug) {
   const w = new ListWidget();
   w.backgroundColor = bgColor();
   w.setPadding(12, 14, 12, 14);
-  w.url = `https://www.culvers.com/restaurants/${slug}`;
+  w.url = `https://custard.chriskaschner.com?store=${encodeURIComponent(slug)}`;
 
   // Header row with cone
   const headerStack = w.addStack();
@@ -212,7 +212,7 @@ function buildMedium(data, slug) {
   const w = new ListWidget();
   w.backgroundColor = bgColor();
   w.setPadding(12, 16, 12, 16);
-  w.url = `https://www.culvers.com/restaurants/${slug}`;
+  w.url = `https://custard.chriskaschner.com?store=${encodeURIComponent(slug)}`;
 
   // Header row
   const headerStack = w.addStack();

@@ -181,6 +181,7 @@ async function buildSmall() {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
+  w.url = "https://custard.chriskaschner.com?store=" + encodeURIComponent(slug);
 
   // Branded header bar: date LEFT, city RIGHT
   var header = w.addStack();
@@ -273,6 +274,7 @@ async function buildMedium() {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
+  w.url = "https://custard.chriskaschner.com?store=" + encodeURIComponent(slug);
 
   // Branded header bar: "This Week" LEFT, city RIGHT
   var header = w.addStack();
@@ -362,6 +364,7 @@ async function buildMultiStore(slugs) {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
+  w.url = "https://custard.chriskaschner.com";
 
   // Branded header bar: "Today" LEFT only
   var header = w.addStack();
