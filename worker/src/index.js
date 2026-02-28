@@ -24,6 +24,7 @@ import { handleLeaderboardRoute } from './leaderboard.js';
 import { handleSocialCard } from './social-card.js';
 import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
+import { sendWeeklyAnalyticsReport } from './report-sender.js';
 import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
 import { handleReliabilityRoute, getReliabilityBatch, refreshReliabilityBatch } from './reliability.js';
 import { handlePlan } from './planner.js';
@@ -508,14 +509,21 @@ export default {
     const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors, false, env);
     const start = Date.now();
 
+    // Monday 2 PM UTC cron → weekly analytics report email
+    const isAnalyticsReport = event.cron === '0 14 * * 1';
     // Sunday 2 PM UTC cron → weekly digest for weekly subscribers
     const isWeekly = event.cron === '0 14 * * 7';
-    const handler = isWeekly ? 'weekly_digest' : 'daily_alerts';
+    const handler = isAnalyticsReport ? 'analytics_report' : isWeekly ? 'weekly_digest' : 'daily_alerts';
 
     const run = async () => {
-      const result = isWeekly
-        ? await checkWeeklyDigests(env, fetchFn)
-        : await checkAlerts(env, fetchFn);
+      const result = isAnalyticsReport
+        ? await sendWeeklyAnalyticsReport(env)
+        : isWeekly
+          ? await checkWeeklyDigests(env, fetchFn)
+          : await checkAlerts(env, fetchFn);
+
+      // Phase 2 + 3: Snapshot harvest and reliability refresh (skip on analytics report cron)
+      if (isAnalyticsReport) return result;
 
       // Phase 2: Snapshot harvest (independent of email config)
       try {
