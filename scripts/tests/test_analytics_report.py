@@ -7,6 +7,9 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
+import json
+import urllib.error
+
 import pytest
 
 _project_root = str(Path(__file__).resolve().parents[2])
@@ -14,11 +17,13 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from scripts.analytics_report import (
+    build_report_text,
     fetch_json,
     fmt_row,
     pct,
     report_events,
     report_quiz,
+    send_report_email,
     write_baseline,
 )
 
@@ -166,3 +171,89 @@ class TestWriteBaseline:
 
         assert worklog.exists()
         assert "Measurement Baseline" in worklog.read_text(encoding="utf-8")
+
+
+class TestBuildReportText:
+    def _events(self):
+        return {
+            "window_days": 7,
+            "totals": {"events": 50, "cta_clicks": 10, "popup_opens": 5,
+                       "signal_views": 3, "quiz_completions": 2,
+                       "onboarding_views": 4, "onboarding_clicks": 1},
+        }
+
+    def _quiz(self):
+        return {
+            "window_days": 7,
+            "totals": {"completions": 2, "matched_in_radius": 1,
+                       "matched_outside_radius": 0, "no_match": 1},
+        }
+
+    def test_returns_string(self):
+        text = build_report_text(self._events(), self._quiz(), 7)
+        assert isinstance(text, str)
+
+    def test_contains_header(self):
+        text = build_report_text(self._events(), self._quiz(), 7)
+        assert "Custard Telemetry Report" in text
+
+    def test_contains_event_count(self):
+        text = build_report_text(self._events(), self._quiz(), 7)
+        assert "50" in text
+
+    def test_empty_data_does_not_raise(self):
+        text = build_report_text({}, {}, 7)
+        assert isinstance(text, str)
+
+
+class TestSendReportEmail:
+    def _mock_response(self, response_data: dict):
+        """Return a context-manager mock for urllib.request.urlopen."""
+        import unittest.mock as mock
+        encoded = json.dumps(response_data).encode()
+        cm = mock.MagicMock()
+        cm.__enter__ = mock.Mock(return_value=cm)
+        cm.__exit__ = mock.Mock(return_value=False)
+        cm.read = mock.Mock(return_value=encoded)
+        return cm
+
+    def test_calls_resend_endpoint(self):
+        from unittest.mock import patch, MagicMock
+        cm = self._mock_response({"id": "abc123"})
+        with patch("urllib.request.urlopen", return_value=cm) as mock_open:
+            send_report_email("Report body", "test@example.com", "fake-key")
+        mock_open.assert_called_once()
+        req = mock_open.call_args[0][0]
+        assert "api.resend.com" in req.full_url
+
+    def test_sends_correct_recipient(self):
+        from unittest.mock import patch
+        cm = self._mock_response({"id": "abc123"})
+        with patch("urllib.request.urlopen", return_value=cm) as mock_open:
+            send_report_email("body", "user@example.com", "key")
+        req = mock_open.call_args[0][0]
+        payload = json.loads(req.data.decode())
+        assert "user@example.com" in payload["to"]
+
+    def test_sends_correct_body_text(self):
+        from unittest.mock import patch
+        cm = self._mock_response({"id": "abc123"})
+        with patch("urllib.request.urlopen", return_value=cm) as mock_open:
+            send_report_email("my report text", "x@y.com", "key")
+        req = mock_open.call_args[0][0]
+        payload = json.loads(req.data.decode())
+        assert payload["text"] == "my report text"
+
+    def test_raises_on_http_error(self):
+        from unittest.mock import patch
+        from io import BytesIO
+        err = urllib.error.HTTPError(
+            url="https://api.resend.com/emails",
+            code=422,
+            msg="Unprocessable",
+            hdrs={},
+            fp=BytesIO(b"invalid from address"),
+        )
+        with patch("urllib.request.urlopen", side_effect=err):
+            with pytest.raises(RuntimeError, match="Resend HTTP 422"):
+                send_report_email("body", "x@y.com", "bad-key")

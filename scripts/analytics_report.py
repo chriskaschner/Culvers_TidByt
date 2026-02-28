@@ -6,17 +6,21 @@ Queries:
   GET /api/v1/quiz/personality-index?days=N  — quiz completion + archetype distribution
 
 Requires WORKER_API_TOKEN environment variable (or --token flag).
+When --email is used, also requires RESEND_API_KEY (or --resend-key).
 
 Usage:
   uv run python scripts/analytics_report.py
   uv run python scripts/analytics_report.py --days 30
   uv run python scripts/analytics_report.py --baseline  # write to WORKLOG.md
+  uv run python scripts/analytics_report.py --email me@example.com
   uv run python scripts/analytics_report.py --token <token>
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import sys
@@ -27,6 +31,7 @@ from pathlib import Path
 
 WORKER_BASE = "https://custard.chriskaschner.com"
 WORKLOG_PATH = Path(__file__).resolve().parent.parent / "WORKLOG.md"
+REPORT_FROM_EMAIL = "reports@custard-calendar.com"
 
 
 def fetch_json(url: str, token: str) -> dict:
@@ -130,6 +135,49 @@ def report_quiz(data: dict) -> None:
             print(fmt_row(row.get("quiz_id") or "(none)", row.get("count", 0)))
 
 
+def build_report_text(events_data: dict, quiz_data: dict, days: int) -> str:
+    """Capture the full report as a string (same output as printing to stdout)."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        print(f"Custard Telemetry Report  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+        print(f"Window: last {days} days  |  Source: {WORKER_BASE}")
+        if events_data:
+            report_events(events_data)
+        if quiz_data:
+            report_quiz(quiz_data)
+        print()
+    return buf.getvalue()
+
+
+def send_report_email(body: str, to: str, resend_key: str) -> None:
+    """Send the report text as a plain-text email via Resend."""
+    subject = f"Custard Calendar Report — {datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+    payload = json.dumps({
+        "from": REPORT_FROM_EMAIL,
+        "to": [to],
+        "subject": subject,
+        "text": body,
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {resend_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+        print(f"Report emailed to {to}  (id={result.get('id')})")
+    except urllib.error.HTTPError as exc:
+        err_body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Resend HTTP {exc.code}: {err_body}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Network error sending email: {exc.reason}") from exc
+
+
 def write_baseline(events_data: dict, quiz_data: dict, days: int) -> None:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     t = events_data.get("totals", {})
@@ -166,10 +214,16 @@ def main() -> None:
     parser.add_argument("--days", type=int, default=7, help="Lookback window in days (default: 7)")
     parser.add_argument("--token", default=os.environ.get("WORKER_API_TOKEN"), help="API bearer token")
     parser.add_argument("--baseline", action="store_true", help="Append baseline snapshot to WORKLOG.md")
+    parser.add_argument("--email", default=None, metavar="ADDRESS", help="Email address to send report to")
+    parser.add_argument("--resend-key", default=os.environ.get("RESEND_API_KEY"), help="Resend API key (or RESEND_API_KEY env var)")
     args = parser.parse_args()
 
     if not args.token:
         print("Error: WORKER_API_TOKEN env var or --token required.", file=sys.stderr)
+        sys.exit(1)
+
+    if args.email and not args.resend_key:
+        print("Error: RESEND_API_KEY env var or --resend-key required when using --email.", file=sys.stderr)
         sys.exit(1)
 
     events_url = f"{WORKER_BASE}/api/v1/events/summary?days={args.days}"
@@ -195,6 +249,10 @@ def main() -> None:
 
     if args.baseline:
         write_baseline(events_data, quiz_data, args.days)
+
+    if args.email:
+        text = build_report_text(events_data, quiz_data, args.days)
+        send_report_email(text, args.email, args.resend_key)
 
     print()
 

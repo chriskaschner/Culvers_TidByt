@@ -1,0 +1,31 @@
+name: Weekly Analytics Report
+
+on:
+  schedule:
+    # Every Monday at 9am CT (14:00 UTC; adjusts with DST — runs 8am CDT, 9am CST)
+    - cron: '0 14 * * 1'
+  workflow_dispatch:  # allow manual runs from the Actions tab
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Send weekly analytics report
+        env:
+          WORKER_API_TOKEN: ${{ secrets.WORKER_API_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_TO: ${{ secrets.REPORT_EMAIL_TO }}
+        run: |
+          uv run python scripts/analytics_report.py \
+            --days 7 \
+            --email "$REPORT_EMAIL_TO"
