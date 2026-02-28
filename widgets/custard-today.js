@@ -433,11 +433,15 @@ async function buildMultiStore(slugs) {
 
 // --- Entry point ---
 
-var widgetSize = (config.widgetFamily || "small");
+// When running in-app (not on home screen), config.widgetFamily is null.
+// Default to "medium" for multi-store scripts so the in-app preview shows
+// the 3-store view instead of the small single-store view.
+var isMultiMode = typeof MODE !== "undefined" && MODE === "multi";
+var widgetSize = config.widgetFamily || (isMultiMode ? "medium" : "small");
 var widget;
 
 if (widgetSize === "medium" || widgetSize === "large") {
-  if (typeof MODE !== "undefined" && MODE === "multi") {
+  if (isMultiMode) {
     widget = await buildMultiStore(slugs);
   } else {
     widget = await buildMedium();
@@ -450,7 +454,7 @@ if (config.runsInWidget) {
   Script.setWidget(widget);
 } else {
   // Preview when running in-app
-  var isMedium = widgetSize === "medium" || (typeof MODE !== "undefined" && MODE === "multi");
+  var isMedium = widgetSize === "medium" || isMultiMode;
   if (isMedium) {
     widget.presentMedium();
   } else {
