@@ -178,3 +178,135 @@ describe('handleEventsRoute fallback', () => {
     expect(res).toBeNull();
   });
 });
+
+describe('new event types (page_view, filter_toggle, widget_tap, store_select)', () => {
+  it('accepts page_view event with referrer and device_type', async () => {
+    const inserts = [];
+    const db = createMockD1((ctx) => {
+      if (ctx.method === 'run') inserts.push(ctx);
+      return null;
+    });
+    const req = makeRequest('/api/v1/events', 'POST', {
+      event_type: 'page_view',
+      page: 'scoop',
+      referrer: 'https://example.com',
+      device_type: 'mobile',
+      page_load_id: 'pl_test123',
+    });
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events', url, req, { DB: db }, CORS);
+    expect(res.status).toBe(202);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(inserts).toHaveLength(1);
+    // referrer and device_type are at positions 10 and 11 (0-indexed)
+    const args = inserts[0].args;
+    expect(args[10]).toBe('https://example.com');
+    expect(args[11]).toBe('mobile');
+  });
+
+  it('accepts filter_toggle event', async () => {
+    const db = createMockD1((ctx) => ctx.method === 'run' ? { success: true } : null);
+    const req = makeRequest('/api/v1/events', 'POST', {
+      event_type: 'filter_toggle',
+      page: 'scoop',
+      action: 'chocolate:on',
+    });
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events', url, req, { DB: db }, CORS);
+    expect(res.status).toBe(202);
+  });
+
+  it('accepts widget_tap event', async () => {
+    const db = createMockD1((ctx) => ctx.method === 'run' ? { success: true } : null);
+    const req = makeRequest('/api/v1/events', 'POST', {
+      event_type: 'widget_tap',
+      page: 'scoop',
+      action: 'mt-horeb,kopps-brookfield',
+    });
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events', url, req, { DB: db }, CORS);
+    expect(res.status).toBe(202);
+  });
+
+  it('accepts store_select event', async () => {
+    const db = createMockD1((ctx) => ctx.method === 'run' ? { success: true } : null);
+    const req = makeRequest('/api/v1/events', 'POST', {
+      event_type: 'store_select',
+      page: 'index',
+      store_slug: 'mt-horeb',
+    });
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events', url, req, { DB: db }, CORS);
+    expect(res.status).toBe(202);
+  });
+
+  it('rejects unknown device_type — stores null', async () => {
+    const inserts = [];
+    const db = createMockD1((ctx) => {
+      if (ctx.method === 'run') inserts.push(ctx);
+      return null;
+    });
+    const req = makeRequest('/api/v1/events', 'POST', {
+      event_type: 'page_view',
+      page: 'scoop',
+      device_type: 'smartwatch',
+    });
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events', url, req, { DB: db }, CORS);
+    expect(res.status).toBe(202);
+    expect(inserts[0].args[11]).toBeNull();
+  });
+});
+
+describe('summary includes new totals and breakdowns', () => {
+  function makeSummaryDb() {
+    return createMockD1(({ sql, method }) => {
+      if (method === 'first') {
+        return {
+          events: 50, cta_clicks: 10, signal_views: 5, popup_opens: 3,
+          onboarding_views: 0, onboarding_clicks: 0, quiz_completions: 2,
+          page_views: 25, store_selects: 4, widget_taps: 1, filter_toggles: 8,
+        };
+      }
+      if (method === 'all' && sql.includes('GROUP BY device_type')) {
+        return { results: [{ device_type: 'mobile', count: 18 }, { device_type: 'desktop', count: 7 }] };
+      }
+      if (method === 'all' && sql.includes("event_type = 'page_view'") && sql.includes('GROUP BY referrer')) {
+        return { results: [{ referrer: 'https://google.com', count: 10 }, { referrer: '', count: 15 }] };
+      }
+      return { results: [] };
+    });
+  }
+
+  it('summary totals include page_views, store_selects, widget_taps, filter_toggles', async () => {
+    const req = makeRequest('/api/v1/events/summary');
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events/summary', url, req, { DB: makeSummaryDb() }, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.totals.page_views).toBe(25);
+    expect(body.totals.store_selects).toBe(4);
+    expect(body.totals.widget_taps).toBe(1);
+    expect(body.totals.filter_toggles).toBe(8);
+  });
+
+  it('summary includes by_device_type breakdown', async () => {
+    const req = makeRequest('/api/v1/events/summary');
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events/summary', url, req, { DB: makeSummaryDb() }, CORS);
+    const body = await res.json();
+    expect(Array.isArray(body.by_device_type)).toBe(true);
+    expect(body.by_device_type[0].device_type).toBe('mobile');
+    expect(body.by_device_type[0].count).toBe(18);
+  });
+
+  it('summary includes top_referrers from page_view events', async () => {
+    const req = makeRequest('/api/v1/events/summary');
+    const url = new URL(req.url);
+    const res = await handleEventsRoute('/api/events/summary', url, req, { DB: makeSummaryDb() }, CORS);
+    const body = await res.json();
+    expect(Array.isArray(body.top_referrers)).toBe(true);
+    expect(body.top_referrers[0].referrer).toBe('https://google.com');
+  });
+});

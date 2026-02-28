@@ -181,7 +181,7 @@ async function buildSmall() {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
-  w.url = "https://custard.chriskaschner.com?store=" + encodeURIComponent(slug);
+  w.url = "https://custard.chriskaschner.com/scoop.html?stores=" + encodeURIComponent(slug);
 
   // Branded header bar: date LEFT, city RIGHT
   var header = w.addStack();
@@ -274,7 +274,7 @@ async function buildMedium() {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
-  w.url = "https://custard.chriskaschner.com?store=" + encodeURIComponent(slug);
+  w.url = "https://custard.chriskaschner.com/scoop.html?stores=" + encodeURIComponent(slug);
 
   // Branded header bar: "This Week" LEFT, city RIGHT
   var header = w.addStack();
@@ -364,7 +364,7 @@ async function buildMultiStore(slugs) {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
-  w.url = "https://custard.chriskaschner.com/multi.html?stores=" + validSlugs.join(",");
+  w.url = "https://custard.chriskaschner.com/scoop.html?stores=" + validSlugs.join(",");
 
   // Branded header bar: "Today" LEFT, first store city RIGHT (mirrors buildMedium)
   var header = w.addStack();

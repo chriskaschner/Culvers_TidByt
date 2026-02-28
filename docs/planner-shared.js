@@ -180,6 +180,12 @@ var CustardPlanner = (function () {
     onboarding_view: true,
     onboarding_click: true,
     quiz_complete: true,
+    page_view: true,
+    store_select: true,
+    filter_toggle: true,
+    widget_tap: true,
+    alert_form_view: true,
+    alert_subscribe_success: true,
   };
   var _ALLOWED_CERTAINTY = { confirmed: true, watch: true, estimated: true, none: true };
 
@@ -253,6 +259,24 @@ var CustardPlanner = (function () {
     } catch (_) {
       return false;
     }
+  }
+
+  /**
+   * Emit a page_view event with referrer and device_type.
+   * Call once per page load: CustardPlanner.emitPageView('scoop')
+   */
+  function emitPageView(pageName) {
+    var referrer = '';
+    try { referrer = document.referrer || ''; } catch (_) {}
+    var ua = '';
+    try { ua = navigator.userAgent || ''; } catch (_) {}
+    var deviceType = /Mobile|Android|iPhone|iPad|iPod/i.test(ua) ? 'mobile' : 'desktop';
+    emitInteractionEvent({
+      event_type: 'page_view',
+      page: pageName || 'unknown',
+      referrer: referrer,
+      device_type: deviceType,
+    });
   }
 
   function inferCtaAction(link) {
@@ -1020,6 +1044,7 @@ var CustardPlanner = (function () {
     alertPageUrl: alertPageUrl,
     actionCTAsHTML: actionCTAsHTML,
     emitInteractionEvent: emitInteractionEvent,
+    emitPageView: emitPageView,
     getPageLoadId: function() { return _pageLoadId; },
 
     // Signals
