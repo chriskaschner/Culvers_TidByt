@@ -207,10 +207,13 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 - Alert subscription funnel (view → intent → confirm)
 
 **Track 2 — Cloudflare Web Analytics beacon** (adds passive/complementary data)
-- [ ] **CF beacon on all docs pages** -- add Cloudflare Web Analytics `<script>` beacon tag to all 10 docs pages (index, map, radar, alerts, siri, calendar, quiz, widget, privacy, scoop). Requires: pull beacon token from Cloudflare dashboard (Zone > Analytics > Web Analytics > add site). No cookies, GDPR-compliant, bot-filtered at edge, free. Gives: time-on-page, bounce rate, full referrer chain, browser/OS breakdown, real unique visitor estimate (CF edge-level, not JS). Complements Track 1; does not replace it.
+- [x] **CF beacon on all docs pages** -- added Cloudflare Web Analytics beacon to all 11 docs pages (index, map, radar, alerts, siri, calendar, quiz, widget, privacy, scoop, forecast-map). Token: c050ff4e79d54b2abbb60587137d0bb2. No cookies, GDPR-compliant, bot-filtered. (2026-02-27)
 - Standard metrics Track 2 adds: bot-filtered traffic baseline, time-on-page, bounce rate per page, browser/OS distribution, more accurate unique visitor count.
 
 **Implementation order:** Track 1 page_view first (immediate visibility into who's there), then store_select, then Scoop events (after Scoop page is built), then Track 2 beacon (one-time config step, can be done anytime).
+
+**Track 3 — Automated weekly reporting**
+- [ ] **Weekly metrics digest** -- extend `analytics_report.py` to answer the 4 weekly signal questions: (1) alert subscriptions (count from D1 `alert_subscribe_success` events + `alert_subscribers` table); (2) widget tap slugs (`widget_tap` events grouped by store_slug, tells you if widget is actually used); (3) Scoop filter activity (`filter_toggle` events grouped by filter_name on page=scoop); (4) top referrer domain (normalize `top_referrers` array into domain buckets: direct/search/social/widget). Expose as `--weekly` flag on `analytics_report.py`. Should answer yes/no for each signal before showing counts.
 
 ## Now -- Licensing and Testing
 
