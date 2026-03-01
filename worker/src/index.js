@@ -33,6 +33,7 @@ import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
 import { getFlavorsCached } from './kv-cache.js';
+import { maybeSendOperatorAlert } from './operator-alerts.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
@@ -51,6 +52,7 @@ const ADMIN_EXACT_ROUTES = new Set([
   '/api/analytics/geo-eda',
   '/api/metrics/accuracy',
 ]);
+const PARSE_FAILURE_BRAND_KEYS = ['culvers', 'kopps', 'oscars', 'gilles', 'hefners', 'kraverz'];
 
 /**
  * Parse comma-separated origin lists from env.
@@ -314,6 +316,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     let snapshotErrorsToday = 0;
     let emailErrorsToday = 0;
     let payloadAnomaliesToday = 0;
+    const parseFailuresByBrandToday = {};
     if (env.FLAVOR_CACHE) {
       try {
         const pfRaw = await env.FLAVOR_CACHE.get(`meta:parse-fail-count:${today}`);
@@ -324,6 +327,10 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
         emailErrorsToday = eeRaw ? parseInt(eeRaw, 10) : 0;
         const paRaw = await env.FLAVOR_CACHE.get(`meta:payload-anomaly-count:${today}`);
         payloadAnomaliesToday = paRaw ? parseInt(paRaw, 10) : 0;
+        for (const brandKey of PARSE_FAILURE_BRAND_KEYS) {
+          const raw = await env.FLAVOR_CACHE.get(`meta:parse-fail-count:brand:${brandKey}:${today}`);
+          parseFailuresByBrandToday[brandKey] = raw ? parseInt(raw, 10) : 0;
+        }
       } catch { /* counter reads are best-effort */ }
     }
 
@@ -333,6 +340,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
         timestamp: new Date().toISOString(),
         checks,
         parse_failures_today: parseFailuresToday,
+        parse_failures_by_brand_today: parseFailuresByBrandToday,
         snapshot_errors_today: snapshotErrorsToday,
         email_errors_today: emailErrorsToday,
         payload_anomalies_today: payloadAnomaliesToday,
@@ -769,6 +777,16 @@ export default {
         } catch (err) {
           console.error(`Failed to persist cron result: ${err.message}`);
         }
+      }
+
+      // Phase 4: Operator push-alert checks (daily cron only).
+      try {
+        const opResult = await maybeSendOperatorAlert({ env, handler, result });
+        if (opResult?.reason === 'email_failed') {
+          console.error(`Operator alert email failed: ${opResult.error || 'unknown error'}`);
+        }
+      } catch (err) {
+        console.error(`Operator alert phase failed: ${err.message}`);
       }
 
       return result;

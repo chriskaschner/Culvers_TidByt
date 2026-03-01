@@ -9,6 +9,14 @@ const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_STORE_NAME_LENGTH = 120;
 
+export function brandCounterKey(brand) {
+  return String(brand || 'unknown')
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'unknown';
+}
+
 /**
  * KV writes should be best-effort only. Caller correctness cannot depend on put success.
  * @param {Object|null} kv - KV namespace binding
@@ -175,6 +183,7 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
   const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
   const isShared = Boolean(brandInfo.kvPrefix);
+  const brandKey = brandCounterKey(brandInfo.brand);
   // When isOverride is true, use the provided fetcher for all brands (testing)
   const fetcher = isOverride ? fetchFlavorsFn : brandInfo.fetcher;
 
@@ -191,11 +200,18 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   }
 
   // Cache miss: fetch from upstream
-  const upstreamData = await fetcher(slug);
+  const today = new Date().toISOString().slice(0, 10);
+  let upstreamData;
+  try {
+    upstreamData = await fetcher(slug);
+  } catch (err) {
+    await incrementDailyCounter(kv, 'meta:parse-fail-count', today);
+    await incrementDailyCounter(kv, `meta:parse-fail-count:brand:${brandKey}`, today);
+    throw err;
+  }
   const sanitized = sanitizeFlavorPayload(upstreamData);
   const data = sanitized.data;
 
-  const today = new Date().toISOString().slice(0, 10);
   if (sanitized.dropped > 0) {
     await incrementDailyCounter(kv, 'meta:payload-anomaly-count', today);
   }
@@ -204,6 +220,7 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   // upstream HTML parsing returned nothing (structure change or network blip).
   if (data.flavors && data.flavors.length === 0) {
     await incrementDailyCounter(kv, 'meta:parse-fail-count', today);
+    await incrementDailyCounter(kv, `meta:parse-fail-count:brand:${brandKey}`, today);
     // If upstream had data but all entries were rejected, do not cache/persist.
     if (sanitized.rawCount > 0) {
       throw new Error(`No valid flavor entries after sanitization for ${slug}`);

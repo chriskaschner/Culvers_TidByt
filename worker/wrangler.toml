@@ -20,11 +20,19 @@ ALLOWED_ORIGIN = "https://custard.chriskaschner.com"
 WORKER_BASE_URL = "https://custard.chriskaschner.com"
 # Email sender address for alerts. Requires verified domain in Resend.
 ALERT_FROM_EMAIL = "alerts@custard.chriskaschner.com"
+# Comma-separated priority slugs checked for forward coverage near month-end.
+OPERATOR_PRIORITY_SLUGS = "mt-horeb,verona,madison-todd-drive"
+# Operator alert thresholds (daily cron).
+OPERATOR_PARSE_FAILURE_THRESHOLD = "3"
+OPERATOR_PAYLOAD_ANOMALY_THRESHOLD = "10"
+OPERATOR_CONSECUTIVE_ERROR_DAYS = "2"
+OPERATOR_MONTH_END_LOOKAHEAD_DAYS = "5"
 
 # Secrets (set via: npx wrangler secret put <NAME>):
 #   RESEND_API_KEY — API key from resend.com for sending alert emails
 #   REPORT_EMAIL_TO — recipient address for the weekly analytics report email
 #   ADMIN_ACCESS_TOKEN — bearer token for admin-only analytics routes
+#   OPERATOR_EMAIL — recipient for cron operator alerts
 
 # KV namespace for caching flavor data + alert subscriptions (24h TTL)
 [[kv_namespaces]]

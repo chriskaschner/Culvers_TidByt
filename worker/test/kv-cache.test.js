@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getFlavorsCached, sanitizeFlavorPayload } from '../src/kv-cache.js';
+import { brandCounterKey, getFlavorsCached, sanitizeFlavorPayload } from '../src/kv-cache.js';
 
 function createMockKV(initial = {}) {
   const store = new Map(Object.entries(initial));
@@ -65,6 +65,27 @@ describe('getFlavorsCached sanitization flow', () => {
     const today = new Date().toISOString().slice(0, 10);
     expect(kv._store.get(`meta:payload-anomaly-count:${today}`)).toBe('1');
     expect(kv._store.get(`meta:parse-fail-count:${today}`)).toBe('1');
+    expect(kv._store.get(`meta:parse-fail-count:brand:culvers:${today}`)).toBe('1');
     expect(kv._store.has('flavors:mt-horeb')).toBe(false);
+  });
+
+  it('increments parse failure counters when upstream fetch throws', async () => {
+    const kv = createMockKV();
+    const fetcher = vi.fn(async () => {
+      throw new Error('No __NEXT_DATA__ script tag found in HTML');
+    });
+
+    await expect(getFlavorsCached('mt-horeb', kv, fetcher)).rejects.toThrow(/NEXT_DATA/);
+    const today = new Date().toISOString().slice(0, 10);
+    expect(kv._store.get(`meta:parse-fail-count:${today}`)).toBe('1');
+    expect(kv._store.get(`meta:parse-fail-count:brand:culvers:${today}`)).toBe('1');
+  });
+});
+
+describe('brandCounterKey', () => {
+  it('normalizes brand names to stable KV-safe keys', () => {
+    expect(brandCounterKey("Culver's")).toBe('culvers');
+    expect(brandCounterKey("Kopp's")).toBe('kopps');
+    expect(brandCounterKey("Gille's")).toBe('gilles');
   });
 });
