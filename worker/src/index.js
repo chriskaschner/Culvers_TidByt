@@ -28,6 +28,7 @@ import { sendWeeklyAnalyticsReport } from './report-sender.js';
 import { resolveSnapshotTargets, getCronCursor, setCronCursor } from './snapshot-targets.js';
 import { handleReliabilityRoute, getReliabilityBatch, refreshReliabilityBatch } from './reliability.js';
 import { handlePlan } from './planner.js';
+import { handleDrive } from './drive.js';
 import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
@@ -139,6 +140,13 @@ function getExpensiveReadLimitConfig(canonical, method) {
       prefix: 'rl:plan:read',
       limit: 120,
       error: 'Rate limit exceeded. Max 120 plan requests per hour.',
+    };
+  }
+  if (canonical === '/api/drive') {
+    return {
+      prefix: 'rl:drive:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 drive requests per hour.',
     };
   }
   return null;
@@ -455,6 +463,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     }
   } else if (canonical === '/api/plan') {
     response = await handlePlan(url, env, corsHeaders);
+  } else if (canonical === '/api/drive') {
+    response = await handleDrive(url, env, corsHeaders);
   } else if (canonical.startsWith('/api/signals/')) {
     response = await handleSignals(url, env, corsHeaders);
   } else if (canonical.startsWith('/api/reliability')) {
@@ -484,7 +494,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
 
   return Response.json(
     {
-      error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/metrics/health/{slug}, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health',
+      error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/drive, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/metrics/health/{slug}, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health',
       request_id: requestId,
     },
     { status: 404, headers: corsHeaders }

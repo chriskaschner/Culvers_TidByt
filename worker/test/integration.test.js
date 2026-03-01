@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleRequest, isValidSlug, getFetcherForSlug, getBrandForSlug, normalizePath } from '../src/index.js';
+import { makeFlavorCacheRecord } from '../src/kv-cache.js';
 
 // Mock flavor data returned by fetchFlavors
 const MOCK_FLAVORS = {
@@ -1301,5 +1302,88 @@ describe('/api/today endpoint', () => {
     if (body.rarity && (body.rarity.label === 'Ultra Rare' || body.rarity.label === 'Rare')) {
       expect(body.spoken).toMatch(/averages \d+ days between appearances/);
     }
+  });
+});
+
+describe('/api/v1/drive endpoint', () => {
+  let mockKV;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    env = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: new Set(['mt-horeb', 'madison-todd-drive']),
+    };
+  });
+
+  it('73: returns 400 when slugs are missing', async () => {
+    const req = makeRequest('/api/v1/drive');
+    const res = await handleRequest(req, env);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/slugs/i);
+  });
+
+  it('74: returns drive cards + excluded arrays for valid input', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    mockKV._store.set('flavors:mt-horeb', makeFlavorCacheRecord({
+      name: "Culver's of Mt. Horeb",
+      flavors: [{ date: today, title: 'Mint Explosion', description: 'Mint with oreo' }],
+    }, 'mt-horeb', false));
+    mockKV._store.set('flavors:madison-todd-drive', makeFlavorCacheRecord({
+      name: "Culver's of Madison Todd Drive",
+      flavors: [{ date: today, title: 'Caramel Cashew', description: 'Vanilla with caramel and cashew pieces' }],
+    }, 'madison-todd-drive', false));
+
+    const req = makeRequest('/api/v1/drive?slugs=mt-horeb,madison-todd-drive&exclude=nuts');
+    const res = await handleRequest(req, env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(Array.isArray(body.cards)).toBe(true);
+    expect(Array.isArray(body.excluded)).toBe(true);
+    expect(body.query.slugs).toEqual(['mt-horeb', 'madison-todd-drive']);
+    expect(body.generated_at).toBeTruthy();
+  });
+
+  it('75: include_tomorrow returns confirmed tomorrow payload and stays backward compatible', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    mockKV._store.set('flavors:mt-horeb', makeFlavorCacheRecord({
+      name: "Culver's of Mt. Horeb",
+      flavors: [
+        { date: today, title: 'Mint Explosion', description: 'Mint with oreo' },
+        { date: tomorrow, title: 'Caramel Cashew', description: 'Vanilla with caramel and cashew pieces' },
+      ],
+    }, 'mt-horeb', false));
+    mockKV._store.set('flavors:madison-todd-drive', makeFlavorCacheRecord({
+      name: "Culver's of Madison Todd Drive",
+      flavors: [{ date: today, title: 'Lemon Ice', description: 'Lemon flavor' }],
+    }, 'madison-todd-drive', false));
+
+    const baseReq = makeRequest('/api/v1/drive?slugs=mt-horeb,madison-todd-drive');
+    const baseRes = await handleRequest(baseReq, env);
+    expect(baseRes.status).toBe(200);
+    expect(baseRes.headers.get('API-Version')).toBe('1');
+    const baseJson = await baseRes.json();
+    expect(baseJson.query.include_tomorrow).toBe(0);
+    expect(Object.prototype.hasOwnProperty.call(baseJson.cards[0], 'tomorrow')).toBe(false);
+
+    const req = makeRequest('/api/v1/drive?slugs=mt-horeb,madison-todd-drive&include_tomorrow=1');
+    const res = await handleRequest(req, env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.query.include_tomorrow).toBe(1);
+    const mtHoreb = body.cards.find((card) => card.slug === 'mt-horeb');
+    const madison = body.cards.find((card) => card.slug === 'madison-todd-drive');
+    expect(mtHoreb.tomorrow).toEqual({
+      date: tomorrow,
+      flavor: 'Caramel Cashew',
+      description: 'Vanilla with caramel and cashew pieces',
+      certainty_tier: 'confirmed',
+    });
+    expect(madison.tomorrow).toBeNull();
   });
 });
