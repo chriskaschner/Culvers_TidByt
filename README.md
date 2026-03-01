@@ -10,7 +10,8 @@ Custard Calendar is a full-stack custard observability platform that ingests, no
 
 | Surface | What it does |
 |---------|-------------|
-| [Forecast](https://custard.chriskaschner.com) | Today's confirmed flavor + week-ahead outlook with pixel-art cones and confidence strips |
+| [Forecast](https://custard.chriskaschner.com) | Decision-first homepage with Today’s Drive ranked cards (2-5 stores), mini-map context, and legacy forecast modules below fold |
+| [The Scoop](https://custard.chriskaschner.com/scoop.html) | Compatibility alias/deep-link surface for widget `?stores=` route links using the same Today’s Drive engine |
 | [Custard Map](https://custard.chriskaschner.com/map.html) | Search nearby flavors across all brands with flavor-matched cone map markers |
 | [Flavor Alerts](https://custard.chriskaschner.com/alerts.html) | Email notifications when your favorite flavor is coming up (daily or weekly digest) |
 | [Flavor Radar](https://custard.chriskaschner.com/radar.html) | 7-day personalized flavor outlook blending confirmed data with ML predictions |
@@ -81,6 +82,7 @@ GET /api/v1/nearby-flavors?location=53705&flavor=turtle
 GET /api/v1/geolocate
 GET /api/v1/flavors/catalog
 GET /api/v1/flavor-config
+GET /api/v1/drive?slugs=mt-horeb,madison-todd-drive
 GET /api/v1/alerts/subscribe          (POST)
 POST /api/v1/events
 GET /api/v1/events/summary?days=7
