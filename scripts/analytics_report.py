@@ -11,6 +11,7 @@ When --email is used, also requires RESEND_API_KEY (or --resend-key).
 Usage:
   uv run python scripts/analytics_report.py
   uv run python scripts/analytics_report.py --days 30
+  uv run python scripts/analytics_report.py --weekly
   uv run python scripts/analytics_report.py --baseline  # write to WORKLOG.md
   uv run python scripts/analytics_report.py --email me@example.com
   uv run python scripts/analytics_report.py --token <token>
@@ -26,6 +27,7 @@ import os
 import sys
 import urllib.request
 import urllib.error
+import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -69,6 +71,51 @@ def print_section(title: str) -> None:
     print(f"-- {title} " + "-" * max(0, 60 - len(title) - 4))
 
 
+def domain_from_referrer(referrer: str | None) -> str:
+    if not referrer:
+        return "(direct)"
+    text = str(referrer).strip()
+    if not text:
+        return "(direct)"
+    try:
+        parsed = urllib.parse.urlparse(text)
+        if parsed.netloc:
+            return parsed.netloc.lower()
+    except Exception:
+        pass
+    return text.lower()
+
+
+def referrer_bucket(referrer: str | None) -> str:
+    domain = domain_from_referrer(referrer)
+    if domain == "(direct)":
+        return "direct"
+    if any(engine in domain for engine in ("google.", "bing.", "duckduckgo.", "yahoo.")):
+        return "search"
+    if any(social in domain for social in ("facebook.", "instagram.", "x.com", "twitter.", "reddit.", "t.co")):
+        return "social"
+    if "scriptable" in domain or "widget" in domain:
+        return "widget"
+    return domain
+
+
+def count_event_type(events_data: dict, event_type: str) -> int:
+    by_type = events_data.get("by_type", []) or []
+    for row in by_type:
+        if (row.get("event_type") or "") == event_type:
+            return int(row.get("count", 0) or 0)
+    return 0
+
+
+def bucket_referrers(top_referrers: list[dict]) -> list[tuple[str, int]]:
+    buckets: dict[str, int] = {}
+    for row in top_referrers or []:
+        bucket = referrer_bucket(row.get("referrer"))
+        count = int(row.get("count", 0) or 0)
+        buckets[bucket] = buckets.get(bucket, 0) + count
+    return sorted(buckets.items(), key=lambda kv: kv[1], reverse=True)
+
+
 def report_events(data: dict) -> None:
     t = data.get("totals", {})
     days = data.get("window_days", "?")
@@ -107,6 +154,19 @@ def report_events(data: dict) -> None:
         for row in top_flavors[:10]:
             print(fmt_row(row.get("flavor") or "(none)", row.get("count", 0)))
 
+    by_device_type = data.get("by_device_type", [])
+    if by_device_type:
+        print_section("By Device Type")
+        for row in by_device_type[:10]:
+            print(fmt_row(row.get("device_type") or "unknown", row.get("count", 0)))
+
+    top_referrers = data.get("top_referrers", [])
+    if top_referrers:
+        print_section("Top Referrers")
+        for row in top_referrers[:10]:
+            domain = domain_from_referrer(row.get("referrer"))
+            print(fmt_row(domain, row.get("count", 0)))
+
 
 def report_quiz(data: dict) -> None:
     days = data.get("window_days", "?")
@@ -139,16 +199,72 @@ def report_quiz(data: dict) -> None:
             print(fmt_row(row.get("quiz_id") or "(none)", row.get("count", 0)))
 
 
-def build_report_text(events_data: dict, quiz_data: dict, days: int) -> str:
+def report_weekly(events_data: dict, widget_data: dict, scoop_filter_data: dict, days: int) -> None:
+    print_section(f"Weekly Signal Digest (last {days}d)")
+
+    alert_success = count_event_type(events_data, "alert_subscribe_success")
+    print(fmt_row("Alerts subscribed", f"{'YES' if alert_success > 0 else 'NO'} ({alert_success:,})"))
+
+    widget_taps = int((widget_data.get("totals") or {}).get("events", 0) or 0)
+    print(fmt_row("Widget taps", f"{'YES' if widget_taps > 0 else 'NO'} ({widget_taps:,})"))
+
+    scoop_filters = int((scoop_filter_data.get("totals") or {}).get("events", 0) or 0)
+    print(fmt_row("Scoop filters", f"{'YES' if scoop_filters > 0 else 'NO'} ({scoop_filters:,})"))
+
+    buckets = bucket_referrers(events_data.get("top_referrers", []))
+    top_bucket = buckets[0][0] if buckets else "none"
+    print(fmt_row("Top referrer bucket", top_bucket))
+
+    top_widget_stores = widget_data.get("top_stores", []) or []
+    if top_widget_stores:
+        print_section("Widget Taps by Store Slug")
+        for row in top_widget_stores[:10]:
+            print(fmt_row(row.get("store_slug") or "(none)", row.get("count", 0)))
+    else:
+        print_section("Widget Taps by Store Slug")
+        print("  (no widget_tap events in window)")
+
+    scoop_actions = scoop_filter_data.get("by_action", []) or []
+    if scoop_actions:
+        print_section("Scoop Filter Activity")
+        for row in scoop_actions[:10]:
+            print(fmt_row(row.get("action") or "(none)", row.get("count", 0)))
+    else:
+        print_section("Scoop Filter Activity")
+        print("  (no scoop filter activity in window)")
+
+    if buckets:
+        print_section("Referrer Buckets")
+        for bucket, count in buckets[:10]:
+            print(fmt_row(bucket, count))
+    else:
+        print_section("Referrer Buckets")
+        print("  (no page_view referrer data yet)")
+
+
+def build_report_text(
+    events_data: dict,
+    quiz_data: dict,
+    days: int,
+    *,
+    weekly: bool = False,
+    widget_data: dict | None = None,
+    scoop_filter_data: dict | None = None,
+) -> str:
     """Capture the full report as a string (same output as printing to stdout)."""
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        print(f"Custard Telemetry Report  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
-        print(f"Window: last {days} days  |  Source: {WORKER_BASE}")
-        if events_data:
-            report_events(events_data)
-        if quiz_data:
-            report_quiz(quiz_data)
+        if weekly:
+            print(f"Custard Weekly Digest  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+            print(f"Window: last {days} days  |  Source: {WORKER_BASE}")
+            report_weekly(events_data or {}, widget_data or {}, scoop_filter_data or {}, days)
+        else:
+            print(f"Custard Telemetry Report  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+            print(f"Window: last {days} days  |  Source: {WORKER_BASE}")
+            if events_data:
+                report_events(events_data)
+            if quiz_data:
+                report_quiz(quiz_data)
         print()
     return buf.getvalue()
 
@@ -218,6 +334,7 @@ def main() -> None:
     parser.add_argument("--days", type=int, default=7, help="Lookback window in days (default: 7)")
     parser.add_argument("--token", default=os.environ.get("WORKER_API_TOKEN"), help="API bearer token")
     parser.add_argument("--baseline", action="store_true", help="Append baseline snapshot to WORKLOG.md")
+    parser.add_argument("--weekly", action="store_true", help="Print weekly digest signals")
     parser.add_argument("--email", default=None, metavar="ADDRESS", help="Email address to send report to")
     parser.add_argument("--resend-key", default=os.environ.get("RESEND_API_KEY"), help="Resend API key (or RESEND_API_KEY env var)")
     args = parser.parse_args()
@@ -232,30 +349,50 @@ def main() -> None:
 
     events_url = f"{WORKER_BASE}/api/v1/events/summary?days={args.days}"
     quiz_url = f"{WORKER_BASE}/api/v1/quiz/personality-index?days={args.days}"
+    widget_url = f"{WORKER_BASE}/api/v1/events/summary?days={args.days}&event_type=widget_tap"
+    scoop_filter_url = f"{WORKER_BASE}/api/v1/events/summary?days={args.days}&event_type=filter_toggle&page=scoop"
 
-    print(f"Custard Telemetry Report  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+    if args.weekly:
+        print(f"Custard Weekly Digest  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+    else:
+        print(f"Custard Telemetry Report  |  {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
     print(f"Window: last {args.days} days  |  Source: {WORKER_BASE}")
 
     events_data: dict = {}
     quiz_data: dict = {}
+    widget_data: dict = {}
+    scoop_filter_data: dict = {}
 
     try:
         events_data = fetch_json(events_url, args.token)
-        report_events(events_data)
+        if args.weekly:
+            widget_data = fetch_json(widget_url, args.token)
+            scoop_filter_data = fetch_json(scoop_filter_url, args.token)
+            report_weekly(events_data, widget_data, scoop_filter_data, args.days)
+        else:
+            report_events(events_data)
     except RuntimeError as exc:
         print(f"\nWarning: could not fetch events summary: {exc}", file=sys.stderr)
 
-    try:
-        quiz_data = fetch_json(quiz_url, args.token)
-        report_quiz(quiz_data)
-    except RuntimeError as exc:
-        print(f"\nWarning: could not fetch quiz personality index: {exc}", file=sys.stderr)
+    if not args.weekly:
+        try:
+            quiz_data = fetch_json(quiz_url, args.token)
+            report_quiz(quiz_data)
+        except RuntimeError as exc:
+            print(f"\nWarning: could not fetch quiz personality index: {exc}", file=sys.stderr)
 
     if args.baseline:
         write_baseline(events_data, quiz_data, args.days)
 
     if args.email:
-        text = build_report_text(events_data, quiz_data, args.days)
+        text = build_report_text(
+            events_data,
+            quiz_data,
+            args.days,
+            weekly=args.weekly,
+            widget_data=widget_data,
+            scoop_filter_data=scoop_filter_data,
+        )
         send_report_email(text, args.email, args.resend_key)
 
     print()

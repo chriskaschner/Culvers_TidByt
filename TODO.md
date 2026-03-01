@@ -16,6 +16,38 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 **Guardrails:** preflight before each agent task, isolate work by worktree+branch, maintain one shipping lane + one delight lane.
 
+## Priority Queue (Prod Refinement First)
+
+Focus order for the next cycle: ship and stabilize what is already built before expanding scope.
+
+1. **P0: Ship Today’s Drive to production**  
+   Source items: `Now -- Today's Drive (Index-first) Rollout` + `Next -- Today’s Drive Comprehensive Plan (Packaged Brief)` phase 0 items.  
+   Outcome: index-first decision UX live, scoop deep-link compatibility preserved, smoke checks complete.
+
+2. **P0: Scoop dual-day card refinement (today + tomorrow context)**  
+   Source items: `Now -- Today's Drive (Index-first) Rollout` (Scoop tomorrow preview card).
+   Outcome: Scoop shows today’s FOTD card plus a clear tomorrow subheading/description for faster next-day planning.
+
+3. **P0: Widget layout parity (3-store must mirror 3-day design language)**  
+   Source items: `Sister Repos` / Scriptable widget UX parity item.
+   Outcome: 3-store widget view uses the same visual structure, spacing, header treatment, typography hierarchy, and metadata placement as the 3-day view.
+
+4. **P0: Close telemetry blind spots on shipped surfaces**  
+   Source items: `Next -- Page Metrics and Usage Visibility` (`page_view` completion, `store_select` parity, alert funnel events).  
+   Outcome: passive traffic + conversion funnel visibility is reliable for Forecast/Scoop/Alerts.
+
+5. **P1: Reporting parity for operations**  
+   Source items: summary/report parity + weekly digest (`analytics_report.py` upgrade, `--weekly`).  
+   Outcome: one command answers weekly product-health questions without manual querying.
+
+6. **P2: Architecture debt paydown (time-boxed)**  
+   Source items: flavor asset parity audit, canonical render spec, greenfield layer discipline.  
+   Outcome: reduced drift risk and clearer future change boundaries, without blocking product delivery.
+
+7. **P3: Someday/Maybe backlog remains parked**  
+   Source items: flavor modification recommendations, catalog browser, Alexa/Android/chatbot/prediction expansions.  
+   Outcome: avoid scope creep until P0/P1 are stable and measured in production.
+
 ## Now -- Historical Metrics Activation Strategy
 
 Revisit the expanded historical corpus (330,490 clean rows across 998 stores, 2015-08-02 to 2026-03-31) and systematically use it across product surfaces.
@@ -38,6 +70,66 @@ Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "
 - [x] **Consistent action CTAs** -- `CustardPlanner.actionCTAsHTML()` shared renderer for Directions/Set Alert/Subscribe. Wired into index.html today card. Confirmed recs show all three; estimated omit Directions. (2026-02-26)
 - [x] **Fix The Scoop empty results** -- replaced broken `culvers.com/api/locator/getLocations` call with coordinate-based nearby search: generated `worker/src/store-coords.js` (Map<slug, {lat,lng,name,address}> for all 1,012 stores), rewrote `handlePlan()` to parse `lat,lon` from location param, find nearby stores by haversine, batch-fetch flavors via `getFlavorsCached`. Removed `transformLocatorStores()`. 8 new tests. 701 total pass. (2026-02-28)
 - [x] **Fix widget 3-store in-app preview** -- `config.widgetFamily` is null when running a Scriptable script in-app, causing `widgetSize` to default to "small" even when `MODE="multi"` is set. Fixed by defaulting to "medium" when `isMultiMode` is true, so the in-app preview correctly shows `buildMultiStore()`. (2026-02-28)
+
+## Now -- Today's Drive (Index-first) Rollout
+
+Status note: implemented in the current worktree and test-verified locally; pending release-branch commit/merge/deploy before counting as production-shipped.
+
+- [x] **New decision API surface** -- `GET /api/v1/drive` shipped in Worker with deterministic tagging, hard constraints, score buckets, sort modes (`match|detour|rarity|eta`), nearby leaderboard, and include-estimated fallback behavior. Covered by `worker/test/drive.test.js` + integration coverage. (2026-02-28)
+- [x] **Shared local-first preference contract** -- `custard:v1:preferences` added in `docs/planner-shared.js` with defaults + legacy migration (`custard-primary`, `custard-secondary`) + URL merge precedence + save/build helpers. (2026-02-28)
+- [x] **Index canonical Today’s Drive UX** -- `docs/index.html` now mounts shared `docs/todays-drive.js` at top of main content with route editor (2-5 stores), chips, sort controls, ranked cards, interactive mini-map, and local reranking without refetching on chip toggles. (2026-02-28)
+- [x] **Scoop compatibility alias** -- `docs/scoop.html` now serves as compatibility/deep-link surface for `?stores=` (widget flows) using the same shared Today’s Drive module. (2026-02-28)
+- [x] **Drive browser + nav regression coverage** -- added Playwright specs for index Today’s Drive and scoop deep-link compatibility; nav click-through expectations updated to include The Scoop. (2026-02-28)
+- [x] **Scoop dual-day card detail** -- `/api/v1/drive` now supports `include_tomorrow=1` (confirmed-only) and Scoop renders an in-card Tomorrow block with fallback copy ("No confirmed flavor posted yet") when no confirmed tomorrow exists. Browser coverage added in `scoop-compat.spec.mjs`. (2026-02-28)
+- [ ] **Production rollout + validation gate** -- stage/commit scoped files, merge to `main`, deploy Worker/docs, and run live smoke checks (`/api/v1/drive`, widget `?stores=` deep links, pin/card interactions, 429/auth behavior unchanged for existing routes).
+
+## Next -- Today’s Drive Comprehensive Plan (Packaged Brief)
+
+Goal: make the route-first decision experience the default product behavior while keeping discovery surfaces (map/calendar/radar) as secondary paths.
+
+Status baseline: core Drive API + index/scoop shared module are implemented in worktree and locally test-green; production rollout and a few UX parity items remain open.
+
+### Phase 0 — Production hardening and parity (P0)
+
+- [ ] **Ship current Today’s Drive stack to production** -- complete release branch, merge, deploy, and smoke verification for `/api/v1/drive`, index Drive render, and scoop deep links.
+- [x] **Scoop dual-day context block** -- implemented via `include_tomorrow=1` on Scoop with confirmed-only tomorrow payload/fallback copy. (2026-02-28)
+- [x] **Widget 3-store/3-day visual parity** -- Scriptable widget now uses shared medium-row renderer for both 3-day and 3-store views (aligned hierarchy + right-aligned rarity tags) and widget preview copy/docs reflect parity contract. (2026-02-28)
+- [ ] **Post-deploy verification checklist** -- live checks for route edit, chip rerank (no refetch), map pin/card sync, and URL/localStorage persistence reproducibility.
+
+### Phase 1 — UX completeness and trust signals (P1)
+
+- [ ] **Card explainability standard** -- normalize “why this rank” copy format so each card consistently shows matched boosts, exclusions, and rarity/novelty rationale.
+- [ ] **Tomorrow-aware fallback behavior** -- define and implement fallback rules when today is missing but tomorrow is present (and vice versa), without collapsing certainty semantics.
+- [ ] **Filter dictionary expansion pass** -- extend rule-based tags/allergen detection safely (`nuts`, `cheesecake`, core profile tags) with regression coverage for false positives.
+- [ ] **Secondary-surface handoff polish** -- keep explicit links/entry points from Drive cards into Map/Calendar/Radar for exploration without breaking route-first focus.
+
+### Phase 2 — Preference model evolution (P1/P2)
+
+- [ ] **Local preferences v1 hardening** -- add debounce on preference writes (300-500ms) and explicit reset/share controls while retaining merge precedence `defaults < localStorage < URL`.
+- [ ] **Route profile roadmap** -- keep one active route now, but define migration path to optional named multi-route profiles (`work/weekend`) without breaking existing keys.
+- [ ] **State schema governance** -- document upgrade rules/versioning for `custard:v1:preferences` and add migration tests for legacy keys (`custard-primary`, `custard-secondary`).
+
+### Phase 3 — Optional sync architecture (P2+)
+
+- [ ] **Anonymous sync design spike** -- evaluate Level 2 sync model (random local user_id + tokenized sync link) with explicit KV vs D1 tradeoff and write-rate constraints.
+- [ ] **Persistence decision record** -- choose KV blob vs D1 structured storage based on expected write frequency, query needs, and operational simplicity.
+- [ ] **Security/privacy review for sync** -- ensure no accidental user identity coupling; document retention and delete semantics before implementation.
+
+### Test and rollout gates
+
+- [x] **Worker tests** -- `/api/v1/drive` coverage now includes `include_tomorrow` confirmed/null behavior and backward-compatible omitted-field behavior. (2026-02-28)
+- [x] **Browser tests** -- Scoop tomorrow rendering/fallback assertions added, alerts telemetry flow test added, and existing Drive/nav specs remain green. (2026-02-28)
+- [x] **Widget parity proof** -- added fixed screenshot checklist artifact at `docs/screenshots/widget-parity-checklist.md` to gate before/after captures for release notes. (2026-02-28)
+- [x] **Metrics instrumentation tie-in** -- Drive/Scoop/alerts/index telemetry now emits through the unified event path and appears in summary-compatible event types. (2026-02-28)
+
+### Acceptance criteria (rollup)
+
+- [ ] Homepage remains route-first and performant with 2-5 store ranking cards.
+- [ ] Scoop shows today card plus tomorrow context block when tomorrow data exists.
+- [ ] Chips/sort rerank instantly with no unnecessary network calls.
+- [ ] Mini-map pins stay synchronized with card buckets and focus/hover behavior.
+- [ ] Preferences persist via `custard:v1:preferences` and URL state sharing works reliably.
+- [ ] Widget 3-store view visually mirrors 3-day design language, including right-aligned rarity tags.
 
 ## Now -- Weather Brand Reframe
 
@@ -210,21 +302,22 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 
 - [x] **custard-scriptable emergency fix** -- fixed base URL (`workers.dev` -> `custard.chriskaschner.com`), endpoint (`/api/flavors` -> `/api/v1/flavors`), and brand color (`#0057B8` -> `#005696`). Also fixed same workers.dev URL bug in `widgets/custard-today.js` (the canonical widget widget.html links to). `Custard Calendar.js` folded into `widgets/custard-scriptable.js`; custard-scriptable repo is now retired. (2026-02-26)
 - [x] **Scriptable widget UX polish** -- cone colors aligned to `#D2691E`/`#F5DEB3` canonical palette; `w.url` added to all builders in both custard-scriptable.js and custard-today.js so tapping opens `custard.chriskaschner.com?store=SLUG`; multi-store falls back to root. (2026-02-27)
+- [x] **Scriptable widget multi-view visual parity** -- 3-day and 3-store now share one medium-row renderer in `docs/assets/custard-today.js` (same label/title/description stack, right-aligned rarity tags, aligned spacing hierarchy). `docs/widget.html` preview layout updated to mirror this parity contract, and screenshot checklist added at `docs/screenshots/widget-parity-checklist.md`. (2026-02-28)
 - [x] **custard-tidbyt contract smoke test** -- `tests/test_api_contract.py` in custard-tidbyt: 9 live smoke tests covering /api/v1/flavors (title/date shape), /api/v1/stores (slug/name shape), API-Version header. Fixed WORKER_BASE from workers.dev to custard.chriskaschner.com. SKIP_LIVE_API=1 to skip in offline CI. (2026-02-26)
 - [x] **Tidbyt daily deploy not running** -- root cause: `TIDBYT_API_TOKEN` and `TIDBYT_DEVICE_ID` secrets were not set in GitHub repo. `main.py` was also swallowing the missing-token error and exiting 0 (silent false success). Fixed: secrets added, `device_id` moved from hardcoded workflow value to `TIDBYT_DEVICE_ID` secret, `--tidbyt-only` now exits 1 on push failure. (2026-02-27)
 
 ## Next -- Page Metrics and Usage Visibility
 
-**Current state:** action tracking is fully built (`interaction_events` D1 table, `POST /api/v1/events` sendBeacon, `GET /api/v1/events/summary`, `analytics_report.py`). Tracked today: CTA clicks, signal views, popup opens, quiz completions. **Gap:** no `page_view` events, so `by_page` in the summary is only populated when people take actions -- passive visits are invisible.
+**Current state:** action tracking is fully built (`interaction_events` D1 table, `POST /api/v1/events` sendBeacon, `GET /api/v1/events/summary`, `analytics_report.py`) and now wired across docs surfaces. Event schema includes page/store/filter/widget + referrer/device fields; page-view rollout, legacy index store-select parity, and alert funnel completion events are implemented.
 
 **Two-track approach:**
 
 **Track 1 — Extend existing event system** (adds product-specific intelligence)
-- [ ] **Page view events** -- add `page_view` to allowed event types in `events.js` + `planner-shared.js`; emit on every docs page load with `referrer` (from `document.referrer`) and `device_type` (mobile/desktop from `navigator.userAgent`); add both fields to the `interaction_events` schema via migration. `by_page` in `events/summary` becomes meaningful immediately.
-- [ ] **Store select event** -- emit `store_select` with `store_slug` when user picks a store from dropdown on index.html or Scoop. Tells you which stores drive engagement, not just which are searched. Allowed event type: `store_select`.
-- [ ] **Scoop-specific events** -- emit `filter_toggle` (with `filter_name` + `filter_mode`: include/exclude) when user activates a flavor chip or No Nuts toggle on The Scoop; emit `widget_tap` (with slug list) when Scoop detects arrival via `?stores=` URL param. New allowed types: `filter_toggle`, `widget_tap`.
-- [ ] **Alert funnel events** -- emit `alert_form_view` on alerts.html load and `alert_subscribe_success` on confirmed subscription. Closes the subscribe-funnel gap: currently only `cta_click` with action=alert is tracked (intent), not completion.
-- [ ] **Summary endpoint additions** -- extend `GET /api/v1/events/summary` to return `by_device_type` and `top_referrers` aggregates; update `analytics_report.py` to print these new fields.
+- [x] **Page view events (finish rollout)** -- `planner-shared.js` now auto-emits page views across docs surfaces and forwards `referrer`/`device_type` through the browser payload path. (2026-02-28)
+- [x] **Store select event (complete parity)** -- legacy index dropdown store selection now emits `store_select` so all store-pick paths are measured consistently. (2026-02-28)
+- [x] **Scoop-specific events** -- Scoop now emits `filter_toggle` and `widget_tap` via the shared Today’s Drive surface (chip actions and `?stores=` entry attribution). (2026-02-28)
+- [x] **Alert funnel events** -- alerts page now emits `alert_form_view` on load and `alert_subscribe_success` on successful subscribe responses. (2026-02-28)
+- [x] **Summary endpoint additions** -- `GET /api/v1/events/summary` returns `by_device_type` and `top_referrers`, and reporting parity is now shipped in `scripts/analytics_report.py`. (2026-02-28)
 
 **Standard metrics Track 1 covers once shipped:**
 - Page views per page (which of 10 pages gets traffic)
@@ -240,10 +333,10 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 - [x] **CF beacon on all docs pages** -- added Cloudflare Web Analytics beacon to all 11 docs pages (index, map, radar, alerts, siri, calendar, quiz, widget, privacy, scoop, forecast-map). Token: c050ff4e79d54b2abbb60587137d0bb2. No cookies, GDPR-compliant, bot-filtered. (2026-02-27)
 - Standard metrics Track 2 adds: bot-filtered traffic baseline, time-on-page, bounce rate per page, browser/OS distribution, more accurate unique visitor count.
 
-**Implementation order:** Track 1 page_view first (immediate visibility into who's there), then store_select, then Scoop events (after Scoop page is built), then Track 2 beacon (one-time config step, can be done anytime).
+**Implementation order:** Track 1 page_view completion first (immediate visibility into passive visits), then store_select parity on legacy index picker, then alert funnel completion events, then `analytics_report.py` parity.
 
 **Track 3 — Automated weekly reporting**
-- [ ] **Weekly metrics digest** -- extend `analytics_report.py` to answer the 4 weekly signal questions: (1) alert subscriptions (count from D1 `alert_subscribe_success` events + `alert_subscribers` table); (2) widget tap slugs (`widget_tap` events grouped by store_slug, tells you if widget is actually used); (3) Scoop filter activity (`filter_toggle` events grouped by filter_name on page=scoop); (4) top referrer domain (normalize `top_referrers` array into domain buckets: direct/search/social/widget). Expose as `--weekly` flag on `analytics_report.py`. Should answer yes/no for each signal before showing counts.
+- [x] **Weekly metrics digest** -- `analytics_report.py` now supports `--weekly`, prints YES/NO weekly signal answers, widget taps by slug, Scoop filter activity, and referrer domain buckets, while standard mode now includes `by_device_type` + `top_referrers` sections. (2026-02-28)
 
 ## Now -- Licensing and Testing
 

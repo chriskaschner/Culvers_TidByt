@@ -17,12 +17,17 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from scripts.analytics_report import (
+    bucket_referrers,
     build_report_text,
+    count_event_type,
+    domain_from_referrer,
     fetch_json,
     fmt_row,
     pct,
     report_events,
     report_quiz,
+    report_weekly,
+    referrer_bucket,
     send_report_email,
     write_baseline,
 )
@@ -118,6 +123,8 @@ class TestReportEvents:
             "by_page": [{"page": "map", "count": 40}],
             "top_stores": [{"store_slug": "mt-horeb", "count": 25}],
             "top_flavors": [{"flavor": "Turtle", "count": 18}],
+            "by_device_type": [{"device_type": "mobile", "count": 60}],
+            "top_referrers": [{"referrer": "https://google.com/search?q=custard", "count": 14}],
         }
         base.update(overrides)
         return base
@@ -137,6 +144,14 @@ class TestReportEvents:
         report_events(self._make_data())
         out = capsys.readouterr().out
         assert "20.0%" in out
+
+    def test_includes_device_and_referrer_sections(self, capsys):
+        report_events(self._make_data())
+        out = capsys.readouterr().out
+        assert "By Device Type" in out
+        assert "mobile" in out
+        assert "Top Referrers" in out
+        assert "google.com" in out
 
 
 class TestReportQuiz:
@@ -252,6 +267,62 @@ class TestBuildReportText:
     def test_empty_data_does_not_raise(self):
         text = build_report_text({}, {}, 7)
         assert isinstance(text, str)
+
+    def test_weekly_mode_header(self):
+        text = build_report_text(
+            {"by_type": [], "top_referrers": []},
+            {},
+            7,
+            weekly=True,
+            widget_data={"totals": {"events": 0}, "top_stores": []},
+            scoop_filter_data={"totals": {"events": 0}, "by_action": []},
+        )
+        assert "Custard Weekly Digest" in text
+        assert "Weekly Signal Digest" in text
+
+
+class TestWeeklyHelpers:
+    def test_domain_from_referrer(self):
+        assert domain_from_referrer("https://google.com/search?q=abc") == "google.com"
+        assert domain_from_referrer("") == "(direct)"
+
+    def test_referrer_bucket(self):
+        assert referrer_bucket("https://google.com/search?q=abc") == "search"
+        assert referrer_bucket("https://reddit.com/r/foo") == "social"
+        assert referrer_bucket("") == "direct"
+
+    def test_bucket_referrers(self):
+        buckets = bucket_referrers([
+            {"referrer": "https://google.com/search?q=abc", "count": 5},
+            {"referrer": "https://reddit.com/r/foo", "count": 2},
+            {"referrer": "", "count": 3},
+        ])
+        assert ("search", 5) in buckets
+        assert ("social", 2) in buckets
+        assert ("direct", 3) in buckets
+
+    def test_count_event_type(self):
+        data = {"by_type": [{"event_type": "alert_subscribe_success", "count": 4}]}
+        assert count_event_type(data, "alert_subscribe_success") == 4
+
+    def test_report_weekly(self, capsys):
+        events = {
+            "by_type": [{"event_type": "alert_subscribe_success", "count": 2}],
+            "top_referrers": [{"referrer": "https://google.com/search?q=a", "count": 3}],
+        }
+        widget = {
+            "totals": {"events": 4},
+            "top_stores": [{"store_slug": "mt-horeb", "count": 3}],
+        }
+        scoop = {
+            "totals": {"events": 5},
+            "by_action": [{"action": "boost:fruit:on", "count": 5}],
+        }
+        report_weekly(events, widget, scoop, 7)
+        out = capsys.readouterr().out
+        assert "Weekly Signal Digest" in out
+        assert "Alerts subscribed" in out
+        assert "Widget Taps by Store Slug" in out
 
 
 class TestSendReportEmail:
