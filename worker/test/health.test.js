@@ -36,6 +36,14 @@ describe('/health endpoint', () => {
 
     expect(Number.isInteger(body.parse_failures_today)).toBe(true);
     expect(body.parse_failures_today).toBe(0);
+    expect(body.parse_failures_by_brand_today).toEqual({
+      culvers: 0,
+      kopps: 0,
+      oscars: 0,
+      gilles: 0,
+      hefners: 0,
+      kraverz: 0,
+    });
   });
 
   it('reflects non-zero parse_failures_today from KV counter', async () => {
@@ -48,6 +56,25 @@ describe('/health endpoint', () => {
     const body = await res.json();
 
     expect(body.parse_failures_today).toBe(3);
+  });
+
+  it('includes parse_failures_by_brand_today from KV counters', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const mockKV = createMockKV({
+      [`meta:parse-fail-count:${today}`]: '3',
+      [`meta:parse-fail-count:brand:culvers:${today}`]: '2',
+      [`meta:parse-fail-count:brand:kopps:${today}`]: '1',
+    });
+    const env = { FLAVOR_CACHE: mockKV };
+
+    const req = new Request('https://example.com/health');
+    const res = await handleRequest(req, env);
+    const body = await res.json();
+
+    expect(body.parse_failures_today).toBe(3);
+    expect(body.parse_failures_by_brand_today.culvers).toBe(2);
+    expect(body.parse_failures_by_brand_today.kopps).toBe(1);
+    expect(body.parse_failures_by_brand_today.oscars).toBe(0);
   });
 
   it('includes email_errors_today as an integer (defaults to 0)', async () => {

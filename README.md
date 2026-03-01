@@ -176,6 +176,37 @@ worker_base: "https://custard.chriskaschner.com"
 
 Secrets go in `.env` and `credentials/` (all gitignored).
 
+### Operator Monitoring (Preemptive Upstream-Change Alerts)
+
+The Worker now supports push alerts for scrape/coverage regressions so you can
+react before users notice.
+
+Required secret:
+
+```bash
+cd worker
+npx wrangler secret put OPERATOR_EMAIL
+```
+
+Existing secret used for delivery:
+
+```bash
+npx wrangler secret put RESEND_API_KEY
+```
+
+Config knobs in `worker/wrangler.toml`:
+- `OPERATOR_PRIORITY_SLUGS` (default: `mt-horeb,verona,madison-todd-drive`)
+- `OPERATOR_PARSE_FAILURE_THRESHOLD` (default: `3`)
+- `OPERATOR_PAYLOAD_ANOMALY_THRESHOLD` (default: `10`)
+- `OPERATOR_CONSECUTIVE_ERROR_DAYS` (default: `2`)
+- `OPERATOR_MONTH_END_LOOKAHEAD_DAYS` (default: `5`)
+
+Trigger conditions checked on daily cron:
+- parse failures exceed threshold
+- payload anomalies exceed threshold
+- priority store coverage does not reach first day of next month near month-end
+- consecutive `daily_alerts` cron runs with `errors_count > 0`
+
 ## Testing
 
 ```bash
