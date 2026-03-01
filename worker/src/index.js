@@ -38,6 +38,7 @@ import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
 import { applyIpRateLimit } from './rate-limit.js';
+import { handleGroupRoute } from './group-routes.js';
 
 const CACHE_MAX_AGE = 3600; // 1 hour (browser + edge cache)
 const API_CSP = "default-src 'none'; base-uri 'none'; frame-ancestors 'none'";
@@ -80,6 +81,8 @@ function isPublicWriteRoute(canonical, method) {
   return method === 'POST' && (
     canonical === '/api/events'
     || canonical === '/api/quiz/events'
+    || canonical === '/api/group/create'
+    || canonical === '/api/group/vote'
   );
 }
 
@@ -96,6 +99,20 @@ function getPublicWriteLimitConfig(canonical) {
       prefix: 'rl:quiz:write',
       limit: 120,
       error: 'Rate limit exceeded. Max 120 quiz event writes per hour.',
+    };
+  }
+  if (canonical === '/api/group/create') {
+    return {
+      prefix: 'rl:group:create',
+      limit: 10,
+      error: 'Rate limit exceeded. Max 10 group sessions per hour.',
+    };
+  }
+  if (canonical === '/api/group/vote') {
+    return {
+      prefix: 'rl:group:vote',
+      limit: 60,
+      error: 'Rate limit exceeded. Max 60 votes per hour.',
     };
   }
   return null;
@@ -474,6 +491,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = await handlePlan(url, env, corsHeaders);
   } else if (canonical === '/api/drive') {
     response = await handleDrive(url, env, corsHeaders);
+  } else if (canonical.startsWith('/api/group')) {
+    response = await handleGroupRoute(canonical, url, request, env, corsHeaders);
   } else if (canonical === '/api/operator-alert/test') {
     response = await handleOperatorAlertTest(env, corsHeaders);
   } else if (canonical.startsWith('/api/signals/')) {

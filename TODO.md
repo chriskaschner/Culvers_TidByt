@@ -99,6 +99,16 @@ Status note: production-shipped on 2026-03-01 (PR #7 merge commit `d240a83`, Wor
 - [x] **Scoop dual-day card detail** -- `/api/v1/drive` now supports `include_tomorrow=1` (confirmed-only) and Scoop renders an in-card Tomorrow block with fallback copy ("No confirmed flavor posted yet") when no confirmed tomorrow exists. Browser coverage added in `scoop-compat.spec.mjs`. (2026-02-28)
 - [x] **Production rollout + validation gate** -- release branch cut, CI fixed/green, merged to `main`, deployed to production, and live smoke checks run for `/health`, `/api/v1/drive` (including `include_tomorrow=1`), Scoop compatibility wiring, and analytics report modes (`--days`, `--weekly`). (2026-03-01)
 
+## Now -- Group Vote ("Where Are We Going?")
+
+Driver picks 2-5 candidate stores, shares a join code, everyone votes yes/meh/no on today’s FOTD, winner is the store with fewest hard-nos (most yeses breaks ties).
+
+- [x] **Worker API** -- `worker/src/group-routes.js`: POST /api/v1/group/create (generates 6-char code, writes KV session + votes, 4h TTL), GET /api/v1/group/:code (tally + winner), POST /api/v1/group/vote (voter_id merge, re-vote overwrites). Rate limits: 10 creates/hr, 60 votes/hr per IP. 15 tests in `worker/test/group-routes.test.js`. (2026-03-01)
+- [x] **Winner algorithm** -- `computeWinner()`: sort by no ASC, yes DESC, alpha fallback. Minimize misery over maximize enthusiasm. (2026-03-01)
+- [x] **Frontend** -- `docs/group.html`: single-page app with three phases: create (store autocomplete, slug badges), vote (FOTD cards from /api/v1/drive, yes/meh/no buttons, submit + 5s polling), results (winner card, directions CTA, flavor similarity note via embedded SIMILARITY_GROUPS, runner-up tallies). QR code via `qrcode@1.5.3` from unpkg. Voter ID in sessionStorage. (2026-03-01)
+- [x] **Nav link** -- "Group" link added to all 12 docs HTML files (index, calendar, map, radar, alerts, siri, forecast-map, quiz, widget, scoop, privacy, group). (2026-03-01)
+- [x] **Deployed** -- Worker version `27b12fae-db6c-4870-9310-626de1c18f19`, live smoke test passed (create → get → vote all return correct JSON). (2026-03-01)
+
 ## Next -- Today’s Drive Comprehensive Plan (Packaged Brief)
 
 Goal: make the route-first decision experience the default product behavior while keeping discovery surfaces (map/calendar/radar) as secondary paths.
@@ -372,6 +382,8 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 
 Not active. Only promote if they clearly improve core decision KPIs.
 
+- [ ] **"Go or add a topping?" preference-driven decision card** -- core problem: a user's primary stores often have FOTDs they don't love; they need a fast answer to "is it worth driving further, or would a topping get me close enough?" Two-phase flow: (1) minimal binary preference intake ("Mint: yes/no, Chocolate: yes/no, Nuts: yes/no, Fruity: yes/no" — 4-6 questions max, no quiz overhead) builds a lightweight taste profile; (2) for each nearby FOTD, score it against the profile and decide: strong match → go, weak match → check if a single standard topping closes the gap (see Flavor modification recommendations below), no match → show next nearest store with a match. Output is a single "Today's call" card: best store name + FOTD + optional topping suggestion + drive distance, with a secondary row for the next-best option. Keeps the decision local (no account required). Prerequisite: modification map from item below. Integration point: planner-shared.js preference contract already stores binary-ish favorites; could extend `custard:v1:preferences` with a `taste_profile` sub-key to persist without re-asking each visit.
+
 - [ ] **Flavor modification recommendations ("close enough" FOTD hacks)** -- given a user's preferred flavor and today's available FOTD options at nearby stores, recommend stores where a simple add-in transforms the FOTD into a close approximation of the desired flavor. Example: user wants Mint Explosion; store serves Mint Cookie → "Add Andes Mints to get close." Requires: (1) canonical add-in catalog (Andes mints, hot fudge, caramel sauce, strawberry, oreos, pecans, sprinkles — confirm what Culver's actually offers at the counter); (2) a modification map keyed on `(base_fotd_profile, add_in) → approximates_flavor` — likely encoded alongside FLAVOR_PROFILES in `flavor-colors.js` or a new `flavor-modifications.js`; (3) a similarity threshold so only genuinely close matches are shown (not "add caramel sauce to Dark Chocolate Decadence = Caramel Turtle"); (4) surface in the planner result card as a secondary recommendation row: "Today's FOTD + [add-in] ≈ [desired flavor]". Prerequisite: confirm which toppings/add-ins are standardly available vs. store-discretionary. Good candidate for Quiz/personality flow where user states a flavor preference.
 
 - [ ] **Flavor catalog browser with profile filtering** -- expose the full flavor catalog to users as a browsable/filterable page. Filters: base custard (vanilla, chocolate, mint, caramel, cheesecake, etc.), toppings present (oreo, pecan, andes, etc.), ribbon type (caramel, fudge, marshmallow, none). Data already exists in `/api/v1/flavor-colors` (profiles + color palettes) and `/api/v1/flavors/catalog` (catalog entries with descriptions). UI: grid of flavor cards with mini cone visual, filter chips at top. Could live at `docs/flavors.html` or as a tab on `docs/radar.html`. Stretch: "flavors like X" cross-links to similar flavors via SIMILARITY_GROUPS in `flavor-matcher.js`.
@@ -381,7 +393,7 @@ Not active. Only promote if they clearly improve core decision KPIs.
 - [ ] **Android widget** -- parity with iOS Scriptable widget using `/api/v1` data
 - [ ] **Madison-area brand expansion** -- selection methodology for adding new brands beyond MKE geo
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI
-- [ ] **Pairwise flavor voting** -- group "where should we go tonight?" (deprioritized, no clear MVP)
+- [x] **Group vote: "where are we going?" session** -- promoted from Someday/Maybe; shipped 2026-03-01. See "Now -- Group Vote" section above. KV-backed ephemeral sessions (4h TTL), join code + QR, yes/meh/no voting, minimize-misery winner algorithm, flavor similarity note, 15 tests. `docs/group.html` + `worker/src/group-routes.js` + nav link on all 12 pages.
 - [ ] **Ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%. Prediction-only; no surface value without forecast headline.
 - [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands on predictions.
 - [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores. Prediction infrastructure only.

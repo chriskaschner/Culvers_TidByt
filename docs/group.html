@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Group Vote — Where Are We Going?</title>
+  <meta name="description" content="Pick a custard stop everyone can agree on. Vote yes/meh/no on today's flavors and let the car decide.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#005696">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .group-phase { display: none; }
+    .group-phase.active { display: block; }
+
+    .join-code-display {
+      font-family: monospace;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #005696;
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .store-pick-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .store-pick-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .selected-slugs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+      min-height: 2rem;
+    }
+
+    .slug-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #e8f0f8;
+      border: 1px solid #b3cde8;
+      border-radius: 20px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.82rem;
+      color: #005696;
+    }
+
+    .slug-badge button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #888;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .slug-badge button:hover { color: #c00; }
+
+    .vote-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .vote-card h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.05rem;
+      color: #222;
+    }
+
+    .vote-card .flavor-name {
+      font-size: 0.95rem;
+      color: #005696;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .vote-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .vote-btn {
+      flex: 1;
+      padding: 0.45rem 0.5rem;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .vote-btn[data-choice="yes"].selected {
+      border-color: #2e7d32;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .vote-btn[data-choice="meh"].selected {
+      border-color: #888;
+      background: #f5f5f5;
+      color: #555;
+    }
+
+    .vote-btn[data-choice="no"].selected {
+      border-color: #c62828;
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .tally-row {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: #555;
+      margin-top: 0.5rem;
+    }
+
+    .tally-yes { color: #2e7d32; }
+    .tally-meh { color: #777; }
+    .tally-no  { color: #c62828; }
+
+    .winner-card {
+      border: 2px solid #2e7d32;
+      border-radius: 10px;
+      background: #e8f5e9;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .winner-badge {
+      display: inline-block;
+      background: #2e7d32;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .share-panel {
+      text-align: center;
+      padding: 1.25rem;
+      background: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .share-panel p { margin: 0.3rem 0; font-size: 0.88rem; color: #555; }
+
+    .qr-canvas { margin: 0.75rem auto; display: block; }
+
+    .similarity-note {
+      background: #fff8e1;
+      border-left: 3px solid #f9a825;
+      border-radius: 4px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.84rem;
+      color: #555;
+      margin-top: 0.75rem;
+    }
+
+    .waiting-note {
+      text-align: center;
+      color: #888;
+      font-size: 0.88rem;
+      margin: 0.75rem 0;
+    }
+
+    .directions-btn {
+      display: block;
+      width: 100%;
+      background: #005696;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 0.75rem;
+    }
+
+    .directions-btn:hover { background: #004070; }
+
+    #phase-create .panel { max-width: 560px; margin: 0 auto; }
+    #phase-vote .panel  { max-width: 560px; margin: 0 auto; }
+    #phase-results .panel { max-width: 560px; margin: 0 auto; }
+
+    .loader {
+      text-align: center;
+      color: #888;
+      padding: 2rem;
+      font-size: 0.9rem;
+    }
+  </style>
+  <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+  <header class="forecast-header">
+    <h1 style="color:#005696;font-size:1.5rem;">Group Vote</h1>
+    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Where are we going?</p>
+    <nav class="nav-links" style="margin-top:0.75rem;">
+      <a href="index.html">Forecast</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="map.html">Map</a>
+      <a href="radar.html">Radar</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="siri.html">Siri</a>
+      <a href="forecast-map.html">Fronts</a>
+      <a href="quiz.html">Quiz</a>
+      <a href="widget.html">Widget</a>
+      <a href="scoop.html">The Scoop</a>
+      <a href="group.html" class="nav-active">Group</a>
+    </nav>
+  </header>
+
+  <main style="padding:1rem;max-width:600px;margin:0 auto;">
+
+    <!-- Phase: Create (host picks stores) -->
+    <div id="phase-create" class="group-phase active">
+      <div class="panel">
+        <h2 style="margin-top:0;">Pick stores to vote on</h2>
+        <p style="font-size:0.88rem;color:#666;margin-top:-0.25rem;">Choose 2-5 custard stops. Everyone votes yes/meh/no on today's flavor.</p>
+
+        <div class="store-pick-row">
+          <input type="text" id="store-search-create" placeholder="Search for a store..." autocomplete="off" aria-label="Search for a store">
+        </div>
+        <div id="store-dropdown-create" class="store-dropdown" hidden></div>
+
+        <div class="selected-slugs" id="selected-slugs" aria-label="Selected stores"></div>
+
+        <button class="btn-primary" id="start-vote-btn" disabled style="width:100%;margin-top:0.5rem;">Start voting</button>
+        <p id="create-error" style="color:#c62828;font-size:0.84rem;margin-top:0.5rem;display:none;"></p>
+      </div>
+    </div>
+
+    <!-- Phase: Vote (shown to both host and joiners) -->
+    <div id="phase-vote" class="group-phase">
+      <!-- Share panel (host only, shown after creating) -->
+      <div id="share-panel" class="share-panel" hidden>
+        <p>Share this code with everyone in the car:</p>
+        <div class="join-code-display" id="join-code-big"></div>
+        <p>Or share the link:</p>
+        <button class="btn-secondary" id="copy-link-btn" style="margin:0.25rem auto;">Copy join link</button>
+        <canvas id="qr-canvas" class="qr-canvas" width="128" height="128"></canvas>
+      </div>
+
+      <div id="vote-loader" class="loader">Loading flavors...</div>
+      <div id="vote-cards" hidden></div>
+
+      <div id="vote-actions" style="margin-top:1rem;" hidden>
+        <button class="btn-primary" id="submit-vote-btn" style="width:100%;">Submit votes</button>
+        <p id="vote-error" style="color:#c62828;font-size:0.84rem;margin-top:0.5rem;display:none;"></p>
+      </div>
+
+      <div id="waiting-section" hidden>
+        <p class="waiting-note">Voted! Waiting for others...</p>
+        <div id="live-tally"></div>
+        <button class="btn-secondary" id="see-results-btn" style="display:block;width:100%;margin-top:0.75rem;">See results now</button>
+      </div>
+    </div>
+
+    <!-- Phase: Results -->
+    <div id="phase-results" class="group-phase">
+      <div id="results-loader" class="loader">Loading results...</div>
+      <div id="results-content" hidden></div>
+    </div>
+
+  </main>
+
+  <script src="planner-shared.js"></script>
+  <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+  (function () {
+    var WORKER_BASE = CustardPlanner.WORKER_BASE;
+
+    // Flavor similarity groups (mirrors worker/src/flavor-matcher.js SIMILARITY_GROUPS)
+    var SIMILARITY_GROUPS = {
+      mint:        ['andes mint avalanche','mint cookie','mint explosion'],
+      chocolate:   ['chocolate caramel twist','chocolate heath crunch','chocolate volcano','dark chocolate decadence','dark chocolate pb crunch','chocolate oreo volcano'],
+      caramel:     ['caramel cashew','caramel fudge cookie dough','caramel pecan','caramel turtle','salted caramel pecan pie','chocolate caramel twist'],
+      cheesecake:  ['oreo cheesecake','oreo cookie cheesecake','raspberry cheesecake','strawberry cheesecake','turtle cheesecake'],
+      turtle:      ['turtle','turtle dove','turtle cheesecake','caramel turtle'],
+      cookie:      ['crazy for cookie dough','caramel fudge cookie dough','mint cookie','oreo cookie cheesecake','lemon dash cookie'],
+      peanutButter:['dark chocolate pb crunch','peanut butter cup','reeses peanut butter cup'],
+      berry:       ['blackberry cobbler','raspberry cheesecake','strawberry cheesecake','lemon berry layer cake'],
+      pecan:       ['butter pecan','caramel pecan','salted caramel pecan pie','double butter pecan'],
+    };
+
+    function normalizeFlavor(name) {
+      if (!name) return '';
+      return name.replace(/\u00ae|\u2122|\u00a9/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    function flavorFamily(name) {
+      var n = normalizeFlavor(name);
+      for (var family in SIMILARITY_GROUPS) {
+        if (SIMILARITY_GROUPS[family].indexOf(n) !== -1) return family;
+      }
+      return null;
+    }
+
+    function similarityNote(winner, runners, cards) {
+      var winnerCard = cards.find(function(c){ return c.slug === winner; });
+      if (!winnerCard) return null;
+      var winnerFamily = flavorFamily(winnerCard.flavor || '');
+      if (!winnerFamily) return null;
+
+      for (var i = 0; i < runners.length; i++) {
+        var runnerCard = cards.find(function(c){ return c.slug === runners[i]; });
+        if (!runnerCard) continue;
+        var runnerFamily = flavorFamily(runnerCard.flavor || '');
+        if (runnerFamily === winnerFamily) {
+          return 'Both stores are serving ' + winnerFamily + ' flavors today — either works for ' + winnerFamily + ' lovers.';
+        }
+      }
+      return null;
+    }
+
+    // Voter ID (per-tab, prevents double-submit)
+    var voterId = sessionStorage.getItem('group:voter_id');
+    if (!voterId) {
+      voterId = crypto.randomUUID();
+      sessionStorage.setItem('group:voter_id', voterId);
+    }
+
+    var joinCode = new URLSearchParams(location.search).get('join');
+    var currentVotes = {};
+    var sessionSlugs = [];
+    var driveCards = [];
+    var pollTimer = null;
+
+    // Phase management
+    function showPhase(name) {
+      document.querySelectorAll('.group-phase').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      document.getElementById('phase-' + name).classList.add('active');
+    }
+
+    // --- CREATE VIEW ---
+    var selectedSlugs = [];
+    var storesCache = null;
+
+    function loadStores() {
+      if (storesCache) return Promise.resolve(storesCache);
+      return fetch(WORKER_BASE + '/api/v1/stores?q=a')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          storesCache = data.stores || [];
+          return storesCache;
+        }).catch(function() { return []; });
+    }
+
+    function renderSelectedSlugs() {
+      var container = document.getElementById('selected-slugs');
+      container.innerHTML = '';
+      selectedSlugs.forEach(function(slug) {
+        var badge = document.createElement('span');
+        badge.className = 'slug-badge';
+        var label = slug;
+        if (storesCache) {
+          var store = storesCache.find(function(s) { return s.slug === slug; });
+          if (store) label = store.name;
+        }
+        badge.textContent = label;
+        var removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '&times;';
+        removeBtn.setAttribute('aria-label', 'Remove ' + label);
+        removeBtn.addEventListener('click', function() {
+          selectedSlugs = selectedSlugs.filter(function(s) { return s !== slug; });
+          renderSelectedSlugs();
+          updateStartBtn();
+        });
+        badge.appendChild(removeBtn);
+        container.appendChild(badge);
+      });
+    }
+
+    function updateStartBtn() {
+      var btn = document.getElementById('start-vote-btn');
+      btn.disabled = selectedSlugs.length < 2 || selectedSlugs.length > 5;
+    }
+
+    var storeSearchInput = document.getElementById('store-search-create');
+    var storeDropdown = document.getElementById('store-dropdown-create');
+
+    storeSearchInput.addEventListener('input', function() {
+      var q = storeSearchInput.value.trim();
+      if (q.length < 2) { storeDropdown.hidden = true; return; }
+      loadStores().then(function(stores) {
+        var lq = q.toLowerCase();
+        var matches = stores.filter(function(s) {
+          return (s.name + ' ' + s.city + ' ' + s.state + ' ' + s.slug).toLowerCase().indexOf(lq) !== -1;
+        }).slice(0, 8);
+        if (matches.length === 0) { storeDropdown.hidden = true; return; }
+        storeDropdown.innerHTML = '';
+        matches.forEach(function(store) {
+          var item = document.createElement('div');
+          item.className = 'store-dropdown-item';
+          item.innerHTML = '<span class="store-dropdown-name">' + store.name + '</span>' +
+            '<span class="store-dropdown-detail">' + store.city + ', ' + store.state + '</span>';
+          item.addEventListener('click', function() {
+            if (selectedSlugs.indexOf(store.slug) === -1 && selectedSlugs.length < 5) {
+              selectedSlugs.push(store.slug);
+              renderSelectedSlugs();
+              updateStartBtn();
+            }
+            storeSearchInput.value = '';
+            storeDropdown.hidden = true;
+          });
+          storeDropdown.appendChild(item);
+        });
+        storeDropdown.hidden = false;
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!storeDropdown.contains(e.target) && e.target !== storeSearchInput) {
+        storeDropdown.hidden = true;
+      }
+    });
+
+    document.getElementById('start-vote-btn').addEventListener('click', function() {
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      var errEl = document.getElementById('create-error');
+      errEl.style.display = 'none';
+
+      fetch(WORKER_BASE + '/api/v1/group/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs: selectedSlugs }),
+      })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          if (!res.ok) throw new Error(res.data.error || 'Failed to create session.');
+          joinCode = res.data.join_code;
+          sessionSlugs = res.data.slugs;
+          // Store so we know how many voters to expect (just this device for now)
+          sessionStorage.setItem('group:expected_voters', '1');
+          transitionToVote(true);
+        })
+        .catch(function(err) {
+          errEl.textContent = err.message;
+          errEl.style.display = '';
+          btn.disabled = false;
+          btn.textContent = 'Start voting';
+        });
+    });
+
+    // --- VOTE VIEW ---
+    function transitionToVote(isHost) {
+      showPhase('vote');
+      var sharePanel = document.getElementById('share-panel');
+      if (isHost) {
+        sharePanel.hidden = false;
+        document.getElementById('join-code-big').textContent = joinCode;
+        var joinUrl = location.origin + location.pathname + '?join=' + joinCode;
+        // QR code
+        if (window.QRCode) {
+          var canvas = document.getElementById('qr-canvas');
+          QRCode.toCanvas(canvas, joinUrl, { width: 128, margin: 1 }, function() {});
+        }
+        document.getElementById('copy-link-btn').addEventListener('click', function() {
+          var joinUrl2 = location.origin + location.pathname + '?join=' + joinCode;
+          navigator.clipboard.writeText(joinUrl2).then(function() {
+            document.getElementById('copy-link-btn').textContent = 'Copied!';
+            setTimeout(function() {
+              document.getElementById('copy-link-btn').textContent = 'Copy join link';
+            }, 2000);
+          }).catch(function() {
+            prompt('Copy this link:', joinUrl2);
+          });
+        });
+      } else {
+        sharePanel.hidden = true;
+      }
+
+      loadVoteCards();
+    }
+
+    function loadVoteCards() {
+      var loader = document.getElementById('vote-loader');
+      var cardsEl = document.getElementById('vote-cards');
+      loader.style.display = '';
+
+      // Fetch session to get slugs (in case we're a joiner)
+      fetch(WORKER_BASE + '/api/v1/group/' + joinCode)
+        .then(function(r) {
+          if (!r.ok) throw new Error('Session not found or expired.');
+          return r.json();
+        })
+        .then(function(session) {
+          sessionSlugs = session.slugs;
+          var slugsParam = sessionSlugs.join(',');
+          return fetch(WORKER_BASE + '/api/v1/drive?slugs=' + encodeURIComponent(slugsParam));
+        })
+        .then(function(r) {
+          if (!r.ok) throw new Error('Could not load flavor data.');
+          return r.json();
+        })
+        .then(function(data) {
+          driveCards = data.cards || [];
+          loader.style.display = 'none';
+          renderVoteCards(driveCards);
+          cardsEl.hidden = false;
+          document.getElementById('vote-actions').hidden = false;
+        })
+        .catch(function(err) {
+          loader.textContent = err.message || 'Failed to load flavors.';
+        });
+    }
+
+    function renderVoteCards(cards) {
+      var container = document.getElementById('vote-cards');
+      container.innerHTML = '';
+      if (cards.length === 0) {
+        container.innerHTML = '<p style="color:#888;text-align:center;">No flavor data available for these stores today.</p>';
+        return;
+      }
+      cards.forEach(function(card) {
+        var div = document.createElement('div');
+        div.className = 'vote-card';
+        div.innerHTML =
+          '<h3>' + escapeHtml(card.name || card.slug) + '</h3>' +
+          '<div class="flavor-name">' + escapeHtml(card.flavor || 'No flavor confirmed') + '</div>' +
+          '<div class="vote-buttons">' +
+            '<button class="vote-btn" data-slug="' + card.slug + '" data-choice="yes">Yes</button>' +
+            '<button class="vote-btn" data-slug="' + card.slug + '" data-choice="meh">Meh</button>' +
+            '<button class="vote-btn" data-slug="' + card.slug + '" data-choice="no">No</button>' +
+          '</div>';
+        container.appendChild(div);
+      });
+
+      container.querySelectorAll('.vote-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var slug = btn.getAttribute('data-slug');
+          var choice = btn.getAttribute('data-choice');
+          currentVotes[slug] = choice;
+          // Update UI — clear siblings, mark this one
+          container.querySelectorAll('.vote-btn[data-slug="' + slug + '"]').forEach(function(b) {
+            b.classList.remove('selected');
+          });
+          btn.classList.add('selected');
+        });
+      });
+    }
+
+    document.getElementById('submit-vote-btn').addEventListener('click', function() {
+      var btn = this;
+      var errEl = document.getElementById('vote-error');
+      errEl.style.display = 'none';
+
+      // Check all slugs have a vote
+      var missing = sessionSlugs.filter(function(s) { return !currentVotes[s]; });
+      if (missing.length > 0) {
+        errEl.textContent = 'Vote on every store before submitting.';
+        errEl.style.display = '';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      fetch(WORKER_BASE + '/api/v1/group/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ join_code: joinCode, voter_id: voterId, votes: currentVotes }),
+      })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          if (!res.ok) throw new Error(res.data.error || 'Failed to submit vote.');
+          document.getElementById('vote-actions').hidden = true;
+          document.getElementById('waiting-section').hidden = false;
+          renderLiveTally(res.data.tally);
+          startPolling();
+        })
+        .catch(function(err) {
+          errEl.textContent = err.message;
+          errEl.style.display = '';
+          btn.disabled = false;
+          btn.textContent = 'Submit votes';
+        });
+    });
+
+    document.getElementById('see-results-btn').addEventListener('click', function() {
+      stopPolling();
+      showResults();
+    });
+
+    function renderLiveTally(tally) {
+      var el = document.getElementById('live-tally');
+      var html = '<div style="font-size:0.84rem;color:#555;">';
+      for (var slug in tally) {
+        var t = tally[slug];
+        html += '<div style="margin-bottom:0.3rem;">' +
+          '<strong>' + escapeHtml(slug) + '</strong> — ' +
+          '<span class="tally-yes">' + t.yes + ' yes</span>, ' +
+          '<span class="tally-meh">' + t.meh + ' meh</span>, ' +
+          '<span class="tally-no">' + t.no + ' no</span>' +
+          '</div>';
+      }
+      html += '</div>';
+      el.innerHTML = html;
+    }
+
+    function startPolling() {
+      if (pollTimer) return;
+      pollTimer = setInterval(function() {
+        fetch(WORKER_BASE + '/api/v1/group/' + joinCode)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            renderLiveTally(data.tally || {});
+          })
+          .catch(function() {});
+      }, 5000);
+    }
+
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    // --- RESULTS VIEW ---
+    function showResults() {
+      showPhase('results');
+      var loader = document.getElementById('results-loader');
+      var content = document.getElementById('results-content');
+      loader.style.display = '';
+      content.hidden = true;
+
+      fetch(WORKER_BASE + '/api/v1/group/' + joinCode)
+        .then(function(r) {
+          if (!r.ok) throw new Error('Could not load results.');
+          return r.json();
+        })
+        .then(function(data) {
+          loader.style.display = 'none';
+          renderResults(data);
+          content.hidden = false;
+        })
+        .catch(function(err) {
+          loader.textContent = err.message || 'Failed to load results.';
+        });
+    }
+
+    function renderResults(data) {
+      var content = document.getElementById('results-content');
+      var winner = data.winner;
+      var slugs = data.slugs || [];
+      var tally = data.tally || {};
+      var html = '';
+
+      if (!winner) {
+        html = '<p style="text-align:center;color:#888;">No votes yet.</p>';
+        content.innerHTML = html;
+        return;
+      }
+
+      // Winner card
+      var winnerCard = driveCards.find(function(c) { return c.slug === winner; });
+      var winnerName = (winnerCard && winnerCard.name) ? winnerCard.name : winner;
+      var winnerFlavor = (winnerCard && winnerCard.flavor) ? winnerCard.flavor : '';
+      var winnerTally = tally[winner] || { yes: 0, meh: 0, no: 0 };
+
+      html += '<div class="winner-card">' +
+        '<span class="winner-badge">Winner</span>' +
+        '<h3 style="margin:0 0 0.25rem;">' + escapeHtml(winnerName) + '</h3>';
+      if (winnerFlavor) {
+        html += '<div class="flavor-name" style="color:#005696;font-weight:600;margin-bottom:0.5rem;">' + escapeHtml(winnerFlavor) + '</div>';
+      }
+      html += '<div class="tally-row">' +
+        '<span class="tally-yes">' + winnerTally.yes + ' yes</span>' +
+        '<span class="tally-meh">' + winnerTally.meh + ' meh</span>' +
+        '<span class="tally-no">' + winnerTally.no + ' no</span>' +
+        '</div>';
+
+      // Directions CTA
+      var mapsQuery = winnerName + ' custard';
+      var mapsUrl = 'https://maps.google.com/?q=' + encodeURIComponent(mapsQuery);
+      if (winnerCard && winnerCard.lat && winnerCard.lon) {
+        mapsUrl = 'https://maps.google.com/?daddr=' + winnerCard.lat + ',' + winnerCard.lon;
+      }
+      html += '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="directions-btn">Get directions</a>';
+      html += '</div>';
+
+      // Flavor similarity note
+      var runners = slugs.filter(function(s) { return s !== winner; });
+      var note = similarityNote(winner, runners, driveCards);
+      if (note) {
+        html += '<div class="similarity-note">' + escapeHtml(note) + '</div>';
+      }
+
+      // Runner-up stores
+      if (runners.length > 0) {
+        html += '<h3 style="margin-top:1.25rem;font-size:0.95rem;color:#555;">Other stores</h3>';
+        runners.forEach(function(slug) {
+          var card = driveCards.find(function(c) { return c.slug === slug; });
+          var name = (card && card.name) ? card.name : slug;
+          var flavor = (card && card.flavor) ? card.flavor : '';
+          var t = tally[slug] || { yes: 0, meh: 0, no: 0 };
+          html += '<div class="vote-card">' +
+            '<h3>' + escapeHtml(name) + '</h3>';
+          if (flavor) html += '<div class="flavor-name">' + escapeHtml(flavor) + '</div>';
+          html += '<div class="tally-row">' +
+            '<span class="tally-yes">' + t.yes + ' yes</span>' +
+            '<span class="tally-meh">' + t.meh + ' meh</span>' +
+            '<span class="tally-no">' + t.no + ' no</span>' +
+            '</div></div>';
+        });
+      }
+
+      content.innerHTML = html;
+    }
+
+    // --- INIT ---
+    function init() {
+      if (joinCode) {
+        // Joiner: skip create phase, go straight to vote
+        transitionToVote(false);
+      } else {
+        showPhase('create');
+        // Preload stores for faster autocomplete
+        loadStores();
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>
