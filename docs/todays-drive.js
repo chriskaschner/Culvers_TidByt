@@ -750,10 +750,21 @@ var CustardDrive = (function () {
         dom.status.textContent = 'No route cards available yet for this query.';
       }
 
+      // Keep active state synchronized with the post-rerank card list.
+      // If the previously active slug was hard-excluded by a chip, reset to
+      // the first ranked card so a card (not an excluded row) holds focus.
+      if (state.activeSlug && sorted.length > 0) {
+        var stillRanked = false;
+        for (var si = 0; si < sorted.length; si++) {
+          if (sorted[si].slug === state.activeSlug) { stillRanked = true; break; }
+        }
+        if (!stillRanked) state.activeSlug = sorted[0].slug;
+      }
       if (!state.activeSlug && sorted.length > 0) {
         state.activeSlug = sorted[0].slug;
-        setActiveSlug(state.activeSlug);
       }
+      // Always reapply is-active to freshly-rendered card DOM nodes.
+      setActiveSlug(state.activeSlug);
     }
 
     async function fetchDrive() {
