@@ -8,8 +8,11 @@
     "test:coverage": "vitest run --coverage",
     "test:browser": "playwright test --config playwright.config.mjs",
     "test:watch": "vitest",
+    "bless:cones": "UPDATE_GOLDENS=1 vitest run --reporter=verbose 2>&1 | grep '^GOLDEN:'",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "sprites": "node ../tools/generate_sprites.mjs",
+    "sprites:ai": "node ../tools/generate_ai_sprites.mjs"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.0",

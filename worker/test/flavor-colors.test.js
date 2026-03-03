@@ -427,3 +427,302 @@ describe('renderConePremiumSVG', () => {
     }
   });
 });
+
+// =============================================================
+// Cone renderer quality gate
+// =============================================================
+
+/**
+ * Parse an SVG produced by a renderCone*SVG call at scale=1 into a sparse
+ * pixel map. Keys are "col,row" strings; values are fill colors.
+ * Multi-pixel rects (width > 1 or height > 1) are expanded to individual pixels.
+ *
+ * Attribute-order tolerant: each attribute is extracted independently so the
+ * parser is robust against future reordering inside the renderer.
+ * Callers must use scale=1 so that SVG coordinates equal grid coordinates.
+ */
+function renderToPixels(svgStr) {
+  const map = new Map();
+  // Match the content of every <rect .../> element regardless of attr order.
+  // [^>]+ captures everything before the closing > (including trailing /).
+  const rectRe = /<rect\s+([^>]+)>/g;
+  let m;
+  while ((m = rectRe.exec(svgStr)) !== null) {
+    const attrs = m[1];
+    const getInt = (name) => {
+      const am = attrs.match(new RegExp(`\\b${name}="(\\d+)"`));
+      return am ? parseInt(am[1]) : 0;
+    };
+    const x = getInt('x');
+    const y = getInt('y');
+    const w = getInt('width') || 1;
+    const h = getInt('height') || 1;
+    const fm = attrs.match(/\bfill="([^"]+)"/);
+    const fill = fm ? fm[1] : '';
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        map.set(`${x + dx},${y + dy}`, fill);
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * Stable hash of a pixel map: sort entries numerically (row then col),
+ * JSON.stringify, then djb2. Deterministic regardless of map insertion order.
+ */
+function stableHash(map) {
+  const entries = [...map.entries()].sort(([a], [b]) => {
+    const [ax, ay] = a.split(',').map(Number);
+    const [bx, by] = b.split(',').map(Number);
+    if (ay !== by) return ay - by;
+    return ax - bx;
+  });
+  const str = JSON.stringify(entries);
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+/**
+ * Compute the set of all valid pixel keys for a tier spec.
+ * Valid = pixel is within the scoop zone, cone zone, or tip zone.
+ * tipPixels entries are [row, startCol, endCol].
+ */
+function buildValidSet(spec) {
+  const valid = new Set();
+  spec.scoopMask.forEach(([sc, ec], row) => {
+    for (let col = sc; col <= ec; col++) valid.add(`${col},${row}`);
+  });
+  const coneStart = spec.scoopMask.length;
+  spec.coneMask.forEach(([sc, ec], ri) => {
+    const row = coneStart + ri;
+    for (let col = sc; col <= ec; col++) valid.add(`${col},${row}`);
+  });
+  for (const [row, sc, ec] of spec.tipPixels) {
+    for (let col = sc; col <= ec; col++) valid.add(`${col},${row}`);
+  }
+  return valid;
+}
+
+// -- Tier specs: explicit masks derived from renderer source constants --
+//
+// minCoverage: exact pixel counts from the mask geometry (sum of ec-sc+1 per row).
+// The base fill always covers the full mask, so these are structural minimums
+// that catch any skipped rows or truncated geometry in the renderer.
+// tipPixels: [row, startCol, endCol] -- at least one pixel must be present.
+
+const MINI_SPEC = {
+  gridW: 9,
+  gridH: 10,
+  // scoopRows from renderConeSVG: rows 0-4
+  scoopMask: [[3,5],[2,6],[1,7],[1,7],[1,7]],
+  // coneRows from renderConeSVG: rows 5-8
+  coneMask:  [[2,6],[2,6],[3,5],[3,5]],
+  // tip pixel at (4,9) -- uses CONE_COLORS.waffle_dark, not CONE_TIP_COLOR
+  tipPixels: [[9, 4, 4]],
+  // 3+5+7+7+7 = 29 scoop; 5+5+3+3 = 16 cone; 1 tip
+  minCoverage: { scoop: 29, cone: 16, tip: 1 },
+};
+
+const HD_SPEC = {
+  gridW: 18,
+  gridH: 21,
+  // scoopRows from renderConeHDSVG: rows 0-10
+  scoopMask: [
+    [4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14],
+  ],
+  // coneRows from renderConeHDSVG: rows 11-19
+  coneMask: [
+    [4,13],[4,13],[5,12],[5,12],[6,11],[6,11],[7,10],[7,10],[8,9],
+  ],
+  // tip: two pixels at row 20, cols 8-9 (CONE_TIP_COLOR)
+  tipPixels: [[20, 8, 9]],
+  // 10+12+14×8+12 = 146 scoop; 10+10+8+8+6+6+4+4+2 = 58 cone; 2 tip
+  minCoverage: { scoop: 146, cone: 58, tip: 2 },
+};
+
+const PREMIUM_SPEC = {
+  gridW: 24,
+  gridH: 28,
+  // _PREM_SCOOP_ROWS: rows 0-13
+  scoopMask: [
+    [3,18],[1,22],[0,23],[0,23],[0,23],[0,23],[0,23],
+    [0,23],[1,22],[2,20],[3,18],[4,16],[5,15],[6,14],
+  ],
+  // _PREM_CONE_ROWS: rows 14-27
+  coneMask: [
+    [5,19],[5,19],[6,18],[6,18],[7,17],[7,17],[8,16],
+    [8,16],[9,15],[9,15],[10,14],[10,14],[11,13],[11,13],
+  ],
+  // tip: rect(11, 27, 3, 1, CONE_TIP_COLOR) -- cols 11-13 at row 27 (within last cone row)
+  tipPixels: [[27, 11, 13]],
+  // 16+22+24×6+22+19+16+13+11+9 = 272 scoop; 2×(15+13+11+9+7+5+3) = 126 cone; 3 tip
+  minCoverage: { scoop: 272, cone: 126, tip: 3 },
+};
+
+const HERO_SPEC = {
+  gridW: 36,
+  gridH: 42,
+  // _HERO_SCOOP_ROWS: rows 0-21
+  scoopMask: [
+    [8,27],[6,29],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],
+    [4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[6,29],[7,28],
+  ],
+  // _HERO_CONE_ROWS: rows 22-39
+  coneMask: [
+    [7,28],[7,28],[9,26],[9,26],[11,24],[11,24],[13,22],[13,22],[14,21],[14,21],
+    [15,20],[15,20],[16,19],[16,19],[16,19],[16,19],[17,18],[17,18],
+  ],
+  // tip: rect(17, 40/41, 2, 1, CONE_TIP_COLOR) -- cols 17-18 at rows 40-41
+  tipPixels: [[40, 17, 18],[41, 17, 18]],
+  // 20+24+28×18+24+22 = 594 scoop; 22+22+18+18+14+14+10+10+8+8+6+6+4×4+2+2 = 176 cone; 4 tip
+  minCoverage: { scoop: 594, cone: 176, tip: 4 },
+};
+
+const TIER_SPECS = [
+  { name: 'Mini',    fn: renderConeSVG,       spec: MINI_SPEC    },
+  { name: 'HD',      fn: renderConeHDSVG,     spec: HD_SPEC      },
+  { name: 'Premium', fn: renderConePremiumSVG, spec: PREMIUM_SPEC },
+  { name: 'Hero',    fn: renderConeHeroSVG,   spec: HERO_SPEC    },
+];
+
+const ALL_FLAVOR_NAMES = Object.keys(FLAVOR_PROFILES);
+
+// -- Structural invariants: all flavors x all tiers --
+
+describe('cone structural invariants — all flavors x all tiers', () => {
+  for (const { name, fn, spec } of TIER_SPECS) {
+    const validSet = buildValidSet(spec);
+    const coneStart = spec.scoopMask.length;
+
+    it(`${name}: every pixel is within grid bounds and valid zone`, () => {
+      for (const flavorName of ALL_FLAVOR_NAMES) {
+        const pixels = renderToPixels(fn(flavorName, 1));
+        for (const key of pixels.keys()) {
+          const [x, y] = key.split(',').map(Number);
+          if (x < 0 || x >= spec.gridW || y < 0 || y >= spec.gridH) {
+            throw new Error(`${flavorName}: pixel (${x},${y}) outside ${spec.gridW}x${spec.gridH} grid`);
+          }
+          if (!validSet.has(key)) {
+            throw new Error(`${flavorName}: pixel (${x},${y}) outside valid zone (scoop+cone+tip)`);
+          }
+        }
+      }
+    });
+
+    it(`${name}: zone coverage meets minimums (scoop, cone, tip)`, () => {
+      for (const flavorName of ALL_FLAVOR_NAMES) {
+        const pixels = renderToPixels(fn(flavorName, 1));
+
+        let scoopCount = 0;
+        spec.scoopMask.forEach(([sc, ec], row) => {
+          for (let col = sc; col <= ec; col++) {
+            if (pixels.has(`${col},${row}`)) scoopCount++;
+          }
+        });
+        if (scoopCount < spec.minCoverage.scoop) {
+          throw new Error(
+            `${flavorName}: scoop has ${scoopCount} pixels, expected >= ${spec.minCoverage.scoop}`
+          );
+        }
+
+        let coneCount = 0;
+        spec.coneMask.forEach(([sc, ec], ri) => {
+          const row = coneStart + ri;
+          for (let col = sc; col <= ec; col++) {
+            if (pixels.has(`${col},${row}`)) coneCount++;
+          }
+        });
+        if (coneCount < spec.minCoverage.cone) {
+          throw new Error(
+            `${flavorName}: cone has ${coneCount} pixels, expected >= ${spec.minCoverage.cone}`
+          );
+        }
+
+        let tipCount = 0;
+        for (const [tipRow, sc, ec] of spec.tipPixels) {
+          for (let col = sc; col <= ec; col++) {
+            if (pixels.has(`${col},${tipRow}`)) tipCount++;
+          }
+        }
+        if (tipCount < spec.minCoverage.tip) {
+          throw new Error(
+            `${flavorName}: tip has ${tipCount} pixels, expected >= ${spec.minCoverage.tip}`
+          );
+        }
+      }
+    });
+
+    it(`${name}: renders identically on two calls (determinism)`, () => {
+      for (const flavorName of ALL_FLAVOR_NAMES) {
+        const h1 = stableHash(renderToPixels(fn(flavorName, 1)));
+        const h2 = stableHash(renderToPixels(fn(flavorName, 1)));
+        if (h1 !== h2) {
+          throw new Error(`${flavorName}: non-deterministic (h1=${h1} h2=${h2})`);
+        }
+      }
+    });
+  }
+});
+
+// -- Golden pixel hashes: Tier-1 flavors x all tiers --
+//
+// To initialize or update:  UPDATE_GOLDENS=1 npm test
+// The run prints "GOLDEN: 'key': 'hash'," lines to stdout.
+// Copy those values into the table below, then commit.
+// Entries set to null are skipped silently (not yet initialized).
+
+const GOLDEN_HASHES = {
+  'Mini/vanilla':                   'baa42cd3',
+  'Mini/mint explosion':            '98590fd4',
+  'Mini/chocolate caramel twist':   '89184d20',
+  'Mini/dark chocolate decadence':  'a85a6964',
+  'Mini/caramel chocolate pecan':   '74926315',
+  'HD/vanilla':                     '6af5b3e3',
+  'HD/mint explosion':              'c9f0f388',
+  'HD/chocolate caramel twist':     '0a5f50c9',
+  'HD/dark chocolate decadence':    '8a7c8271',
+  'HD/caramel chocolate pecan':     '56b33517',
+  'Premium/vanilla':                'cc0e3069',
+  'Premium/mint explosion':         '3f8f5c4b',
+  'Premium/chocolate caramel twist':'de723f6b',
+  'Premium/dark chocolate decadence':'03b26551',
+  'Premium/caramel chocolate pecan':'2dbf7bcb',
+  'Hero/vanilla':                   '2ef6df7b',
+  'Hero/mint explosion':            'a600087a',
+  'Hero/chocolate caramel twist':   'b0df661b',
+  'Hero/dark chocolate decadence':  '2385a85f',
+  'Hero/caramel chocolate pecan':   '47289457',
+};
+
+const GOLDEN_FLAVORS = [
+  'vanilla',
+  'mint explosion',
+  'chocolate caramel twist',
+  'dark chocolate decadence',
+  'caramel chocolate pecan',
+];
+
+describe('cone golden hashes — Tier-1 flavors x all tiers', () => {
+  for (const { name, fn } of TIER_SPECS) {
+    for (const flavorName of GOLDEN_FLAVORS) {
+      const key = `${name}/${flavorName}`;
+      it(key, () => {
+        const hash = stableHash(renderToPixels(fn(flavorName, 1)));
+        if (process.env.UPDATE_GOLDENS === '1') {
+          console.log(`GOLDEN: '${key}': '${hash}',`);
+          return;
+        }
+        if (GOLDEN_HASHES[key] === null) {
+          // Not yet initialized. Run UPDATE_GOLDENS=1 npm test to populate.
+          return;
+        }
+        expect(hash).toBe(GOLDEN_HASHES[key]);
+      });
+    }
+  }
+});

@@ -51,6 +51,7 @@ export const TOPPING_COLORS = {
   brownie: '#2D1700',
   blueberry: '#3B1F6B',
   pie_crust: '#C4966A',
+  blackberry_drupe: '#3D1F5C',  // darker purple for blackberry inclusions at small tiers
 };
 
 export const CONE_COLORS = {
@@ -93,7 +94,16 @@ export const FLAVOR_PROFILES = {
   'chocolate heath crunch': { base: 'chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
   'double butter pecan': { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' },
   // Catalog entries without prior profiles
-  'blackberry cobbler': { base: 'blackberry', ribbon: null, toppings: ['pie_crust', 'pie_crust', 'pie_crust'], density: 'standard' },
+  'blackberry cobbler': {
+    base: 'blackberry', ribbon: null, toppings: ['pie_crust', 'pie_crust', 'pie_crust'], density: 'standard',
+    // L2 override: 3 blackberry drupes + 3 crust dots, spread within inner scoop,
+    // each topping at least 2px from image edge. [col, row, colorKey]
+    l2_toppings: [
+      [2, 2, 'blackberry_drupe'], [5, 2, 'pie_crust'],
+      [3, 3, 'pie_crust'],        [6, 3, 'blackberry_drupe'],
+      [4, 4, 'blackberry_drupe'], [6, 4, 'pie_crust'],
+    ],
+  },
   'brownie thunder': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['brownie', 'dove', 'brownie'], density: 'explosion' },
   'chocolate oreo volcano': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['oreo', 'dove'], density: 'explosion' },
   'lemon berry layer cake': { base: 'lemon', ribbon: null, toppings: ['blueberry', 'cake'], density: 'standard' },
@@ -198,15 +208,24 @@ export function renderConeSVG(flavorName, scale = 1) {
     }
   }
 
-  // Fixed topping slots (T1-T4): distributed across rows 1-4 so toppings
-  // span the full scoop height rather than clustering in a horizontal band.
-  // T1:(3,1) T2:(6,2) T3:(3,3) T4:(5,4) -- no ribbon collision with any slot
-  const tSlots = [[3,1],[6,2],[3,3],[5,4]];
-  for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
-    const color = TOPPING_COLORS[toppingSlots[i]];
-    if (!color) continue;
-    const [tx, ty] = tSlots[i];
-    rects.push(`<rect x="${tx * s}" y="${ty * s}" width="${s}" height="${s}" fill="${color}"/>`);
+  // Topping placement: use per-flavor l2_toppings override if defined,
+  // otherwise fall back to 4 fixed slots distributed across scoop rows 1-4.
+  if (profile.l2_toppings) {
+    for (const [tx, ty, colorKey] of profile.l2_toppings) {
+      const color = TOPPING_COLORS[colorKey];
+      if (color) rects.push(`<rect x="${tx * s}" y="${ty * s}" width="${s}" height="${s}" fill="${color}"/>`);
+    }
+  } else {
+    // Fixed topping slots (T1-T4): distributed across rows 1-4 so toppings
+    // span the full scoop height rather than clustering in a horizontal band.
+    // T1:(3,1) T2:(6,2) T3:(3,3) T4:(5,4) -- no ribbon collision with any slot
+    const tSlots = [[3,1],[6,2],[3,3],[5,4]];
+    for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
+      const color = TOPPING_COLORS[toppingSlots[i]];
+      if (!color) continue;
+      const [tx, ty] = tSlots[i];
+      rects.push(`<rect x="${tx * s}" y="${ty * s}" width="${s}" height="${s}" fill="${color}"/>`);
+    }
   }
 
   // Fixed ribbon slots (R1-R3) -- rendered after toppings, ribbon wins at overlap
