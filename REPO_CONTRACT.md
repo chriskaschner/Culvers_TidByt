@@ -15,7 +15,7 @@ This file is authoritative. New top-level directories require an update here bef
 | `tests/` | Python integration tests | @chriskaschner | Yes -- pytest |
 | `tidbyt/` | Canonical Tidbyt Starlark renderer | @chriskaschner | No (manual deploy) |
 | `widgets/` | Canonical Scriptable widget source | @chriskaschner | No (manual deploy) |
-| `tools/` | One-off generators and fixture capture utilities | @chriskaschner | No |
+| `tools/` | One-off generators, fixture capture, and dev utilities | @chriskaschner | No |
 | `archive/` | Inactive code preserved for reference | @chriskaschner | No |
 | `.github/` | CI workflows and issue templates | @chriskaschner | Yes |
 
@@ -48,6 +48,9 @@ Everything else (coverage, sprites, audit HTML, local DB files, backfill checkpo
 
 Engineering docs, audit HTML, sprite grids, planning documents, and generated asset variants
 do NOT belong in `docs/`. Place them in `archive/`, `tools/`, or gitignore them.
+
+Exception: `docs/flavor-audit.html` and `docs/multi.html` are development QA tools served by
+GitHub Pages for convenience. Pending migration decision -- they are not public product pages.
 
 ## Naming Conventions
 
@@ -83,4 +86,4 @@ Current archive contents:
 | Python tests | pytest (~179 tests) | Push to main, PR |
 | Metrics seed freshness | Vitest | Push to main |
 | Repo structure policy | (to be added) | Push to main, PR |
-| Secret scanning | (to be added) | Push to main, PR |
+| Secret scanning | TruffleHog (`.github/workflows/security.yml`) | Push to main, PR |

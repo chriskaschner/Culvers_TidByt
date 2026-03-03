@@ -3,7 +3,7 @@
 # For full pipeline (fetch + calendar + tidbyt), use: uv run python main.py
 
 set -e
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 # Load environment variables
 if [ -f .env ]; then

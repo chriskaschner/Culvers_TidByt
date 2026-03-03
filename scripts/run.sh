@@ -2,8 +2,8 @@
 # Culver's FOTD Tracker - Cron Helper Script
 # Runs the full pipeline: fetch → calendar sync → tidbyt render + push
 
-# Change to the project directory
-cd "$(dirname "$0")"
+# Change to the project root (script lives in scripts/)
+cd "$(dirname "$0")/.."
 
 # Load environment variables (TIDBYT_API_TOKEN)
 if [ -f .env ]; then
