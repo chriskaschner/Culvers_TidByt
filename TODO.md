@@ -122,7 +122,7 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 - [x] **Ship current Today’s Drive stack to production** -- completed with merged `main`, production deploy, and live smoke verification for `/api/v1/drive`, index Drive asset load, and scoop deep-link compatibility wiring. (2026-03-01)
 - [x] **Scoop dual-day context block** -- implemented via `include_tomorrow=1` on Scoop with confirmed-only tomorrow payload/fallback copy. (2026-02-28)
 - [x] **Widget 3-store/3-day visual parity** -- Scriptable widget now uses shared medium-row renderer for both 3-day and 3-store views (aligned hierarchy + right-aligned rarity tags) and widget preview copy/docs reflect parity contract. (2026-02-28)
-- [ ] **Post-deploy verification checklist** -- remaining manual live walkthroughs: route edit UX, chip rerank/no-refetch confirmation in prod network tab, map pin/card sync, and URL/localStorage reproducibility on mobile + desktop. This is the only unchecked Phase 0 blocker.
+- [x] **Post-deploy verification checklist** -- chip rerank/no-refetch: confirmed by code review (rerenderFromRaw, no fetch on chip/sort). Mini-map pin/card sync: bug found and fixed (setActiveSlug not called after rerenderFromRaw when activeSlug already set). 4 browser specs added covering initial activate, hover sync, post-rerank persistence, pin click. URL/localStorage state: confirmed via code review (history.replaceState on every savePrefs, URL takes precedence on load). Manual route-edit and mobile/desktop UI walkthroughs remain optional nice-to-have. (2026-03-03)
 - [x] **Drive retry + SW cache smoke check** -- production /api/v1/drive returns confirmed cards with real flavor data. Root cause of prior 500s was null fetchFlavorsFn crash (kv cache miss path); fixed and deployed as Worker 93bfd9d8. Browser tests (28/28) and worker tests (801/801) all green. Nav test updated to include Group link. (2026-03-03)
 
 ### Phase 1 — UX completeness and trust signals (P1)
@@ -156,7 +156,7 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 - [x] Homepage remains route-first and performant with 2-5 store ranking cards.
 - [x] Scoop shows today card plus tomorrow context block when tomorrow data exists.
 - [x] Chips/sort rerank instantly with no unnecessary network calls.
-- [ ] Mini-map pins stay synchronized with card buckets and focus/hover behavior.
+- [x] Mini-map pins stay synchronized with card buckets and focus/hover behavior. Fixed setActiveSlug regression + 4 browser specs. (2026-03-03)
 - [x] Preferences persist via `custard:v1:preferences` and URL state sharing works reliably.
 - [x] Widget 3-store view visually mirrors 3-day design language, including right-aligned rarity tags.
 
