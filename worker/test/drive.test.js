@@ -39,6 +39,55 @@ describe('flavor-tags helpers', () => {
   it('maps excluded tags to user-facing dealbreakers', () => {
     expect(buildDealbreakers(['nuts', 'cheesecake'])).toEqual(['Contains nuts', 'Contains cheesecake']);
   });
+
+  // Expansion: praline
+  it('praline triggers nuts tag', () => {
+    const tags = extractFlavorTags('Praline Pecan', 'Custard with praline-coated pecans');
+    expect(tags).toContain('nuts');
+  });
+
+  // Existing: reeses variant (apostrophe-free)
+  it("Really Reese's triggers nuts tag", () => {
+    const tags = extractFlavorTags("Really Reese's", "Reese's Peanut Butter Cups in chocolate custard");
+    expect(tags).toContain('nuts');
+  });
+
+  // Multi-tag: Turtle (pecan + caramel + chocolate = nuts + caramel + chocolate)
+  it('Turtle triggers nuts + caramel + chocolate', () => {
+    const tags = extractFlavorTags('Turtle', 'Vanilla custard with caramel, chocolate, and toasted pecan pieces');
+    expect(tags).toContain('nuts');
+    expect(tags).toContain('caramel');
+    expect(tags).toContain('chocolate');
+  });
+
+  // False-positive regression: mint must not trigger coffee
+  it('Mint Chocolate Chip does not trigger coffee tag', () => {
+    const tags = extractFlavorTags('Mint Chocolate Chip', 'Mint custard with chocolate chips');
+    expect(tags).toContain('mint');
+    expect(tags).toContain('chocolate');
+    expect(tags).not.toContain('coffee');
+  });
+
+  // False-positive regression: neutral flavor produces no allergen tags
+  it('Vanilla Bean has no nuts or cheesecake tags', () => {
+    const tags = extractFlavorTags('Vanilla Bean', 'Classic creamy vanilla custard');
+    expect(tags).not.toContain('nuts');
+    expect(tags).not.toContain('cheesecake');
+  });
+
+  // False-positive regression: partial word does not trigger nuts
+  it('Peachy Keen does not trigger nuts (peac is not pecan)', () => {
+    const tags = extractFlavorTags('Peachy Keen', 'Peach custard with fresh fruit swirl');
+    expect(tags).not.toContain('nuts');
+    expect(tags).toContain('fruit');
+  });
+
+  // False-positive regression: "chocolate cake" must not trigger cheesecake
+  it('Chocolate Lava Cake does not trigger cheesecake tag', () => {
+    const tags = extractFlavorTags('Chocolate Lava Cake', 'Dark chocolate custard with cake pieces');
+    expect(tags).not.toContain('cheesecake');
+    expect(tags).toContain('chocolate');
+  });
 });
 
 describe('handleDrive', () => {
@@ -222,6 +271,56 @@ describe('handleDrive', () => {
     });
     expect(madison.tomorrow).toBeNull();
     expect(json.query.include_tomorrow).toBe(1);
+  });
+
+  it('uses tomorrow confirmed flavor as fallback when today is missing', async () => {
+    const tomorrow = tomorrowIso();
+    // mt-horeb has no today flavor but does have tomorrow
+    setFlavorCache(mockKv, 'mt-horeb', {
+      name: "Culver's of Mt. Horeb",
+      flavors: [{ date: tomorrow, title: 'Butter Pecan', description: 'Classic butter pecan.' }],
+    });
+    setFlavorCache(mockKv, 'madison-todd-drive', {
+      name: "Culver's of Madison",
+      flavors: [{ date: tomorrow, title: 'Turtle', description: 'Caramel, chocolate, pecan.' }],
+    });
+
+    const url = new URL('https://example.com/api/v1/drive?slugs=mt-horeb,madison-todd-drive');
+    const res = await handleDrive(url, env, corsHeaders);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    // Both stores should appear as ranked cards, not excluded
+    expect(json.cards).toHaveLength(2);
+    expect(json.excluded).toHaveLength(0);
+
+    const mtHoreb = json.cards.find((c) => c.slug === 'mt-horeb');
+    expect(mtHoreb.flavor).toBe('Butter Pecan');
+    expect(mtHoreb.source).toBe('confirmed_tomorrow');
+    expect(mtHoreb.certainty_tier).toBe('confirmed');
+    expect(mtHoreb.date).toBe(tomorrow);
+  });
+
+  it('tomorrow fallback does not apply when include_tomorrow=1 (Scoop mode)', async () => {
+    const tomorrow = tomorrowIso();
+    // No today's flavor, only tomorrow
+    setFlavorCache(mockKv, 'mt-horeb', {
+      name: "Culver's of Mt. Horeb",
+      flavors: [{ date: tomorrow, title: 'Butter Pecan', description: 'Classic.' }],
+    });
+    setFlavorCache(mockKv, 'madison-todd-drive', {
+      name: "Culver's of Madison",
+      flavors: [{ date: tomorrow, title: 'Turtle', description: 'Classic.' }],
+    });
+
+    const url = new URL('https://example.com/api/v1/drive?slugs=mt-horeb,madison-todd-drive&include_tomorrow=1');
+    const res = await handleDrive(url, env, corsHeaders);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    // In Scoop mode (include_tomorrow=1), missing today should still exclude the card
+    expect(json.excluded).toHaveLength(2);
+    expect(json.cards).toHaveLength(0);
   });
 
   it('omits tomorrow field when include_tomorrow is not enabled', async () => {

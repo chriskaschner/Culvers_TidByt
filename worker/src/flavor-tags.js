@@ -1,6 +1,6 @@
 import { getFlavorProfile } from './flavor-colors.js';
 
-const NUTS_PATTERN = /\b(pecan|cashew|almond|walnut|hazelnut|pistachio|peanut|reeses?)\b/i;
+const NUTS_PATTERN = /\b(pecan|cashew|almond|walnut|hazelnut|pistachio|peanut|reeses?|praline)\b/i;
 const CHEESECAKE_PATTERN = /\bcheesecake\b/i;
 const CHOCOLATE_PATTERN = /\b(chocolate|cocoa|fudge|mocha|brownie|oreo)\b/i;
 const FRUIT_PATTERN = /\b(strawberry|raspberry|cherry|peach|lemon|blueberry|blackberry|mango|banana|berry)\b/i;

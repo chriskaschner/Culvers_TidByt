@@ -238,6 +238,23 @@ async function buildCard({
     }
   }
 
+  // Tomorrow-aware fallback: when today has no confirmed flavor and we haven't
+  // fallen back to an estimate yet, use tomorrow's confirmed schedule entry.
+  // Keeps certainty=confirmed (real data) but labels source as confirmed_tomorrow
+  // so the frontend can indicate this is a next-day flavor, not today's.
+  // Only applies outside the includeTomorrow=1 mode (Scoop) where tomorrow is
+  // handled as an explicit secondary block on cards that already have today data.
+  if (!flavorName && !includeTomorrow) {
+    const tomorrowFallback = (flavorData.flavors || []).find((entry) => entry.date === tomorrow) || null;
+    if (tomorrowFallback?.title) {
+      flavorName = tomorrowFallback.title;
+      description = tomorrowFallback.description || '';
+      source = 'confirmed_tomorrow';
+      certaintyTier = 'confirmed';
+      date = tomorrowFallback.date;
+    }
+  }
+
   if (!flavorName) {
     return {
       type: 'excluded',

@@ -372,6 +372,31 @@ var CustardDrive = (function () {
       return (card.flavor || 'Flavor') + '; ' + parts.join('; ');
     }
 
+    function buildExplainHtml(card) {
+      var rows = [];
+      if (card.matchedBoost.length > 0) {
+        var chips = card.matchedBoost.map(function (t) {
+          return '<span class="drive-tag-chip">' + escapeHtml(titleCaseTag(t)) + '</span>';
+        }).join('');
+        rows.push('<p class="drive-explain-row">Matches: ' + chips + '</p>');
+      }
+      if (card.matchedAvoid.length > 0) {
+        var avoidChips = card.matchedAvoid.map(function (t) {
+          return '<span class="drive-tag-chip drive-tag-chip-avoid">' + escapeHtml(titleCaseTag(t)) + '</span>';
+        }).join('');
+        rows.push('<p class="drive-explain-row drive-explain-muted">Avoiding: ' + avoidChips + '</p>');
+      }
+      if (card.novelty) {
+        rows.push('<p class="drive-explain-rarity">First time at this store recently.</p>');
+      } else if (card.avgGapDays && card.avgGapDays > 21) {
+        rows.push('<p class="drive-explain-rarity">Rare: appears ~' + card.avgGapDays + 'd apart.</p>');
+      }
+      if (rows.length === 0) {
+        rows.push('<p class="drive-explain-rarity drive-explain-muted">Familiar pick, reliable rotation.</p>');
+      }
+      return '<div class="drive-explain">' + rows.join('') + '</div>';
+    }
+
     function decorateCard(rawCard) {
       var tags = normalizeTags(rawCard.tags);
       var excludes = normalizeTags(state.prefs.filters.excludeTags);
@@ -427,6 +452,7 @@ var CustardDrive = (function () {
         mapBucket: mapBucketFromScore(score, hardPass),
         recommendation: recommendation,
         dealbreakers: dealbreakers,
+        novelty: novelty,
         distanceMiles: distance,
         etaMinutes: etaMinutesFromDistance(distance),
         avgGapDays: Number.isFinite(avgGap) ? Math.round(avgGap) : null,
@@ -512,23 +538,40 @@ var CustardDrive = (function () {
             + '</div>';
         }
 
+        var isTomorrowFallback = card.raw && card.raw.source === 'confirmed_tomorrow';
+        var flavorKicker = isTomorrowFallback
+          ? '<p class="drive-tomorrow-kicker">Tomorrow\'s flavor</p>'
+          : '';
+        var directionsHtml = isTomorrowFallback
+          ? ''
+          : '<p><a href="' + escapeHtml(buildDirectionsHref(card)) + '" target="_blank" rel="noopener">Directions</a></p>';
+        var mapHref = '/map.html?focus=' + encodeURIComponent(card.slug);
+        var calHref = '/calendar.html?slug=' + encodeURIComponent(card.slug);
+        var radarHref = '/radar.html?store=' + encodeURIComponent(card.slug);
+
         html += '<article class="drive-card" data-store-slug="' + escapeHtml(card.slug) + '" tabindex="0">'
           + '<header class="drive-card-head">'
           +   '<div>'
           +     '<h4>' + escapeHtml(getStoreLabel(bySlug[card.slug] || { name: card.name, slug: card.slug })) + '</h4>'
+          +     flavorKicker
           +     '<p class="drive-flavor">' + escapeHtml(card.flavor || 'Flavor unavailable') + '</p>'
           +   '</div>'
           +   '<div class="drive-score drive-bucket-' + escapeHtml(card.mapBucket) + '">' + escapeHtml(scoreLabel) + '</div>'
           + '</header>'
           + '<p class="drive-vibe">' + escapeHtml(vibe) + '</p>'
           + '<p class="drive-dealbreaker">' + escapeHtml(dealbreaker) + '</p>'
-          + '<p class="drive-rec">' + escapeHtml(card.recommendation) + '</p>'
+          + buildExplainHtml(card)
           + tomorrowHtml
           + '<details>'
           +   '<summary>Details</summary>'
           +   (card.description ? '<p class="drive-detail-line">' + escapeHtml(card.description) + '</p>' : '')
           +   '<p class="drive-detail-line">' + escapeHtml(lastSeen + ' • ' + detour + ' • ' + eta) + '</p>'
-          +   '<p><a href="' + escapeHtml(buildDirectionsHref(card)) + '" target="_blank" rel="noopener">Directions</a></p>'
+          +   directionsHtml
+          +   '<p class="drive-detail-links">'
+          +     '<a href="' + mapHref + '">Map</a>'
+          +     ' · <a href="' + calHref + '">Subscribe</a>'
+          +     ' · <a href="' + radarHref + '">Radar</a>'
+          +   '</p>'
           + '</details>'
           + '</article>';
       }
