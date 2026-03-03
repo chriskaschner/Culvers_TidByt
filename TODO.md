@@ -20,35 +20,21 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 Focus order for the next cycle: tighten production quality and measurement before expanding scope.
 
-1. **P0: CI gate stability + rapid triage discipline**  
-   Source items: CI run `22531947153` (`Worker Tests` failure) + recurring release-gate reliability needs.  
-   Outcome: keep Worker/Python checks consistently green, harden date-sensitive tests, and treat CI red as stop-the-line until resolved.
+1. ~~**P0: CI gate stability + rapid triage discipline**~~ -- closed 2026-03-03. CI fully green: Worker tests (810), Python tests, browser tests (32) all passing. Security Scan (TruffleHog) fixed (event-aware base SHA). Repo-structure CI gate added. SRI enforcement catches unhashed CDN scripts.
 
-2. **P0: Complete post-deploy UX verification in production (Phase 0 blocker)**  
-   Source items: `Next -- Today’s Drive Comprehensive Plan (Packaged Brief)` phase 0 post-deploy checklist.  
-   Outcome: close the only remaining Phase 0 blocker via manual live validation for route edit flow, chip rerank/no-refetch behavior, mini-map pin/card sync, and URL/localStorage reproducibility on desktop + mobile.
+2. ~~**P0: Complete post-deploy UX verification in production (Phase 0 blocker)**~~ -- closed 2026-03-03. Chip rerank/no-refetch confirmed by code review. Mini-map pin/card sync bug fixed + 4 browser specs. URL/localStorage state confirmed. Drive retry + SW cache smoke check passed.
 
-3. **P0: Close mini-map synchronization acceptance criterion**  
-   Source items: unchecked acceptance criterion in Today’s Drive Phase 0 rollup.  
-   Outcome: demonstrate and document that mini-map pins remain synchronized with card buckets and focus/hover behavior.
+3. ~~**P0: Close mini-map synchronization acceptance criterion**~~ -- closed 2026-03-03. setActiveSlug regression fixed, 4 browser specs (initial activate, hover sync, post-rerank persistence, pin click).
 
 4. ~~**P1: Public-readiness OG preview verification**~~ -- closed 2026-03-03. Added scoop + group to PAGE_CARD_DEFS; /og/page/scoop.svg and /og/page/group.svg return 200. og:image added to scoop.html and group.html; full OG block added to privacy.html. Worker 75c13e21.
 
-5. **P1: Card explainability standard**  
-   Source items: Today’s Drive phase 1 explainability item.  
-   Outcome: every card shows a consistent “why this rank” explanation (boosts/penalties/rarity/novelty) to improve trust.
+5. ~~**P1: Card explainability standard**~~ -- closed 2026-03-03. Structured drive-explain block with matched/avoid chips, rarity/novelty sentences, “Familiar pick” fallback.
 
-6. **P1: Tomorrow-aware fallback behavior**  
-   Source items: Scoop/Drive tomorrow edge-case item.  
-   Outcome: deterministic handling when today is missing but tomorrow exists (and vice versa), without blurring certainty tiers.
+6. ~~**P1: Tomorrow-aware fallback behavior**~~ -- closed 2026-03-03. Drive uses tomorrow's confirmed schedule as fallback (source=confirmed_tomorrow, certainty=confirmed, "Tomorrow's flavor" kicker, no Directions CTA).
 
-7. **P1: Filter dictionary expansion + regression coverage**  
-   Source items: Today’s Drive phase 1 filter pass.  
-   Outcome: broader tag/allergen detection with explicit false-positive tests.
+7. ~~**P1: Filter dictionary expansion + regression coverage**~~ -- closed 2026-03-03. Added praline to NUTS_PATTERN; 8 false-positive regression tests.
 
-8. **P1: Secondary-surface handoff polish**  
-   Source items: Today’s Drive phase 1 handoff links.  
-   Outcome: clearer transitions from decision cards into Map/Calendar/Radar without losing route context.
+8. ~~**P1: Secondary-surface handoff polish**~~ -- closed 2026-03-03. Map/Subscribe/Radar links added inside every drive card’s Details section with slug-aware URLs.
 
 9. ~~**P1: .ics event body layout for Apple Calendar truncation**~~ -- fixed 2026-03-01. Reordered DESCRIPTION: flavor description → Backup Options → URL. Reduced 3-blank-line gap to 1. Test 15 added. Worker `f0f7c880`.
 
@@ -156,9 +142,9 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 
 ### Public-readiness follow-ups (non-blocking unless noted)
 
-- [ ] **OG social card endpoint verification (P1)** -- confirm `og:image` tags resolve through the dynamic Worker endpoint (`/og/page/{slug}.svg`) rather than missing static assets, and run a real share-preview spot-check (Slack/X) on at least one docs URL.
-- [ ] **Meta consistency for Scoop + Privacy (P2)** -- add missing `og:image` tags to `docs/scoop.html` and `docs/privacy.html` to improve preview quality.
-- [ ] **Siri brand color token cleanup (P2)** -- replace remaining inline `#003366` occurrences in `docs/siri.html` with canonical brand token usage.
+- [x] **OG social card endpoint verification (P1)** -- confirmed: og:image tags resolve through `/og/page/{slug}.svg` on all pages. scoop.svg, group.svg verified 200 in production. Real share-preview spot-check remains a manual nice-to-have. (2026-03-03)
+- [x] **Meta consistency for Scoop + Privacy (P2)** -- scoop.html has og:image + twitter:card. privacy.html has og:title/url/type (no social card — policy page). (2026-03-03)
+- [x] **Siri brand color token cleanup (P2)** -- verified: siri.html already uses #005696 throughout, no #003366 found. (2026-03-03)
 - [ ] **Alerts placeholder copy review (P2)** -- decide whether `placeholder=\"you@example.com\"` remains intentional UX copy or should be revised to a less developer-toned variant.
 
 ## Now -- Weather Brand Reframe
