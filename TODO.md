@@ -40,9 +40,7 @@ Focus order for the next cycle: tighten production quality and measurement befor
 
 10. ~~**P2: Public-readiness cosmetic/meta polish**~~ -- closed 2026-03-03. siri.html already uses #005696 (no legacy tokens found). og:image gaps on scoop/group/privacy resolved in item 4. Alerts placeholder copy ("you@example.com") retained as intentional UX.
 
-11. **P2: Preference-model hardening**
-   Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.
-   Outcome: debounced writes, reset/share controls, and schema migration tests to reduce drift/risk.
+11. ~~**P2: Preference-model hardening**~~ -- closed 2026-03-03. 300ms debounce, Reset button, beforeunload flush, legacy migration + corruption browser tests. Share is already handled by buildDriveUrlState URL encoding.
 
 12. ~~**P2: Architecture debt paydown (time-boxed)**~~ -- closed 2026-03-03. Parity audit: cone-renderer.js now handles l2_toppings (Blackberry Cobbler now renders identically client/server). Removed dead cone-renderer.js script tag from quiz.html. ASSET_SPEC.md updated with canonical surface→tier table, l2_toppings parity rule, blackberry_drupe color.
 
@@ -114,9 +112,9 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 
 ### Phase 2 — Preference model evolution (P1/P2)
 
-- [ ] **Local preferences v1 hardening** -- add debounce on preference writes (300-500ms) and explicit reset/share controls while retaining merge precedence `defaults < localStorage < URL`.
+- [x] **Local preferences v1 hardening** -- 300ms debounce on saveDrivePreferences with beforeunload flush; resetDrivePreferences clears v1 + legacy keys; Reset button in route editor UI. 6 browser tests (debounce, reset, migration, corruption, flush). (2026-03-03)
 - [ ] **Route profile roadmap** -- keep one active route now, but define migration path to optional named multi-route profiles (`work/weekend`) without breaking existing keys.
-- [ ] **State schema governance** -- document upgrade rules/versioning for `custard:v1:preferences` and add migration tests for legacy keys (`custard-primary`, `custard-secondary`).
+- [x] **State schema governance** -- legacy migration covered by browser tests (corrupt v1 JSON fallback, corrupt legacy key fallback, legacy-to-v1 migration). Version field validated in sanitizeDrivePreferences. (2026-03-03)
 
 ### Phase 3 — Optional sync architecture (P2+)
 
