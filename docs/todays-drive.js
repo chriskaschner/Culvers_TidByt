@@ -174,6 +174,7 @@ var CustardDrive = (function () {
       +     '<div>'
       +       '<div id="drive-cards" class="drive-cards"></div>'
       +       '<div id="drive-empty" class="drive-empty" hidden></div>'
+      +       '<button type="button" id="drive-retry" class="drive-btn drive-retry" hidden>Try again</button>'
       +     '</div>'
       +     '<aside class="drive-map-panel">'
       +       '<h3>Mini-map</h3>'
@@ -257,6 +258,7 @@ var CustardDrive = (function () {
       map: root.querySelector('#drive-map'),
       locationBtn: root.querySelector('#drive-use-location'),
       locationStatus: root.querySelector('#drive-location-status'),
+      retry: root.querySelector('#drive-retry'),
       excludedSection: root.querySelector('#drive-excluded-section'),
       excluded: root.querySelector('#drive-excluded'),
       nearbySection: root.querySelector('#drive-nearby-section'),
@@ -763,36 +765,49 @@ var CustardDrive = (function () {
       state.loading = true;
       dom.status.textContent = 'Loading route cards…';
 
-      try {
-        var params = new URLSearchParams();
-        params.set('slugs', state.prefs.activeRoute.stores.join(','));
-        params.set('radius', String(state.prefs.ui.radiusMiles || 25));
-        if (state.location && Number.isFinite(state.location.lat) && Number.isFinite(state.location.lon)) {
-          params.set('location', Number(state.location.lat).toFixed(5) + ',' + Number(state.location.lon).toFixed(5));
-        }
-        if (state.includeTomorrow) {
-          params.set('include_tomorrow', '1');
-        }
-        var url = workerBase + '/api/v1/drive?' + params.toString();
-        var resp = await fetch(url);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        var payload = await resp.json();
-
-        state.cardsRaw = asArray(payload.cards);
-        state.excludedServer = asArray(payload.excluded);
-        state.nearby = asArray(payload.nearby_leaderboard);
-        state.hasLoaded = true;
-        rerenderFromRaw();
-      } catch (err) {
-        dom.status.textContent = 'Unable to load Today\'s Drive right now.';
-        if (!state.hasLoaded) {
-          dom.cards.innerHTML = '';
-          dom.empty.hidden = false;
-          dom.empty.textContent = 'Drive data unavailable. Retry after checking your connection.';
-        }
-      } finally {
-        state.loading = false;
+      var params = new URLSearchParams();
+      params.set('slugs', state.prefs.activeRoute.stores.join(','));
+      params.set('radius', String(state.prefs.ui.radiusMiles || 25));
+      if (state.location && Number.isFinite(state.location.lat) && Number.isFinite(state.location.lon)) {
+        params.set('location', Number(state.location.lat).toFixed(5) + ',' + Number(state.location.lon).toFixed(5));
       }
+      if (state.includeTomorrow) {
+        params.set('include_tomorrow', '1');
+      }
+      var driveUrl = workerBase + '/api/v1/drive?' + params.toString();
+
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          var resp = await fetch(driveUrl);
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          var payload = await resp.json();
+
+          state.cardsRaw = asArray(payload.cards);
+          state.excludedServer = asArray(payload.excluded);
+          state.nearby = asArray(payload.nearby_leaderboard);
+          state.hasLoaded = true;
+          dom.retry.hidden = true;
+          dom.empty.hidden = true;
+          rerenderFromRaw();
+          state.loading = false;
+          return;
+        } catch (_) {
+          if (attempt === 0) {
+            // Silent retry after short delay -- covers transient network glitches
+            await new Promise(function (r) { setTimeout(r, 3000); });
+          }
+        }
+      }
+
+      // Both attempts failed
+      dom.status.textContent = 'Unable to load Today\'s Drive right now.';
+      if (!state.hasLoaded) {
+        dom.cards.innerHTML = '';
+        dom.empty.hidden = false;
+        dom.empty.textContent = 'Drive data unavailable.';
+        dom.retry.hidden = false;
+      }
+      state.loading = false;
     }
 
     function toggleTag(list, tag) {
@@ -867,6 +882,12 @@ var CustardDrive = (function () {
         if (!Number.isFinite(value)) return;
         state.prefs.ui.radiusMiles = clamp(value, 1, 100);
         savePrefs();
+        fetchDrive();
+      });
+
+      dom.retry.addEventListener('click', function () {
+        dom.retry.hidden = true;
+        dom.empty.hidden = true;
         fetchDrive();
       });
 
