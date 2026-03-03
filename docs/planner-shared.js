@@ -165,8 +165,26 @@ var CustardPlanner = (function () {
     for (var ki = 0; ki < lookupKeys.length; ki++) {
       var slug = lookupKeys[ki];
       if (isCulversSlug(slug, storeLookup)) culvers.push(slug);
-      if (culvers.length >= 5) break;
     }
+    // Sort by proximity to geoIP location when available, WI-first fallback
+    if (opts.location && Number.isFinite(opts.location.lat) && Number.isFinite(opts.location.lon)) {
+      var gLat = opts.location.lat;
+      var gLon = opts.location.lon;
+      culvers.sort(function (a, b) {
+        var sa = storeLookup[a];
+        var sb = storeLookup[b];
+        var da = (sa && sa.lat != null && sa.lng != null) ? haversineMiles(gLat, gLon, sa.lat, sa.lng) : Infinity;
+        var db = (sb && sb.lat != null && sb.lng != null) ? haversineMiles(gLat, gLon, sb.lat, sb.lng) : Infinity;
+        return da - db;
+      });
+    } else {
+      culvers.sort(function (a, b) {
+        var aWI = storeLookup[a] && storeLookup[a].state === 'WI' ? 0 : 1;
+        var bWI = storeLookup[b] && storeLookup[b].state === 'WI' ? 0 : 1;
+        return aWI - bWI;
+      });
+    }
+    culvers = culvers.slice(0, 5);
     if (legacyClean.length === 1) {
       for (var ci = 0; ci < culvers.length; ci++) {
         if (culvers[ci] !== legacyClean[0]) {
@@ -1420,6 +1438,7 @@ var CustardPlanner = (function () {
     saveDrivePreferences: saveDrivePreferences,
     flushDrivePreferences: flushDrivePreferences,
     resetDrivePreferences: resetDrivePreferences,
+    pickDefaultDriveStores: pickDefaultDriveStores,
     parseDriveUrlState: parseDriveUrlState,
     buildDriveUrlState: buildDriveUrlState,
     DRIVE_PREFERENCES_KEY: DRIVE_PREFERENCES_KEY,

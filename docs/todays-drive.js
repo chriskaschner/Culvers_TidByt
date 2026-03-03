@@ -556,7 +556,10 @@ var CustardDrive = (function () {
           +   '<div>'
           +     '<h4>' + escapeHtml(getStoreLabel(bySlug[card.slug] || { name: card.name, slug: card.slug })) + '</h4>'
           +     flavorKicker
-          +     '<p class="drive-flavor">' + escapeHtml(card.flavor || 'Flavor unavailable') + '</p>'
+          +     '<p class="drive-flavor">'
+          +       (typeof renderMiniConeSVG === 'function' ? renderMiniConeSVG(card.flavor) : '')
+          +       escapeHtml(card.flavor || 'Flavor unavailable')
+          +     '</p>'
           +   '</div>'
           +   '<div class="drive-score drive-bucket-' + escapeHtml(card.mapBucket) + '">' + escapeHtml(scoreLabel) + '</div>'
           + '</header>'
@@ -991,6 +994,39 @@ var CustardDrive = (function () {
       renderSortControls();
     }
 
+    // Detect whether user has ever explicitly saved drive preferences
+    var _hadSavedPrefs = false;
+    try {
+      _hadSavedPrefs = typeof localStorage !== 'undefined'
+        && (localStorage.getItem(planner.DRIVE_PREFERENCES_KEY) !== null
+            || localStorage.getItem('custard-primary') !== null);
+    } catch (_) {}
+
+    function autoGeoPickStores() {
+      if (_hadSavedPrefs) return; // User has saved prefs, don't override
+      fetch(workerBase + '/api/v1/geolocate')
+        .then(function (resp) { return resp.json(); })
+        .then(function (geo) {
+          if (!geo || !geo.lat || !geo.lon) return;
+          state.location = { lat: Number(geo.lat), lon: Number(geo.lon) };
+          var nearest = planner.pickDefaultDriveStores({
+            stores: culversStores,
+            location: state.location,
+          });
+          if (nearest.length >= 2) {
+            state.prefs.activeRoute.stores = nearest;
+            state.prefs.favoriteStores = nearest.slice(0, 5);
+            savePrefs({ routeChanged: true });
+            renderRouteStores();
+            fetchDrive();
+            if (typeof config.onPrimaryStoreChange === 'function') {
+              config.onPrimaryStoreChange(nearest[0]);
+            }
+          }
+        })
+        .catch(function () { /* geoIP unavailable, keep WI defaults */ });
+    }
+
     function init() {
       var widgetStores = parseDriveUrlStores();
       if (pageKey === 'scoop' && widgetStores.length > 0) {
@@ -1008,6 +1044,7 @@ var CustardDrive = (function () {
       if (typeof config.onPrimaryStoreChange === 'function' && state.prefs.activeRoute.stores.length > 0) {
         config.onPrimaryStoreChange(state.prefs.activeRoute.stores[0]);
       }
+      autoGeoPickStores();
     }
 
     init();
@@ -1028,6 +1065,16 @@ var CustardDrive = (function () {
       },
       getPreferences: function () {
         return state.prefs;
+      },
+      getStores: function () {
+        return state.prefs.activeRoute.stores.slice();
+      },
+      setStores: function (slugs) {
+        if (!Array.isArray(slugs) || slugs.length < 1) return;
+        state.prefs.activeRoute.stores = slugs.slice(0, 5);
+        savePrefs({ routeChanged: true });
+        renderRouteStores();
+        fetchDrive();
       },
     };
   }

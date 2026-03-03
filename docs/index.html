@@ -552,6 +552,19 @@
       updateCalendarPreview(null, store, BRAND_COLORS[brandKey] || '#005696');
 
       loadForecast(slug);
+
+      // Propagate store selection to Drive controller
+      if (driveController && typeof driveController.setStores === 'function') {
+        var current = typeof driveController.getStores === 'function' ? driveController.getStores() : [];
+        var updated = [slug];
+        for (var i = 0; i < current.length; i++) {
+          if (current[i] !== slug) updated.push(current[i]);
+        }
+        if (updated.length < 2 && current.length > 0 && current[0] !== slug) {
+          updated.push(current[0]);
+        }
+        driveController.setStores(updated.slice(0, 5));
+      }
     }
 
     function showStorePicker() {
