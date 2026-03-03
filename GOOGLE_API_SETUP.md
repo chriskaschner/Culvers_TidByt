@@ -52,15 +52,21 @@ This guide walks you through setting up Google Calendar API credentials for the 
 
 ## Step 4: Save the Credentials File
 
-1. Rename the downloaded file to `credentials.json`
-2. Move it to the `credentials/` directory in your project:
-   ```bash
-   mv ~/Downloads/client_secret_*.json credentials/credentials.json
-   ```
-3. Verify the file exists:
-   ```bash
-   ls -la credentials/credentials.json
-   ```
+Store credentials outside the repo tree so they can never be accidentally committed:
+
+```bash
+mkdir -p ~/.config/custard-calendar
+mv ~/Downloads/client_secret_*.json ~/.config/custard-calendar/credentials.json
+```
+
+Verify the file is in place:
+```bash
+ls -la ~/.config/custard-calendar/credentials.json
+```
+
+The pipeline checks `~/.config/custard-calendar/` first, then falls back to the legacy
+`credentials/` directory inside the repo (gitignored). New installations should use the
+config dir path.
 
 ## Step 5: First-Time Authentication
 
@@ -79,7 +85,7 @@ uv run python main.py
 5. You'll see "The authentication flow has completed"
 6. Close the browser window
 
-After this, a `credentials/token.json` file will be created and stored for future use. You won't need to authenticate again unless the token expires (typically after a few months) or is deleted.
+After this, a `token.json` file will be created in `~/.config/custard-calendar/` and stored for future use. You won't need to authenticate again unless the token expires (typically after a few months) or is deleted.
 
 ## Troubleshooting
 
@@ -97,7 +103,7 @@ After this, a `credentials/token.json` file will be created and stored for futur
 ### Token Expiration
 
 If you see authentication errors after the app has been working:
-1. Delete the token file: `rm credentials/token.json`
+1. Delete the token file: `rm ~/.config/custard-calendar/token.json`
 2. Run the app again to re-authenticate
 
 ## Security Notes

@@ -16,7 +16,9 @@ This file is authoritative. New top-level directories require an update here bef
 | `tidbyt/` | Canonical Tidbyt Starlark renderer | @chriskaschner | No (manual deploy) |
 | `widgets/` | Canonical Scriptable widget source | @chriskaschner | No (manual deploy) |
 | `tools/` | One-off generators, fixture capture, and dev utilities | @chriskaschner | No |
+| `logs/` | Cron log target (`.gitkeep` only; `logs/*.log` is gitignored) | @chriskaschner | No |
 | `archive/` | Inactive code preserved for reference | @chriskaschner | No |
+| `.claude/` | Claude Code project settings (`settings.json`) | @chriskaschner | No |
 | `.github/` | CI workflows and issue templates | @chriskaschner | Yes |
 
 ## Forbidden at Root
@@ -85,5 +87,5 @@ Current archive contents:
 | Worker browser tests | Playwright (32 tests) | Push to main, PR |
 | Python tests | pytest (~179 tests) | Push to main, PR |
 | Metrics seed freshness | Vitest | Push to main |
-| Repo structure policy | (to be added) | Push to main, PR |
+| Repo structure policy | `scripts/check_repo_structure.py` in `ci.yml` | Push to main, PR |
 | Secret scanning | TruffleHog (`.github/workflows/security.yml`) | Push to main, PR |

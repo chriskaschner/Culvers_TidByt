@@ -24,9 +24,22 @@ _EVENT_LOOKUP_NOT_PROVIDED = object()
 # Scopes required for calendar access
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-# Paths for credentials
-CREDENTIALS_FILE = 'credentials/credentials.json'
-TOKEN_FILE = 'credentials/token.json'
+# Credential file resolution: prefer ~/.config/custard-calendar/ (outside repo tree)
+# over the legacy credentials/ directory (gitignored but still in repo tree).
+# Migration: mkdir -p ~/.config/custard-calendar
+#            cp credentials/credentials.json ~/.config/custard-calendar/
+#            cp credentials/token.json        ~/.config/custard-calendar/  (if it exists)
+_CONFIG_DIR = os.path.expanduser('~/.config/custard-calendar')
+_LEGACY_DIR = 'credentials'
+
+# If credentials.json is in the config dir, use that dir for both files so the
+# token gets written outside the repo tree on first auth.
+if os.path.exists(os.path.join(_CONFIG_DIR, 'credentials.json')):
+    CREDENTIALS_FILE = os.path.join(_CONFIG_DIR, 'credentials.json')
+    TOKEN_FILE = os.path.join(_CONFIG_DIR, 'token.json')
+else:
+    CREDENTIALS_FILE = os.path.join(_LEGACY_DIR, 'credentials.json')
+    TOKEN_FILE = os.path.join(_LEGACY_DIR, 'token.json')
 
 
 def authenticate():
