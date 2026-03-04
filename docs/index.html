@@ -114,15 +114,13 @@
 
     <!-- Today's flavor hero card -->
     <section id="today-section" hidden>
-      <div class="today-card">
-        <div class="today-card-accent" id="today-accent"></div>
-        <div class="today-card-body">
+      <div class="today-card" id="today-card">
           <div class="today-card-header">
             <span class="today-card-label">Today's Flavor</span>
             <span id="today-badge" class="day-card-badge"></span>
           </div>
           <div class="today-flavor-body">
-            <div class="today-flavor-cone" id="today-cone" aria-hidden="true"></div>
+            <div class="today-flavor-cone cone-lg" id="today-cone" aria-hidden="true"></div>
             <div class="today-flavor-content">
               <div class="today-flavor-name" id="today-flavor"></div>
               <div class="today-flavor-desc" id="today-desc"></div>
@@ -135,7 +133,6 @@
             <span class="freshness-ts" id="today-freshness"></span>
           </div>
           <div id="today-ctas"></div>
-        </div>
       </div>
     </section>
 
@@ -254,7 +251,7 @@
     const errorMessage = document.getElementById('error-message');
     const retryBtn = document.getElementById('retry-btn');
     const todaySection = document.getElementById('today-section');
-    const todayAccent = document.getElementById('today-accent');
+    const todayCard = document.getElementById('today-card');
     const todayBadge = document.getElementById('today-badge');
     const todayFlavor = document.getElementById('today-flavor');
     const todayCone = document.getElementById('today-cone');
@@ -759,10 +756,10 @@
       const color = BRAND_COLORS[brand] || '#005696';
 
       if (day.type === 'confirmed') {
-        todayAccent.style.background = color;
+        todayCard.style.borderLeftColor = color;
         todayBadge.textContent = 'Confirmed';
         todayBadge.className = 'day-card-badge day-card-badge-confirmed';
-        todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 5);
+        todayCone.innerHTML = renderMiniConeSVG(day.flavor);
         todayCone.hidden = false;
         todayFlavor.textContent = day.flavor;
         todayFlavor.style.color = '';
@@ -771,10 +768,10 @@
         todayPredictions.innerHTML = '';
         renderRarity(todayData && todayData.rarity);
       } else if (day.type === 'predicted') {
-        todayAccent.style.background = '#bdbdbd';
+        todayCard.style.borderLeftColor = '#bdbdbd';
         todayBadge.textContent = 'Estimated';
         todayBadge.className = 'day-card-badge day-card-badge-estimated';
-        todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 5);
+        todayCone.innerHTML = renderMiniConeSVG(day.flavor);
         todayCone.hidden = false;
         todayFlavor.textContent = day.flavor;
         todayFlavor.style.color = '';
@@ -799,7 +796,7 @@
         }
         renderRarity(null);
       } else {
-        todayAccent.style.background = '#e0e0e0';
+        todayCard.style.borderLeftColor = '#e0e0e0';
         todayBadge.textContent = '';
         todayBadge.className = 'day-card-badge';
         todayCone.innerHTML = '';
@@ -868,7 +865,7 @@
             '<div class="' + certaintyStripClass(day) + '"></div>'
             + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
-            + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
+            + '<div class="week-day-cone cone-sm">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
             + '<div class="week-day-confidence" style="color:#2e7d32;">Confirmed</div>';
         } else if (day.type === 'predicted') {
@@ -879,7 +876,7 @@
             '<div class="' + certaintyStripClass(day) + '"></div>'
             + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
-            + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
+            + '<div class="week-day-cone cone-sm">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
             + (pct ? '<div class="week-day-confidence">Estimated</div>' : '');
         } else {

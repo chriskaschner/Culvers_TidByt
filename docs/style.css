@@ -4,6 +4,7 @@
   --text: #1a1a1a;
   --text-muted: #666;
   --bg: #fafafa;
+  --bg-tint: #f8fbfe;
   --border: #ddd;
   --radius: 0.5rem;
 }
@@ -44,6 +45,10 @@ header p {
 
 main {
   margin-top: 1.5rem;
+}
+
+main > section + section {
+  margin-top: 1.25rem;
 }
 
 .filter-row {
@@ -1038,7 +1043,7 @@ details ol {
 
 /* Hero variant: elevated position directly below today card */
 .hero-signal {
-  margin: 0.75rem 0 0;
+  margin: 0;
 }
 
 .hero-signal .signal-card {
@@ -1054,33 +1059,23 @@ details ol {
   font-size: 0.875rem;
 }
 
-.hero-signal .signal-card-accent {
-  width: 5px;
-}
 
 .signal-card {
-  display: flex;
   border: 1px solid #d5e6f4;
   border-radius: 8px;
   overflow: hidden;
   background: #fcfdff;
+  border-left: 3px solid var(--brand);
 }
 
-.signal-card-accent {
-  width: 4px;
-  flex-shrink: 0;
-}
-
-.signal-accent-overdue { background: #e65100; }
-.signal-accent-dow_pattern { background: #1565c0; }
-.signal-accent-seasonal { background: #2e7d32; }
-.signal-accent-active_streak { background: #f9a825; }
-.signal-accent-rare_find { background: #7b1fa2; }
+.signal-card[data-signal-type="overdue"] { border-left-color: #e65100; }
+.signal-card[data-signal-type="dow_pattern"] { border-left-color: #1565c0; }
+.signal-card[data-signal-type="seasonal"] { border-left-color: #2e7d32; }
+.signal-card[data-signal-type="active_streak"] { border-left-color: #f9a825; }
+.signal-card[data-signal-type="rare_find"] { border-left-color: #7b1fa2; }
 
 .signal-card-body {
   padding: 0.5rem 0.75rem;
-  flex: 1;
-  min-width: 0;
 }
 
 .signal-headline {
@@ -1426,7 +1421,7 @@ footer a {
 
 .quick-start-chip {
   border: 1px solid #bfd3e8;
-  background: #f7fbff;
+  background: var(--bg-tint);
   color: #005696;
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
@@ -1526,20 +1521,8 @@ footer a {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
-  display: flex;
-  margin-bottom: 1.5rem;
-}
-
-.today-card-accent {
-  width: 6px;
-  flex-shrink: 0;
-  background: #005696;
-}
-
-.today-card-body {
+  border-left: 3px solid var(--brand);
   padding: 1.25rem 1.5rem;
-  flex: 1;
-  min-width: 0;
 }
 
 .today-card-header {
@@ -1565,6 +1548,27 @@ footer a {
 
 .today-flavor-cone {
   flex-shrink: 0;
+}
+
+/* Shared cone icon sizing -- override inline SVG width/height attrs */
+.cone-sm svg { width: 27px !important; height: 30px !important; display: block; }
+.cone-lg svg { width: 63px !important; height: 70px !important; display: block; }
+
+.week-day-cone {
+  text-align: center;
+  margin: 0.25rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.drive-card-cone {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.drive-card-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .today-flavor-content {
@@ -1682,18 +1686,18 @@ footer a {
   width: 140px;
   background: white;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0.75rem;
-  border-left: 4px solid #005696;
+  border-left: 3px solid #005696;
 }
 
 .week-day-card-predicted,
 .week-day-card-estimated {
-  border-left: 4px dashed #b0c4de;
+  border-left: 3px dashed #b0c4de;
 }
 
 .week-day-card-none {
-  border-left: 4px solid #ddd;
+  border-left: 3px solid #ddd;
 }
 
 .week-day-name {
@@ -1725,8 +1729,7 @@ footer a {
 
 /* Calendar subscription CTA */
 .calendar-cta {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  margin: 0;
 }
 
 .calendar-cta-card {
@@ -1734,9 +1737,10 @@ footer a {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: #f7fbff;
+  background: var(--bg-tint);
   border: 1px solid #bfd3e8;
   border-radius: 8px;
+  border-left: 3px solid var(--brand);
 }
 
 .calendar-cta-icon {
@@ -1834,7 +1838,7 @@ footer a {
   padding: 0.35rem 0.75rem;
   border: 1px solid #bfd3e8;
   border-radius: 999px;
-  background: #f7fbff;
+  background: var(--bg-tint);
   color: #005696;
   text-decoration: none;
   font-size: 0.75rem;
@@ -2521,11 +2525,10 @@ textarea:focus-visible {
 
 /* Today\'s Drive (index + scoop shared surface) */
 .drive-shell {
-  background: #f8fbfe;
+  background: var(--bg-tint);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1rem;
-  margin-bottom: 1.25rem;
 }
 
 .drive-head {
@@ -2756,10 +2759,18 @@ textarea:focus-visible {
   background: #fff;
   padding: 0.6rem 0.7rem;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  border-left: 3px solid #757575;
 }
 
+.drive-card.drive-bucket-great { border-left-color: #2e7d32; }
+.drive-card.drive-bucket-ok { border-left-color: #f9a825; }
+.drive-card.drive-bucket-pass { border-left-color: #757575; }
+.drive-card.drive-bucket-hard_pass { border-left-color: #c62828; }
+
 .drive-card.is-active {
-  border-color: var(--brand);
+  border-top-color: var(--brand);
+  border-right-color: var(--brand);
+  border-bottom-color: var(--brand);
   box-shadow: 0 0 0 1px rgba(0, 86, 150, 0.2);
 }
 
@@ -2783,6 +2794,14 @@ textarea:focus-visible {
   color: var(--text);
 }
 
+.drive-score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
 .drive-score {
   min-width: 2.4rem;
   text-align: center;
@@ -2791,6 +2810,13 @@ textarea:focus-visible {
   font-size: 0.82rem;
   font-weight: 700;
   border: 1px solid transparent;
+}
+
+.drive-score-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #777;
 }
 
 .drive-vibe,

@@ -1502,7 +1502,6 @@ var CustardPlanner = (function () {
       + ' data-store-slug="' + escapeHtml(slug || '') + '"'
       + ' data-flavor="' + escapeHtml(flavor) + '"'
       + ' data-certainty-tier="' + escapeHtml(certainty) + '">'
-      + '<div class="signal-card-accent signal-accent-' + escapeHtml(sig.type) + '"></div>'
       + '<div class="signal-card-body">'
       + '<div class="signal-headline">' + escapeHtml(sig.headline) + '</div>'
       + '<div class="signal-explanation">' + escapeHtml(sig.explanation) + '</div>'

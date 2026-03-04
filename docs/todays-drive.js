@@ -551,14 +551,21 @@ var CustardDrive = (function () {
         var calHref = '/calendar.html?slug=' + encodeURIComponent(card.slug);
         var radarHref = '/radar.html?store=' + encodeURIComponent(card.slug);
 
-        html += '<article class="drive-card" data-store-slug="' + escapeHtml(card.slug) + '" tabindex="0">'
+        var coneHtml = (typeof renderMiniConeSVG === 'function')
+          ? '<div class="drive-card-cone cone-sm">' + renderMiniConeSVG(card.flavor || '') + '</div>'
+          : '';
+        html += '<article class="drive-card drive-bucket-' + escapeHtml(card.mapBucket) + '" data-store-slug="' + escapeHtml(card.slug) + '" tabindex="0">'
           + '<header class="drive-card-head">'
-          +   '<div>'
+          +   coneHtml
+          +   '<div class="drive-card-info">'
           +     '<h4>' + escapeHtml(getStoreLabel(bySlug[card.slug] || { name: card.name, slug: card.slug })) + '</h4>'
           +     flavorKicker
           +     '<p class="drive-flavor">' + escapeHtml(card.flavor || 'Flavor unavailable') + '</p>'
           +   '</div>'
-          +   '<div class="drive-score drive-bucket-' + escapeHtml(card.mapBucket) + '">' + escapeHtml(scoreLabel) + '</div>'
+          +   '<div class="drive-score-wrap" title="Match score: ' + escapeHtml(scoreLabel) + '/100">'
+          +     '<div class="drive-score drive-bucket-' + escapeHtml(card.mapBucket) + '">' + escapeHtml(scoreLabel) + '</div>'
+          +     '<span class="drive-score-label">match</span>'
+          +   '</div>'
           + '</header>'
           + '<p class="drive-vibe">' + escapeHtml(vibe) + '</p>'
           + '<p class="drive-dealbreaker">' + escapeHtml(dealbreaker) + '</p>'
@@ -667,6 +674,12 @@ var CustardDrive = (function () {
         lonMin -= 0.05;
         lonMax += 0.05;
       }
+      var latPad = Math.max((latMax - latMin) * 0.25, 0.05);
+      var lonPad = Math.max((lonMax - lonMin) * 0.25, 0.05);
+      latMin -= latPad;
+      latMax += latPad;
+      lonMin -= lonPad;
+      lonMax += lonPad;
       return { latMin: latMin, latMax: latMax, lonMin: lonMin, lonMax: lonMax };
     }
 
