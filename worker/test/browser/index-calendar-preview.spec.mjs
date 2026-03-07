@@ -62,19 +62,38 @@ test("index calendar preview renders and updates with selected store context", a
     },
   );
 
+  // Mock geolocation API to prevent picker overlay
+  await page.context().route(
+    "**/api/v1/geolocate",
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ lat: 43.07, lon: -89.40 }),
+      });
+    },
+  );
+
   await page.goto("/index.html");
 
   await expect(page.locator("#calendar-preview-section")).toBeVisible();
   await expect(page.locator("#calendar-preview-section")).toContainText("Google Calendar style");
   await expect(page.locator("#calendar-preview-section")).toContainText("Apple Calendar style");
 
-  const searchInput = page.locator("#store-search");
-  const dropdownItems = page.locator("#store-dropdown .store-dropdown-item");
-  await searchInput.fill("Madison");
-  await expect.poll(async () => dropdownItems.count()).toBeGreaterThan(0);
-  await dropdownItems.first().click();
+  // Use SharedNav store picker to select a store (legacy search is hidden)
+  const changeBtn = page.locator("#shared-nav .store-change-btn");
+  await changeBtn.click();
 
-  await expect(page.locator("#current-store")).toBeVisible();
+  const pickerSearch = page.locator("#shared-nav .store-picker-search");
+  await expect(pickerSearch).toBeVisible();
+  await pickerSearch.fill("Madison");
+
+  const pickerItems = page.locator("#shared-nav .store-picker-item:visible");
+  await expect.poll(async () => pickerItems.count()).toBeGreaterThan(0);
+  await pickerItems.first().click();
+
+  // Store indicator should show after selection
+  await expect(page.locator("#shared-nav .store-indicator")).toBeVisible();
   await expect(page.locator("#sample-google-location")).not.toContainText("Select a store");
   await expect(page.locator("#sample-apple-location")).not.toContainText("Select a store");
 });

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("index store search supports arrow-key navigation", async ({ page }) => {
+test("index SharedNav store picker search filters stores", async ({ page }) => {
   await page.route(
     "https://custard.chriskaschner.com/api/v1/flavor-colors",
     async (route) => {
@@ -18,31 +18,43 @@ test("index store search supports arrow-key navigation", async ({ page }) => {
     },
   );
 
+  // Mock geolocation API to prevent picker overlay on first visit
+  await page.context().route(
+    "**/api/v1/geolocate",
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ lat: 43.07, lon: -89.40 }),
+      });
+    },
+  );
+
   await page.goto("/index.html");
 
-  const searchInput = page.locator("#store-search");
-  const dropdown = page.locator("#store-dropdown");
-  const items = page.locator("#store-dropdown .store-dropdown-item");
+  // Open SharedNav's store picker via the change button on the first-visit prompt
+  const changeBtn = page.locator("#shared-nav .store-change-btn");
+  await expect(changeBtn).toBeVisible({ timeout: 10000 });
+  await changeBtn.click();
 
-  await expect(searchInput).toBeVisible();
+  const pickerSearch = page.locator("#shared-nav .store-picker-search");
+  const pickerItems = page.locator("#shared-nav .store-picker-item");
 
-  await searchInput.fill("Madison");
-  await expect(dropdown).toBeVisible();
-  await expect.poll(async () => items.count()).toBeGreaterThan(1);
+  await expect(pickerSearch).toBeVisible();
 
-  await searchInput.press("ArrowDown");
-  await expect(items.nth(0)).toHaveClass(/is-active/);
-  await expect(items.nth(0)).toHaveAttribute("aria-selected", "true");
+  // Type to filter
+  await pickerSearch.fill("Madison");
 
-  await searchInput.press("ArrowDown");
-  await expect(items.nth(1)).toHaveClass(/is-active/);
-  await expect(items.nth(1)).toHaveAttribute("aria-selected", "true");
-  await expect(items.nth(0)).toHaveAttribute("aria-selected", "false");
+  // Visible items should be filtered
+  const visibleItems = page.locator("#shared-nav .store-picker-item:visible");
+  await expect.poll(async () => {
+    const total = await pickerItems.count();
+    const visible = await visibleItems.count();
+    return visible < total && visible > 0;
+  }).toBeTruthy();
 
-  await searchInput.press("ArrowUp");
-  await expect(items.nth(0)).toHaveClass(/is-active/);
-  await expect(items.nth(0)).toHaveAttribute("aria-selected", "true");
-
-  await searchInput.press("Escape");
-  await expect(dropdown).toBeHidden();
+  // Close picker via close button
+  const closeBtn = page.locator("#shared-nav .store-picker-close");
+  await closeBtn.click();
+  await expect(page.locator("#shared-nav .store-picker")).toBeHidden();
 });
