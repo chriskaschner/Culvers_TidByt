@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-test("index calendar preview renders and updates with selected store context", async ({ page }) => {
+// Skipped: calendar preview section removed from index.html in Phase 2 (TDAY-07)
+test.skip("index calendar preview renders and updates with selected store context", async ({ page }) => {
   const todayIso = new Date().toISOString().slice(0, 10);
 
   await page.route(

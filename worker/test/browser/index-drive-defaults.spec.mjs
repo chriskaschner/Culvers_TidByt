@@ -134,7 +134,8 @@ async function setupRoutes(page, opts) {
   });
 }
 
-test("geoIP defaults: first-visit stores are nearest to user, not alphabetical", async ({ page }) => {
+// Skipped: CustardDrive removed from index.html in Phase 2 (TDAY-07)
+test.skip("geoIP defaults: first-visit stores are nearest to user, not alphabetical", async ({ page }) => {
   await setupRoutes(page);
   await page.goto("/index.html");
 
@@ -173,7 +174,7 @@ test("minimap renders pins for all route stores", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("custard-primary", "mt-horeb");
   });
-  await page.goto("/index.html?stores=mt-horeb,madison-todd-drive");
+  await page.goto("/scoop.html?stores=mt-horeb,madison-todd-drive");
 
   await expect(page.locator(".drive-card").first()).toBeVisible();
 
@@ -187,7 +188,8 @@ test("minimap renders pins for all route stores", async ({ page }) => {
   expect(pinSlugs).toContain("madison-todd-drive");
 });
 
-test("legacy store search propagates selection to Drive controller", async ({ page }) => {
+// Skipped: CustardDrive removed from index.html in Phase 2 (TDAY-07)
+test.skip("legacy store search propagates selection to Drive controller", async ({ page }) => {
   let driveRequests = [];
 
   await setupRoutes(page, { preservePrefs: true });

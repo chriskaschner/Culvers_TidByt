@@ -171,7 +171,8 @@ async function mockSupportingRoutes(page) {
   );
 }
 
-test(
+// Skipped: CustardDrive removed from index.html in Phase 2 (TDAY-07)
+test.skip(
   "auto-retry: first drive call fails, second succeeds silently -- no error shown",
   async ({ page }) => {
     let driveCalls = 0;
@@ -205,7 +206,8 @@ test(
   }
 );
 
-test(
+// Skipped: CustardDrive removed from index.html in Phase 2 (TDAY-07)
+test.skip(
   "manual retry: both auto-attempts fail, retry button appears, click recovers",
   async ({ page }) => {
     let shouldSucceed = false;
