@@ -106,50 +106,50 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
-| NAV-04 | TBD | Pending |
-| STOR-01 | TBD | Pending |
-| STOR-02 | TBD | Pending |
-| STOR-03 | TBD | Pending |
-| STOR-04 | TBD | Pending |
-| STOR-05 | TBD | Pending |
-| TDAY-01 | TBD | Pending |
-| TDAY-02 | TBD | Pending |
-| TDAY-03 | TBD | Pending |
-| TDAY-04 | TBD | Pending |
-| TDAY-05 | TBD | Pending |
-| TDAY-06 | TBD | Pending |
-| TDAY-07 | TBD | Pending |
-| COMP-01 | TBD | Pending |
-| COMP-02 | TBD | Pending |
-| COMP-03 | TBD | Pending |
-| COMP-04 | TBD | Pending |
-| COMP-05 | TBD | Pending |
-| COMP-06 | TBD | Pending |
-| COMP-07 | TBD | Pending |
-| COMP-08 | TBD | Pending |
-| FUN-01 | TBD | Pending |
-| FUN-02 | TBD | Pending |
-| FUN-03 | TBD | Pending |
-| FUN-04 | TBD | Pending |
-| FUN-05 | TBD | Pending |
-| UPDT-01 | TBD | Pending |
-| UPDT-02 | TBD | Pending |
-| UPDT-03 | TBD | Pending |
-| UPDT-04 | TBD | Pending |
-| UPDT-05 | TBD | Pending |
-| VIZP-01 | TBD | Pending |
-| VIZP-02 | TBD | Pending |
-| VIZP-03 | TBD | Pending |
-| VIZP-04 | TBD | Pending |
+| STOR-01 | Phase 1 | Pending |
+| STOR-02 | Phase 1 | Pending |
+| STOR-03 | Phase 1 | Pending |
+| STOR-04 | Phase 1 | Pending |
+| STOR-05 | Phase 1 | Pending |
+| TDAY-01 | Phase 2 | Pending |
+| TDAY-02 | Phase 2 | Pending |
+| TDAY-03 | Phase 2 | Pending |
+| TDAY-04 | Phase 2 | Pending |
+| TDAY-05 | Phase 2 | Pending |
+| TDAY-06 | Phase 2 | Pending |
+| TDAY-07 | Phase 2 | Pending |
+| COMP-01 | Phase 3 | Pending |
+| COMP-02 | Phase 3 | Pending |
+| COMP-03 | Phase 3 | Pending |
+| COMP-04 | Phase 3 | Pending |
+| COMP-05 | Phase 3 | Pending |
+| COMP-06 | Phase 3 | Pending |
+| COMP-07 | Phase 3 | Pending |
+| COMP-08 | Phase 3 | Pending |
+| FUN-01 | Phase 4 | Pending |
+| FUN-02 | Phase 4 | Pending |
+| FUN-03 | Phase 4 | Pending |
+| FUN-04 | Phase 4 | Pending |
+| FUN-05 | Phase 4 | Pending |
+| UPDT-01 | Phase 4 | Pending |
+| UPDT-02 | Phase 4 | Pending |
+| UPDT-03 | Phase 4 | Pending |
+| UPDT-04 | Phase 4 | Pending |
+| UPDT-05 | Phase 4 | Pending |
+| NAV-01 | Phase 4 | Pending |
+| NAV-02 | Phase 4 | Pending |
+| NAV-03 | Phase 4 | Pending |
+| NAV-04 | Phase 4 | Pending |
+| VIZP-01 | Phase 5 | Pending |
+| VIZP-02 | Phase 5 | Pending |
+| VIZP-03 | Phase 5 | Pending |
+| VIZP-04 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 38 total
-- Mapped to phases: 0
-- Unmapped: 38 (pending roadmap creation)
+- Mapped to phases: 38
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-07*
-*Last updated: 2026-03-07 after initial definition*
+*Last updated: 2026-03-07 after roadmap creation*
