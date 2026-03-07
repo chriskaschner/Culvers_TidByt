@@ -10,7 +10,7 @@ import { expect, test } from "@playwright/test";
  * each test injects the #shared-nav container and loads the script manually.
  */
 
-// Mock store manifest returned by the Worker API
+// Mock store manifest (matches stores.json format)
 const MOCK_STORES = [
   { slug: "mt-horeb", name: "Mt. Horeb", city: "Mt. Horeb", state: "WI", lat: 43.0045, lng: -89.7387, brand: "culvers" },
   { slug: "verona", name: "Verona", city: "Verona", state: "WI", lat: 42.9919, lng: -89.5332, brand: "culvers" },
@@ -25,17 +25,20 @@ const MOCK_GEO = { lat: 43.0, lon: -89.4, city: "Madison", regionName: "Wisconsi
  * the store manifest and IP geolocation to keep tests deterministic.
  */
 async function setupSharedNav(page, { clearStorage = false, setStore = null } = {}) {
-  // Intercept store manifest API
-  await page.route("**/api/v1/stores", (route) => {
+  // Use context-level routing to intercept cross-origin requests
+  const context = page.context();
+
+  // Intercept store manifest (local stores.json used by shared-nav.js)
+  await context.route("**/stores.json*", (route) => {
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(MOCK_STORES),
+      body: JSON.stringify({ stores: MOCK_STORES }),
     });
   });
 
-  // Intercept IP geolocation API
-  await page.route("**/ip-api.com/**", (route) => {
+  // Intercept IP geolocation via Worker proxy (/api/v1/geolocate)
+  await context.route("**/api/v1/geolocate", (route) => {
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -43,22 +46,23 @@ async function setupSharedNav(page, { clearStorage = false, setStore = null } = 
     });
   });
 
-  // Handle localStorage before navigation
+  // Navigate to the page first so we have the correct origin for localStorage
+  await page.goto("/index.html");
+
+  // Manipulate localStorage AFTER navigation (so we're on the correct origin)
   if (clearStorage) {
-    await page.addInitScript(() => {
+    await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
     });
   }
 
   if (setStore) {
-    await page.addInitScript((slug) => {
+    await page.evaluate((slug) => {
+      sessionStorage.clear();
       localStorage.setItem("custard-primary", slug);
     }, setStore);
   }
-
-  // Navigate to the page
-  await page.goto("/index.html");
 
   // Inject #shared-nav container if it doesn't exist
   await page.evaluate(() => {
@@ -86,7 +90,7 @@ async function setupSharedNav(page, { clearStorage = false, setStore = null } = 
   });
 
   // Allow async operations (manifest fetch, geolocation) to complete
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2000);
 }
 
 // ---------------------------------------------------------------------------
@@ -115,16 +119,18 @@ test("STOR-03: store indicator visible when a store is saved in localStorage", a
 // STOR-05: Store persists across pages
 // ---------------------------------------------------------------------------
 test("STOR-05: store selection persists across page navigation", async ({ page }) => {
-  // Set up routes and store before navigating
-  await page.route("**/api/v1/stores", (route) => {
+  // Use context-level routing to intercept cross-origin requests
+  const context = page.context();
+
+  await context.route("**/stores.json*", (route) => {
     route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(MOCK_STORES),
+      body: JSON.stringify({ stores: MOCK_STORES }),
     });
   });
 
-  await page.route("**/ip-api.com/**", (route) => {
+  await context.route("**/api/v1/geolocate", (route) => {
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -132,12 +138,12 @@ test("STOR-05: store selection persists across page navigation", async ({ page }
     });
   });
 
-  await page.addInitScript(() => {
+  // Visit index.html, set store after navigation (correct origin for localStorage)
+  await page.goto("/index.html");
+  await page.evaluate(() => {
+    sessionStorage.clear();
     localStorage.setItem("custard-primary", "mt-horeb");
   });
-
-  // Visit index.html with shared-nav
-  await page.goto("/index.html");
   await page.evaluate(() => {
     if (!document.getElementById("shared-nav")) {
       var c = document.createElement("div");
@@ -153,14 +159,14 @@ test("STOR-05: store selection persists across page navigation", async ({ page }
       if (el) SharedNav.renderNav(el);
     }
   });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2000);
 
   // Verify store shows on index.html
   const indexIndicator = page.locator("#shared-nav .store-indicator");
   await expect(indexIndicator).toBeVisible();
   const indexText = await indexIndicator.textContent();
 
-  // Navigate to calendar.html
+  // Navigate to calendar.html (localStorage persists across navigations on same origin)
   await page.goto("/calendar.html");
   await page.evaluate(() => {
     if (!document.getElementById("shared-nav")) {
@@ -177,7 +183,7 @@ test("STOR-05: store selection persists across page navigation", async ({ page }
       if (el) SharedNav.renderNav(el);
     }
   });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2000);
 
   // Verify same store shows on calendar.html
   const calIndicator = page.locator("#shared-nav .store-indicator");
