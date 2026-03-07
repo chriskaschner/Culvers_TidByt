@@ -1528,34 +1528,28 @@ footer a {
   padding: 1.25rem 1.5rem;
 }
 
-.today-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.today-card-label {
-  font-size: 0.75rem;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .today-flavor-body {
   display: flex;
-  align-items: center;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  align-items: flex-start;
 }
 
 .today-flavor-cone {
   flex-shrink: 0;
 }
 
+.today-flavor-cone.cone-lg {
+  flex: 0 0 auto;
+  width: 120px;
+}
+
+.today-flavor-cone.cone-lg svg {
+  width: 100%;
+  height: auto;
+}
+
 /* Shared cone icon sizing -- override inline SVG width/height attrs */
 .cone-sm svg { width: 27px !important; height: 30px !important; display: block; }
-.cone-lg svg { width: 63px !important; height: 70px !important; display: block; }
 
 .week-day-cone {
   text-align: center;
@@ -1730,6 +1724,112 @@ footer a {
   margin-top: 0.25rem;
 }
 
+/* Multi-store glance row */
+.multi-store-row {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.multi-store-cell {
+  flex: 0 0 auto;
+  min-width: 100px;
+  max-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  scroll-snap-align: start;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+}
+
+.multi-store-cell:hover,
+.multi-store-cell:focus {
+  border-color: #005696;
+  box-shadow: 0 0 0 1px #005696;
+  outline: none;
+}
+
+.multi-store-cell.active {
+  border-color: #005696;
+  background: #f0f6fc;
+}
+
+.multi-store-cone {
+  width: 40px;
+  height: 48px;
+}
+
+.multi-store-cone svg {
+  width: 100%;
+  height: 100%;
+}
+
+.multi-store-flavor {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.multi-store-name {
+  font-size: 0.6875rem;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Updates CTA card */
+.updates-cta-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.75rem;
+  background: #f8f9fa;
+  margin: 1rem 0;
+}
+
+.updates-cta-card strong {
+  font-size: 1rem;
+  color: #005696;
+}
+
+.updates-cta-card p {
+  font-size: 0.875rem;
+  color: #555;
+  margin: 0;
+}
+
+.updates-cta-card .btn-primary {
+  align-self: flex-start;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* Section spacing for below-fold flow */
+#signals-section { margin-top: 0.75rem; }
+#multi-store-section { margin-top: 1rem; }
+#updates-cta { margin-top: 1rem; }
+details#week-section { margin-top: 1rem; }
+
 /* Calendar subscription CTA */
 .calendar-cta {
   margin: 0;
@@ -1808,154 +1908,6 @@ footer a {
   .calendar-cta-actions {
     width: 100%;
     justify-content: flex-end;
-  }
-}
-
-/* Calendar preview module (index page) */
-.calendar-preview-section {
-  margin-top: 1.5rem;
-}
-
-.calendar-preview-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.calendar-preview-head h2 {
-  margin: 0;
-  font-size: 1rem;
-  color: #005696;
-}
-
-.calendar-preview-head p {
-  margin: 0.2rem 0 0;
-  font-size: 0.8125rem;
-  color: #667085;
-}
-
-.calendar-preview-link {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid #bfd3e8;
-  border-radius: 999px;
-  background: var(--bg-tint);
-  color: #005696;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.calendar-preview-link:hover {
-  background: #eef6ff;
-  border-color: #8eb4d8;
-}
-
-.calendar-preview-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.calendar-preview-surface {
-  border: 1px solid #d9e2ec;
-  border-radius: 10px;
-  background: #fff;
-  padding: 0.75rem;
-}
-
-.calendar-preview-app {
-  margin: 0 0 0.5rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #6b7280;
-}
-
-.calendar-preview-event {
-  box-shadow: none;
-  border-color: #d7dde5;
-}
-
-.calendar-preview-event .cal-event-body {
-  padding: 0.8rem 0.95rem;
-}
-
-.calendar-preview-event .cal-event-title {
-  font-size: 0.95rem;
-  margin-bottom: 0.25rem;
-}
-
-.calendar-preview-event .cal-event-date,
-.calendar-preview-event .cal-event-location {
-  font-size: 0.75rem;
-  margin-bottom: 0.2rem;
-}
-
-.calendar-preview-event .cal-event-desc {
-  font-size: 0.75rem;
-  line-height: 1.45;
-}
-
-.apple-cal-card {
-  border: 1px solid #d7dde5;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #fdfefe 0%, #f7fafc 100%);
-  padding: 0.75rem;
-}
-
-.apple-cal-row {
-  display: flex;
-  gap: 0.7rem;
-  align-items: flex-start;
-}
-
-.apple-cal-dot {
-  width: 0.65rem;
-  height: 0.65rem;
-  border-radius: 50%;
-  background: #005696;
-  box-shadow: 0 0 0 3px rgba(0, 86, 150, 0.14);
-  margin-top: 0.35rem;
-  flex-shrink: 0;
-}
-
-.apple-cal-main {
-  min-width: 0;
-}
-
-.apple-cal-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.3;
-}
-
-.apple-cal-meta {
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: #4b5563;
-}
-
-.apple-cal-location {
-  margin-top: 0.3rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-  line-height: 1.35;
-}
-
-@media (max-width: 700px) {
-  .calendar-preview-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .calendar-preview-grid {
-    grid-template-columns: 1fr;
   }
 }
 
