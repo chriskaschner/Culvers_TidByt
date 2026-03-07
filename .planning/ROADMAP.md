@@ -30,12 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can tap "change" on the store indicator and select a different store
   4. Store selection made on one page persists when navigating to another page
   5. After a deployment with page changes, returning users receive updated content within one page load cycle (no permanently stale pages)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md -- Build shared-nav.js IIFE module (nav rendering, store indicator, geolocation, store picker) with Playwright tests
+- [ ] 01-02-PLAN.md -- Deploy shared-nav.js across all 12 HTML pages, update service worker, visual verification
 
 ### Phase 2: Today Page
 **Goal**: User can see today's flavor at their store instantly -- cone, name, description above the fold at 375px with progressive disclosure for deeper data
@@ -117,7 +116,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 0/2 | Planned | - |
 | 2. Today Page | 0/3 | Not started | - |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
