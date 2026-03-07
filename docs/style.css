@@ -397,14 +397,17 @@ details ol {
 
 /* Navigation */
 .nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
   margin-top: 0.5rem;
+  max-width: 100%;
 }
 
 .nav-links a {
   color: #005696;
   font-size: 0.875rem;
   text-decoration: none;
-  margin: 0 0.5rem;
 }
 
 .nav-links a:hover {
@@ -3327,4 +3330,11 @@ textarea:focus-visible {
   color: var(--text-muted);
   font-size: 0.8rem;
   margin-left: 0.5rem;
+}
+
+.store-picker-address {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.125rem;
 }

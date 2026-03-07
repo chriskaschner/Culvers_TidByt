@@ -371,10 +371,14 @@ var SharedNav = (function () {
         if (s.city && s.state) {
           label += ' <span class="store-picker-meta">' + escapeHtml(s.city) + ', ' + escapeHtml(s.state) + '</span>';
         }
+        if (s.address) {
+          label += ' <span class="store-picker-address">' + escapeHtml(s.address) + '</span>';
+        }
         html += '<li class="store-picker-item" data-slug="' + escapeHtml(s.slug) + '"'
           + ' data-name="' + escapeHtml(s.name) + '"'
           + ' data-city="' + escapeHtml(s.city || '') + '"'
           + ' data-state="' + escapeHtml(s.state || '') + '"'
+          + ' data-address="' + escapeHtml(s.address || '') + '"'
           + '>' + label + '</li>';
       }
     }
@@ -395,9 +399,11 @@ var SharedNav = (function () {
       var name = (item.getAttribute('data-name') || '').toLowerCase();
       var city = (item.getAttribute('data-city') || '').toLowerCase();
       var state = (item.getAttribute('data-state') || '').toLowerCase();
+      var address = (item.getAttribute('data-address') || '').toLowerCase();
       var match = name.indexOf(lower) !== -1
         || city.indexOf(lower) !== -1
-        || state.indexOf(lower) !== -1;
+        || state.indexOf(lower) !== -1
+        || address.indexOf(lower) !== -1;
       item.style.display = match ? '' : 'none';
     }
   }
