@@ -12,7 +12,7 @@ This project restructures the Custard Calendar presentation layer from 11 loosel
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Shared nav component, persistent store indicator, and service worker update discipline
+- [x] **Phase 1: Foundation** - Shared nav component, persistent store indicator, and service worker update discipline
 - [ ] **Phase 2: Today Page** - Radical simplification of the today view to answer "what's the flavor?" above the fold
 - [ ] **Phase 3: Compare Page** - Store-by-day comparison grid for families deciding where to go
 - [ ] **Phase 4: Supporting Pages + Nav Activation** - Fun page, Get Updates page, and 4-item nav goes live across all pages
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md -- Build shared-nav.js IIFE module (nav rendering, store indicator, geolocation, store picker) with Playwright tests
-- [ ] 01-02-PLAN.md -- Deploy shared-nav.js across all 12 HTML pages, update service worker, visual verification
+- [x] 01-02-PLAN.md -- Deploy shared-nav.js across all 12 HTML pages, update service worker, visual verification
 
 ### Phase 2: Today Page
 **Goal**: User can see today's flavor at their store instantly -- cone, name, description above the fold at 375px with progressive disclosure for deeper data
@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/2 | In Progress | - |
+| 1. Foundation | 2/2 | Complete | 2026-03-07 |
 | 2. Today Page | 0/3 | Not started | - |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
