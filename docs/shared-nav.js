@@ -216,6 +216,16 @@ var SharedNav = (function () {
     if (btn) {
       btn.addEventListener('click', function () { showStorePicker(); });
     }
+
+    // Dispatch custom event so page-specific code can react to store changes
+    if (store && store.slug) {
+      try {
+        var event = new CustomEvent('sharednav:storechange', {
+          detail: { slug: store.slug, store: store }
+        });
+        document.dispatchEvent(event);
+      } catch (_) { /* IE fallback -- not needed for modern browsers */ }
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -292,17 +302,50 @@ var SharedNav = (function () {
           if (nearest) {
             showFirstVisitPrompt(nearest);
           } else {
-            showStorePicker();
+            // No stores in manifest -- show a subtle prompt instead of full picker
+            showFallbackPrompt();
           }
         });
       })
       .catch(function (err) {
-        console.debug('SharedNav: IP geolocation failed, showing picker:', err);
-        // Graceful fallback: show store picker directly
+        console.debug('SharedNav: IP geolocation failed, showing fallback prompt:', err);
+        // Graceful fallback: show a subtle prompt, NOT the full picker overlay.
+        // The picker should only appear when user explicitly taps "change".
         _manifestPromise.then(function () {
-          showStorePicker();
+          showFallbackPrompt();
         });
       });
+  }
+
+  // Show a non-intrusive prompt when IP geolocation fails or no stores found.
+  // This avoids showing the full-screen picker overlay on first visit.
+  function showFallbackPrompt() {
+    if (!_container) return;
+    // Remove any existing prompt or indicator
+    var existing = _container.querySelector('.first-visit-prompt');
+    if (existing) existing.remove();
+    var existingIndicator = _container.querySelector('.store-indicator');
+    if (existingIndicator) existingIndicator.remove();
+
+    var html = '<div class="first-visit-prompt">'
+      + '<p>Select a store to see today\'s flavor</p>'
+      + '<div class="first-visit-actions">'
+      + '<button type="button" class="store-change-btn">Find your store</button>'
+      + '</div>'
+      + '</div>';
+
+    var nav = _container.querySelector('nav.nav-links');
+    if (nav) {
+      nav.insertAdjacentHTML('beforebegin', html);
+    } else {
+      _container.insertAdjacentHTML('afterbegin', html);
+    }
+
+    // Bind the find store button to open the picker
+    var btn = _container.querySelector('.first-visit-prompt .store-change-btn');
+    if (btn) {
+      btn.addEventListener('click', function () { showStorePicker(); });
+    }
   }
 
   // -------------------------------------------------------------------------
