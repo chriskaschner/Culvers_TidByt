@@ -48,12 +48,12 @@ Plans:
   3. Week-ahead schedule is hidden by default and expandable via a disclosure element
   4. User with multiple saved stores sees a compact row showing today's flavor at each of their stores
   5. The page does not contain Drive ranking cards, hero card duplication, calendar preview, mini-map, or score badges
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md -- Extract inline JS to today-page.js IIFE, simplify HTML (remove Drive/calendar preview/predictions), create Playwright test scaffolds for all TDAY requirements
+- [ ] 02-02-PLAN.md -- Add CSS for multi-store row and CTA card, polish hero card layout, verify interactive flows (tap-to-switch, details expand)
+- [ ] 02-03-PLAN.md -- Update service worker (add today-page.js, bump cache version), run full test suites, visual verification checkpoint
 
 Note: Phase 2 and Phase 3 can be built in parallel -- both depend only on Phase 1.
 
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | - |
-| 2. Today Page | 0/3 | Not started | - |
+| 2. Today Page | 0/3 | Planned | - |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
 | 5. Visual Polish | 0/2 | Not started | - |
