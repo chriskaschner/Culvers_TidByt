@@ -24,19 +24,7 @@
   <header class="forecast-header">
     <h1 style="color:#005696;font-size:1.5rem;">Flavor Fronts</h1>
     <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Weather-map style flavor movement across nearby stores</p>
-    <nav class="nav-links" style="margin-top:0.75rem;">
-      <a href="index.html">Forecast</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="map.html">Map</a>
-      <a href="radar.html">Radar</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="siri.html">Siri</a>
-      <a href="forecast-map.html" class="nav-active">Fronts</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="widget.html">Widget</a>
-      <a href="scoop.html">The Scoop</a>
-      <a href="group.html">Group</a>
-    </nav>
+    <div id="shared-nav"></div>
   </header>
 
   <main>
@@ -152,6 +140,7 @@
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;

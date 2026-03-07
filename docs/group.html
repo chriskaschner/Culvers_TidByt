@@ -233,19 +233,7 @@
   <header class="forecast-header">
     <h1 style="color:#005696;font-size:1.5rem;">Group Vote</h1>
     <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Where are we going?</p>
-    <nav class="nav-links" style="margin-top:0.75rem;">
-      <a href="index.html">Forecast</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="map.html">Map</a>
-      <a href="radar.html">Radar</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="siri.html">Siri</a>
-      <a href="forecast-map.html">Fronts</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="widget.html">Widget</a>
-      <a href="scoop.html">The Scoop</a>
-      <a href="group.html" class="nav-active">Group</a>
-    </nav>
+    <div id="shared-nav"></div>
   </header>
 
   <main style="padding:1rem;max-width:600px;margin:0 auto;">
@@ -303,6 +291,7 @@
   </main>
 
   <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
   <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-8k/674J8BfiDbYOO16+Z0gW2QiG+aRITthbJaaZpcE+AoWU0ep4TEMy8/xEhs4e3" crossorigin="anonymous"></script>
   <script>
   (function () {

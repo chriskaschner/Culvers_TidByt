@@ -136,19 +136,7 @@
   <header>
     <h1>Ask Siri for Today's Flavor</h1>
     <p>"Hey Siri, flavor of the day" — and Siri reads it aloud.</p>
-    <nav class="nav-links">
-      <a href="index.html">Forecast</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="map.html">Map</a>
-      <a href="radar.html">Radar</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="siri.html" class="nav-active">Siri</a>
-      <a href="forecast-map.html">Fronts</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="widget.html">Widget</a>
-      <a href="scoop.html">The Scoop</a>
-      <a href="group.html">Group</a>
-    </nav>
+    <div id="shared-nav"></div>
   </header>
 
   <main>
@@ -233,6 +221,7 @@
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;

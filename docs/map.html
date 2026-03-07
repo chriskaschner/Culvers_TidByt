@@ -24,19 +24,7 @@
   <header>
     <h1>Custard Map</h1>
     <p>Find today's Flavor of the Day near you.</p>
-    <nav class="nav-links">
-      <a href="index.html">Forecast</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="map.html" class="nav-active">Map</a>
-      <a href="radar.html">Radar</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="siri.html">Siri</a>
-      <a href="forecast-map.html">Fronts</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="widget.html">Widget</a>
-      <a href="scoop.html">The Scoop</a>
-      <a href="group.html">Group</a>
-    </nav>
+    <div id="shared-nav"></div>
   </header>
 
   <main>
@@ -110,6 +98,7 @@
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>

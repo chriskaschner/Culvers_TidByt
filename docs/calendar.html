@@ -24,19 +24,7 @@
   <header>
     <h1>Custard Calendar</h1>
     <p>Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, Hefner's, Kraverz, and Oscar's.</p>
-    <nav class="nav-links">
-      <a href="index.html">Forecast</a>
-      <a href="calendar.html" class="nav-active">Calendar</a>
-      <a href="map.html">Map</a>
-      <a href="radar.html">Radar</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="siri.html">Siri</a>
-      <a href="forecast-map.html">Fronts</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="widget.html">Widget</a>
-      <a href="scoop.html">The Scoop</a>
-      <a href="group.html">Group</a>
-    </nav>
+    <div id="shared-nav"></div>
   </header>
 
   <main>
@@ -133,6 +121,7 @@
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;

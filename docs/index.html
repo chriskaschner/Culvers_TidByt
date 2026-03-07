@@ -44,26 +44,10 @@
       </div>
     </div>
 
-    <nav class="nav-links" style="margin-top:0.75rem;">
-      <a href="index.html" class="nav-active">Forecast</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="map.html">Map</a>
-      <a href="radar.html">Radar</a>
-      <a href="alerts.html">Alerts</a>
-      <a href="siri.html">Siri</a>
-      <a href="forecast-map.html">Fronts</a>
-      <a href="quiz.html">Quiz</a>
-      <a href="widget.html">Widget</a>
-      <a href="scoop.html">The Scoop</a>
-      <a href="group.html">Group</a>
-    </nav>
+    <div id="shared-nav" data-page="index"></div>
   </header>
 
   <main>
-    <section id="todays-drive-section">
-      <div id="todays-drive-root"></div>
-    </section>
-
     <!-- Empty state: no store selected -->
     <section id="empty-state">
       <div class="hero-empty">
@@ -141,6 +125,17 @@
       <div id="signals-list" class="signals-list"></div>
     </section>
 
+    <div id="watch-banner-container"></div>
+
+    <!-- Week strip -->
+    <section id="week-section" hidden>
+      <div class="week-header">
+        <h2>Week Ahead</h2>
+        <span class="freshness-ts" id="week-freshness"></span>
+      </div>
+      <div class="week-strip" id="week-strip"></div>
+    </section>
+
     <section id="calendar-cta" class="calendar-cta" hidden>
       <div class="calendar-cta-card">
         <div class="calendar-cta-icon">
@@ -159,15 +154,8 @@
       </div>
     </section>
 
-    <div id="watch-banner-container"></div>
-
-    <!-- Week strip -->
-    <section id="week-section" hidden>
-      <div class="week-header">
-        <h2>Week Ahead</h2>
-        <span class="freshness-ts" id="week-freshness"></span>
-      </div>
-      <div class="week-strip" id="week-strip"></div>
+    <section id="todays-drive-section">
+      <div id="todays-drive-root"></div>
     </section>
 
     <section id="calendar-preview-section" class="calendar-preview-section">
@@ -220,6 +208,7 @@
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>
@@ -1040,6 +1029,7 @@
         root: 'todays-drive-root',
         stores: allStores,
         pageKey: 'index',
+        compact: true,
         workerBase: WORKER_BASE,
         onPrimaryStoreChange: function(slug) {
           if (!slug || currentSlug === slug) return;
