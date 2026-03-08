@@ -165,11 +165,12 @@ var SharedNav = (function () {
   // Shared footer
   // -------------------------------------------------------------------------
 
-  function buildFooterHTML() {
-    return '<footer class="shared-footer" style="text-align:center;padding:1.5rem 0 1rem;margin-top:2rem;border-top:1px solid #e5e5e5;font-size:0.8125rem;">'
+  function buildFooterLinksHTML() {
+    return '<div class="shared-footer-links" style="text-align:center;padding:0.5rem 0;font-size:0.8125rem;">'
       + '<a href="updates.html" style="color:#005696;text-decoration:none;margin:0 0.75rem;">Get Updates</a>'
+      + '<a href="https://github.com/chriskaschner/custard-calendar" style="color:#666;text-decoration:none;margin:0 0.75rem;">GitHub</a>'
       + '<a href="privacy.html" style="color:#666;text-decoration:none;margin:0 0.75rem;">Privacy</a>'
-      + '</footer>';
+      + '</div>';
   }
 
   // -------------------------------------------------------------------------
@@ -556,9 +557,21 @@ var SharedNav = (function () {
       doIPGeolocation();
     }
 
-    // Render shared footer at page bottom (guard against double-render)
-    if (!document.querySelector('.shared-footer')) {
-      document.body.insertAdjacentHTML('beforeend', buildFooterHTML());
+    // Inject shared footer links into existing <footer> or create one
+    if (!document.querySelector('.shared-footer-links')) {
+      var existingFooter = document.querySelector('footer');
+      if (existingFooter) {
+        // Remove old brands/links that shared footer now replaces
+        var oldBrands = existingFooter.querySelector('.footer-brands');
+        if (oldBrands) oldBrands.remove();
+        var oldLinks = existingFooter.querySelector('.footer-links');
+        if (oldLinks) oldLinks.remove();
+        existingFooter.insertAdjacentHTML('afterbegin', buildFooterLinksHTML());
+      } else {
+        document.body.insertAdjacentHTML('beforeend',
+          '<footer style="text-align:center;padding:1.5rem 0 1rem;margin-top:2rem;border-top:1px solid #e5e5e5;">'
+          + buildFooterLinksHTML() + '</footer>');
+      }
     }
   }
 
