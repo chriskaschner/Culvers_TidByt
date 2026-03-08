@@ -428,13 +428,52 @@ async function renderQuestions(quiz) {
       textInput.autocomplete = 'off';
       fieldset.appendChild(textInput);
     } else if (questionType === 'fill_in_madlib') {
-      // Free-text input; keyword scoring in collectAnswers maps user text to an option.
+      // Tappable chips for first 3 pre-populated word choices (FUN-02)
+      if (Array.isArray(question.options) && question.options.length >= 3) {
+        const chipContainer = document.createElement('div');
+        chipContainer.className = 'madlib-chip-group';
+        chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;';
+        for (let ci = 0; ci < 3; ci++) {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'madlib-chip';
+          chip.textContent = question.options[ci].label;
+          chip.dataset.optionId = question.options[ci].id;
+          chip.style.cssText = 'padding:0.375rem 0.875rem;border:1.5px solid #ccc;border-radius:999px;background:white;color:#444;font-size:0.8125rem;font-weight:600;cursor:pointer;';
+          chip.addEventListener('click', (function(idx) {
+            return function() {
+              // Deselect siblings
+              chipContainer.querySelectorAll('.madlib-chip').forEach(function(s) {
+                s.style.background = 'white'; s.style.color = '#444'; s.style.borderColor = '#ccc';
+                s.classList.remove('selected');
+              });
+              // Select this chip
+              chip.style.background = '#005696'; chip.style.color = 'white'; chip.style.borderColor = '#005696';
+              chip.classList.add('selected');
+              // Fill the text input with the chip's label for scoring
+              textInput.value = question.options[idx].label;
+            };
+          })(ci));
+          chipContainer.appendChild(chip);
+        }
+        fieldset.appendChild(chipContainer);
+      }
+
+      // Free-text write-in input (also used as value store when chip is tapped)
       const textInput = document.createElement('input');
       textInput.type = 'text';
       textInput.name = question.id;
       textInput.className = 'quiz-fill-in-input quiz-fill-in-madlib';
       textInput.placeholder = question.placeholder || 'Write anything...';
       textInput.autocomplete = 'off';
+      // When user types, deselect all chips
+      textInput.addEventListener('input', function() {
+        const chips = fieldset.querySelectorAll('.madlib-chip');
+        chips.forEach(function(s) {
+          s.style.background = 'white'; s.style.color = '#444'; s.style.borderColor = '#ccc';
+          s.classList.remove('selected');
+        });
+      });
       fieldset.appendChild(textInput);
     } else {
       // Default: multiple_choice
@@ -1280,6 +1319,18 @@ async function init() {
       throw new Error('Quiz configuration is missing.');
     }
     populateVariantSelect();
+
+    // Auto-select mode from query param (e.g., quiz.html?mode=classic-v1)
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get('mode');
+    if (modeParam) {
+      const target = getQuizById(modeParam);
+      if (target) {
+        state.activeQuiz = target;
+        els.variantSelect.value = target.id;
+      }
+    }
+
     await setLocationFromCloudflare();
     await renderQuestions(state.activeQuiz);
     bindEvents();

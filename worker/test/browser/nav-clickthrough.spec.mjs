@@ -16,8 +16,7 @@ test("nav click-through across existing pages", async ({ page }) => {
   const labels = await nav.locator("a").allTextContents();
   expect(labels.map((x) => x.trim())).toEqual(NAV_LINKS.map((x) => x.label));
 
-  // Only click through pages that currently exist (fun.html not yet created)
-  const sequence = ["Compare", "Map", "Today"];
+  const sequence = ["Compare", "Map", "Fun", "Today"];
   for (const label of sequence) {
     const target = NAV_LINKS.find((x) => x.label === label);
     expect(target).toBeTruthy();
@@ -33,12 +32,13 @@ test("nav click-through across existing pages", async ({ page }) => {
   }
 });
 
-// Test nav consistency on pages that currently exist
-// TODO: Add fun.html and updates.html after Plan 02 and 03 create them
+// Test nav consistency on all pages
+// TODO: Add updates.html after Plan 03 creates it
 const ALL_PAGES = [
   "/index.html",
   "/compare.html",
   "/map.html",
+  "/fun.html",
   "/calendar.html",
   "/quiz.html",
   "/scoop.html",
