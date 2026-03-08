@@ -61,10 +61,10 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 ### Visual Polish
 
-- [ ] **VIZP-01**: Consistent cone rendering tier used across all homepage elements
+- [x] **VIZP-01**: Consistent cone rendering tier used across all homepage elements
 - [x] **VIZP-02**: Unified card system with shared border, background, spacing, and typography
 - [x] **VIZP-03**: Rarity/overdue copy accounts for seasonality (suppress misleading cadence claims for seasonal flavors)
-- [ ] **VIZP-04**: Cone asset quality pipeline from low-res Tidbyt tier up to hero-level pixel art per context
+- [x] **VIZP-04**: Cone asset quality pipeline from low-res Tidbyt tier up to hero-level pixel art per context
 
 ## v2 Requirements
 
@@ -140,10 +140,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | NAV-02 | Phase 4 | Complete |
 | NAV-03 | Phase 4 | Complete |
 | NAV-04 | Phase 4 | Complete |
-| VIZP-01 | Phase 5 | Pending |
+| VIZP-01 | Phase 5 | Complete |
 | VIZP-02 | Phase 5 | Complete |
 | VIZP-03 | Phase 5 | Complete |
-| VIZP-04 | Phase 5 | Pending |
+| VIZP-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 38 total

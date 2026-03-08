@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
-stopped_at: "Completed 05-01-PLAN.md"
-last_updated: "2026-03-08T21:17:20Z"
-last_activity: 2026-03-08 -- Completed Plan 05-01 (Card system + seasonal rarity suppression)
+status: completed
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-08T21:36:17.833Z"
+last_activity: 2026-03-08 -- Completed Plan 05-02 (Hero cone asset pipeline)
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 15
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-07)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 5 in progress -- Visual polish: card system, tokens, seasonal rarity
+**Current focus:** All phases complete -- v1.0 milestone achieved
 
 ## Current Position
 
-Phase: 5 of 5 (Visual Polish)
-Plan: 1 of 2 in current phase (complete)
-Status: Plan 05-01 complete, ready for Plan 05-02
-Last activity: 2026-03-08 -- Completed Plan 05-01 (Card system + seasonal rarity suppression)
+Phase: 5 of 5 (Visual Polish) -- COMPLETE
+Plan: 2 of 2 in current phase (complete)
+Status: All 15 plans across 5 phases complete
+Last activity: 2026-03-08 -- Completed Plan 05-02 (Hero cone asset pipeline)
 
-Progress: [#########.] 93%
+Progress: [##########] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 8 min
-- Total execution time: 1.79 hours
+- Total execution time: 1.99 hours
 
 **By Phase:**
 
@@ -47,10 +47,10 @@ Progress: [#########.] 93%
 | 2 - Today Page | 3/3 | 35 min | 12 min |
 | 3 - Compare Page | 3/3 | 31 min | 10 min |
 | 4 - Supporting Pages | 3/4 | 12 min | 4 min |
-| 5 - Visual Polish | 1/2 | 9 min | 9 min |
+| 5 - Visual Polish | 2/2 | 21 min | 11 min |
 
 **Recent Trend:**
-- Last 5 plans: 8 min, 4 min, 3 min, 5 min, 9 min
+- Last 5 plans: 4 min, 3 min, 5 min, 9 min, 12 min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -65,6 +65,7 @@ Progress: [#########.] 93%
 | Phase 04 P02 | 3 | 2 tasks | 5 files |
 | Phase 04 P03 | 5 | 2 tasks | 6 files |
 | Phase 05 P01 | 9 | 2 tasks | 9 files |
+| Phase 05 P02 | 12 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase 05-01]: Moved fun.html inline quiz-mode-card styles to style.css via .card--quiz variant
 - [Phase 05-01]: isSeasonalFlavor uses same SEASONAL_PATTERN regex as worker/src/flavor-tags.js
 - [Phase 05-01]: renderRarity() extended with flavorName parameter for seasonal detection
+- [Phase 05]: Generated 40 hero cone PNGs from FLAVOR_PROFILES (canonical set with visual profiles), SVG fallback for remaining flavors
+- [Phase 05]: Added .gitignore exception for docs/assets/cones/*.png (*.png globally ignored for Tidbyt renders)
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-08T21:17:20Z
-Stopped at: Completed 05-01-PLAN.md
-Resume file: .planning/phases/05-visual-polish/05-01-SUMMARY.md
+Last session: 2026-03-08T21:36:17.830Z
+Stopped at: Completed 05-02-PLAN.md
+Resume file: None
