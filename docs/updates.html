@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Get Updates -- Custard Calendar</title>
+  <meta name="description" content="Subscribe to your store's flavor calendar, sign up for flavor alerts, add a home screen widget, or set up a Siri shortcut.">
+  <meta property="og:title" content="Get Updates -- Custard Calendar">
+  <meta property="og:description" content="Never miss your favorite flavor. Calendar, alerts, widget, and Siri shortcut setup in one place.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/updates.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og/page/forecast.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#005696">
+  <link rel="stylesheet" href="style.css">
+  <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
+
+  <style>
+    .updates-section {
+      border: 1px solid #e0e0e0;
+      border-radius: 0.75rem;
+      background: #fff;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .updates-section h2 {
+      font-size: 1.125rem;
+      color: #005696;
+      margin-bottom: 0.375rem;
+    }
+
+    .updates-section p {
+      font-size: 0.875rem;
+      color: #555;
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .store-auto-fill {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .cal-action {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .cal-action a.btn-primary {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+    }
+
+    .cal-action .store-label {
+      font-size: 0.875rem;
+      color: #555;
+    }
+
+    .cal-action .more-link {
+      font-size: 0.8125rem;
+      color: #005696;
+    }
+
+    /* Alert form */
+    #alert-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    #alert-form input[type="email"] {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+    }
+
+    #alert-form input[type="email"]:focus {
+      outline: none;
+      border-color: #005696;
+      box-shadow: 0 0 0 2px rgba(0, 86, 150, 0.15);
+    }
+
+    .alert-store-row {
+      font-size: 0.875rem;
+      color: #555;
+    }
+
+    .alert-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .alert-chip {
+      padding: 0.375rem 0.875rem;
+      border: 1.5px solid #ccc;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .alert-chip:hover {
+      border-color: #999;
+    }
+
+    .alert-chip.selected {
+      background: #005696;
+      color: #fff;
+      border-color: #005696;
+    }
+
+    .alert-more-link {
+      font-size: 0.8125rem;
+      color: #005696;
+    }
+
+    #alert-form button[type="submit"] {
+      align-self: flex-start;
+      padding: 0.5rem 1.5rem;
+      background: #005696;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #alert-form button[type="submit"]:hover {
+      background: #004488;
+    }
+
+    #alert-status {
+      font-size: 0.875rem;
+      min-height: 1.25em;
+    }
+  </style>
+</head>
+<body>
+  <header class="forecast-header">
+    <h1 style="color:#005696;font-size:1.5rem;">Get Updates</h1>
+    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Never miss your favorite flavor</p>
+
+    <div id="shared-nav" data-page="updates"></div>
+  </header>
+
+  <main>
+    <div id="updates-content">
+
+      <!-- Section 1: Calendar -->
+      <section id="calendar-section" class="updates-section">
+        <h2>Calendar</h2>
+        <p>Subscribe to your store's flavor calendar and see upcoming flavors in Apple Calendar, Google Calendar, or Outlook.</p>
+        <div class="cal-action">
+          <a id="cal-subscribe-btn" href="#" class="btn-primary">Subscribe</a>
+          <span class="store-label">for <span class="store-auto-fill">your store</span></span>
+        </div>
+        <p style="margin-top:0.5rem;margin-bottom:0;"><a href="calendar.html" class="more-link">Add more stores</a></p>
+      </section>
+
+      <!-- Section 2: Flavor Alerts -->
+      <section id="alerts-section" class="updates-section">
+        <h2>Flavor Alerts</h2>
+        <p>Get an email when your favorite flavors are on the menu.</p>
+        <form id="alert-form">
+          <input type="email" name="email" required placeholder="your@email.com" autocomplete="email">
+          <div class="alert-store-row">
+            Store: <span class="store-auto-fill">your store</span>
+            <input type="hidden" id="alert-store-slug" name="slug" value="">
+          </div>
+          <div class="alert-chips">
+            <span class="alert-chip">Turtle</span>
+            <span class="alert-chip">Cookie Dough</span>
+            <span class="alert-chip">Mint</span>
+            <span class="alert-chip">Caramel Cashew</span>
+            <span class="alert-chip">Snickers Swirl</span>
+            <span class="alert-chip">Oreo</span>
+          </div>
+          <a href="alerts.html" class="alert-more-link">Search more flavors</a>
+          <button type="submit">Sign Up</button>
+          <div id="alert-status"></div>
+        </form>
+      </section>
+
+      <!-- Section 3: Widget -->
+      <section id="widget-section" class="updates-section">
+        <h2>iOS Widget</h2>
+        <p>See today's flavor right on your home screen with a Scriptable widget.</p>
+        <a href="widget.html" class="btn-secondary">Get Full Instructions</a>
+      </section>
+
+      <!-- Section 4: Siri -->
+      <section id="siri-section" class="updates-section">
+        <h2>Siri Shortcut</h2>
+        <p>Ask Siri for today's flavor with a custom shortcut.</p>
+        <a href="siri.html" class="btn-secondary">Get Full Instructions</a>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-brands">Culver's / Kopp's / Gille's / Hefner's / Kraverz / Oscar's</div>
+    <div class="footer-links">
+      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
+  </footer>
+
+  <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
+  <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
+  <script src="updates-page.js"></script>
+</body>
+</html>
