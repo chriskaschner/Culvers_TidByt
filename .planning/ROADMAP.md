@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Shared nav component, persistent store indicator, and service worker update discipline
 - [x] **Phase 2: Today Page** - Radical simplification of the today view to answer "what's the flavor?" above the fold
-- [ ] **Phase 3: Compare Page** - Store-by-day comparison grid for families deciding where to go
+- [x] **Phase 3: Compare Page** - Store-by-day comparison grid for families deciding where to go
 - [ ] **Phase 4: Supporting Pages + Nav Activation** - Fun page, Get Updates page, and 4-item nav goes live across all pages
 - [ ] **Phase 5: Visual Polish** - Unified card system, cone rendering consistency, and cross-page coherence
 
@@ -71,8 +71,8 @@ Note: Phase 2 and Phase 3 can be built in parallel -- both depend only on Phase 
 
 Plans:
 - [x] 03-01-PLAN.md -- Create compare.html, compare-page.js IIFE with day-first card stack grid, Playwright test scaffolds for all COMP requirements
-- [ ] 03-02-PLAN.md -- Add accordion expand for store row details and exclusion filter chips with dimming
-- [ ] 03-03-PLAN.md -- Update service worker (add compare assets, bump cache version), run full test suites, visual verification checkpoint
+- [x] 03-02-PLAN.md -- Add accordion expand for store row details and exclusion filter chips with dimming
+- [x] 03-03-PLAN.md -- Update service worker (add compare assets, bump cache version), run full test suites, visual verification checkpoint
 
 ### Phase 4: Supporting Pages + Nav Activation
 **Goal**: Fun page and Get Updates page are live, and users see exactly 4 clear nav items (Today, Compare, Map, Fun) on every page
@@ -118,6 +118,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | - |
 | 2. Today Page | 3/3 | Complete | 2026-03-07 |
-| 3. Compare Page | 1/3 | In progress | - |
+| 3. Compare Page | 3/3 | Complete | 2026-03-08 |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
 | 5. Visual Polish | 0/2 | Not started | - |
