@@ -1,5 +1,25 @@
 # Roadmap
 
+## Phase 5: Visual Polish
+
+**Status:** COMPLETE
+**Plans:** 3/3 done
+
+| Plan | Name | Status | Summary |
+| ---- | ---- | ------ | ------- |
+| 01 | Card system + seasonal rarity | Done | Unified .card class system, design tokens at :root, seasonal rarity badge suppression |
+| 02 | Hero cone asset pipeline | Done | Generated 40 hero cone PNGs from FLAVOR_PROFILES, SVG fallback for remaining flavors |
+| 03 | Design token adoption | Done | Adopted design tokens across 37 CSS rules in Today, Map, Compare, SharedNav, Navigation sections |
+
+### Key Deliverables
+- Design tokens defined and consumed across all 4 nav page CSS sections
+- 40 hero cone PNGs for profiled flavors with SVG fallback
+- Unified .card class system with 12px border-radius
+- Seasonal rarity badge suppression (no cadence text for seasonal flavors)
+- 37 hardcoded CSS values replaced with var() token references
+
+---
+
 ## Phase 4: Supporting Pages + Nav Activation
 
 **Status:** COMPLETE
