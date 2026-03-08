@@ -67,14 +67,12 @@ Note: Phase 2 and Phase 3 can be built in parallel -- both depend only on Phase 
   3. User can toggle exclusion filter chips (No Nuts, No Mint, etc.) to hide cells with matching flavors
   4. The grid is usable at 375px width (day-first card stack, scroll-snap, or equivalent mobile pattern -- not a literal 4-column table)
   5. All data comes from the existing `/api/v1/drive` endpoint with no new API endpoints
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
-
-Research flag: The mobile layout needs an HTML/CSS prototype tested at 375px with real flavor name lengths before committing to a pattern. Two candidate approaches (day-first card stack vs horizontal scroll-snap) should be evaluated.
+- [ ] 03-01-PLAN.md -- Create compare.html, compare-page.js IIFE with day-first card stack grid, Playwright test scaffolds for all COMP requirements
+- [ ] 03-02-PLAN.md -- Add accordion expand for store row details and exclusion filter chips with dimming
+- [ ] 03-03-PLAN.md -- Update service worker (add compare assets, bump cache version), run full test suites, visual verification checkpoint
 
 ### Phase 4: Supporting Pages + Nav Activation
 **Goal**: Fun page and Get Updates page are live, and users see exactly 4 clear nav items (Today, Compare, Map, Fun) on every page
