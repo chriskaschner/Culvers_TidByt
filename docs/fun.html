@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Custard Calendar -- Fun</title>
+  <meta name="description" content="Quizzes, word games, and flavor experiments. Find your custard personality.">
+  <meta property="og:title" content="Custard Forecast -- Fun">
+  <meta property="og:description" content="Quizzes, word games, and flavor experiments. Find your custard personality.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/fun.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og/page/forecast.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#005696">
+  <link rel="stylesheet" href="style.css">
+  <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
+  <style>
+    .fun-section {
+      margin-bottom: 1.5rem;
+    }
+    .fun-section h2 {
+      color: #005696;
+      font-size: 1.125rem;
+      margin-bottom: 0.75rem;
+    }
+    .fun-section-desc {
+      color: #666;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Quiz mode card grid */
+    .quiz-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    @media (min-width: 600px) {
+      .quiz-card-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    .quiz-mode-card {
+      display: block;
+      padding: 0.875rem;
+      border: 1.5px solid #ddd;
+      border-radius: 0.75rem;
+      background: #f8f9fa;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .quiz-mode-card:hover {
+      border-color: #005696;
+      box-shadow: 0 2px 8px rgba(0, 86, 150, 0.12);
+    }
+    .quiz-mode-card:active {
+      background: #eef4fb;
+    }
+    .quiz-mode-card strong {
+      display: block;
+      color: #005696;
+      font-size: 0.9375rem;
+      margin-bottom: 0.25rem;
+    }
+    .quiz-mode-card p {
+      margin: 0;
+      color: #555;
+      font-size: 0.8125rem;
+      line-height: 1.4;
+    }
+
+    /* Mad Libs featured card */
+    .madlibs-card {
+      display: block;
+      padding: 1.125rem;
+      border: 1.5px solid #005696;
+      border-radius: 0.75rem;
+      background: #eef4fb;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s;
+    }
+    .madlibs-card:hover {
+      box-shadow: 0 2px 8px rgba(0, 86, 150, 0.15);
+    }
+    .madlibs-card:active {
+      background: #dde9f5;
+    }
+    .madlibs-card strong {
+      display: block;
+      color: #005696;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .madlibs-card p {
+      margin: 0;
+      color: #444;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    /* Link-out cards */
+    .linkout-card {
+      padding: 1rem;
+      border: 1.5px solid #ddd;
+      border-radius: 0.75rem;
+      background: #f8f9fa;
+    }
+    .linkout-card h3 {
+      color: #005696;
+      font-size: 1rem;
+      margin: 0 0 0.375rem;
+    }
+    .linkout-card p {
+      margin: 0 0 0.75rem;
+      color: #555;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    .btn-primary {
+      display: inline-block;
+      padding: 0.5rem 1.25rem;
+      background: #005696;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover {
+      background: #004578;
+    }
+  </style>
+</head>
+<body>
+  <header class="forecast-header">
+    <h1 style="color:#005696;font-size:1.5rem;">Custard Forecast</h1>
+    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Quizzes, word games, and flavor experiments</p>
+
+    <div id="shared-nav" data-page="fun"></div>
+  </header>
+
+  <main id="fun-content" style="max-width:640px;margin:0 auto;padding:1rem;">
+
+    <!-- Section 1: Quiz Modes -->
+    <section id="quiz-modes" class="fun-section">
+      <h2>Pick a Quiz</h2>
+      <div class="quiz-card-grid">
+        <a href="quiz.html?mode=classic-v1" class="quiz-mode-card">
+          <strong>Classic</strong>
+          <p>Which flavor are you? Classic personality quiz.</p>
+        </a>
+        <a href="quiz.html?mode=weather-v1" class="quiz-mode-card">
+          <strong>Weather</strong>
+          <p>Your vibe today mapped to a flavor forecast.</p>
+        </a>
+        <a href="quiz.html?mode=trivia-v1" class="quiz-mode-card">
+          <strong>Trivia</strong>
+          <p>Test your custard knowledge with real flavor facts.</p>
+        </a>
+        <a href="quiz.html?mode=date-night-v1" class="quiz-mode-card">
+          <strong>Date Night</strong>
+          <p>Find the perfect flavor for two.</p>
+        </a>
+        <a href="quiz.html?mode=build-scoop-v1" class="quiz-mode-card">
+          <strong>Build-a-Scoop</strong>
+          <p>Design your ideal scoop from the ground up.</p>
+        </a>
+        <a href="quiz.html?mode=compatibility-v1" class="quiz-mode-card">
+          <strong>Compatibility</strong>
+          <p>How well do your flavor personalities match?</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- Section 2: Mad Libs -->
+    <section id="mad-libs-section" class="fun-section">
+      <h2>Mad Libs</h2>
+      <p class="fun-section-desc">Fill in the blanks for a custom flavor story.</p>
+      <a href="quiz.html?mode=mad-libs-v1" class="madlibs-card">
+        <strong>Play Mad Libs</strong>
+        <p>Choose words (or write your own) and get a flavor match based on your story.</p>
+      </a>
+    </section>
+
+    <!-- Section 3: Group Vote -->
+    <section id="group-vote-section" class="fun-section">
+      <div class="linkout-card">
+        <h3>Group Vote</h3>
+        <p>Can't decide? Start a group vote and let your crew pick the flavor.</p>
+        <a href="group.html" class="btn-primary">Start Voting</a>
+      </div>
+    </section>
+
+    <!-- Section 4: Fronts -->
+    <section id="fronts-section" class="fun-section">
+      <div class="linkout-card">
+        <h3>Flavor Fronts</h3>
+        <p>See the flavor weather map across all stores.</p>
+        <a href="forecast-map.html" class="btn-primary">View Map</a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+  </footer>
+
+  <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
+  <script src="fun-page.js"></script>
+</body>
+</html>
