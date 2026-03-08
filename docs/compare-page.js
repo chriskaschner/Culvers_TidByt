@@ -3,7 +3,7 @@
  *
  * Shows 3 days of flavors across 2-4 saved stores with cone SVGs,
  * rarity badges, and a rarity nudge banner. Accordion expand and
- * exclusion filters are added in Plan 02.
+ * exclusion filters provide interactive filtering and detail views.
  *
  * Usage: <script src="compare-page.js"></script> (after planner-shared.js, shared-nav.js, cone-renderer.js)
  * Exposes: window.CustardCompare (var, no build step required)
@@ -211,10 +211,100 @@ var CustardCompare = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // Google Maps directions URL
+  // ---------------------------------------------------------------------------
+
+  function directionsUrl(store) {
+    var addr = encodeURIComponent(store.address + ', ' + store.city + ', ' + store.state);
+    return 'https://google.com/maps/dir/?api=1&destination=' + addr;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accordion expand
+  // ---------------------------------------------------------------------------
+
+  function populateDetail(detailEl, slug, dateStr) {
+    var data = _storeData[slug];
+    var store = _storeManifest[slug];
+    var html = '';
+
+    // Flavor description
+    var flavorDesc = '';
+    if (data && data.flavors) {
+      var sched = extract3DaySchedule(data.flavors);
+      var entry = sched.schedule[dateStr];
+      if (entry && entry.description) {
+        flavorDesc = entry.description;
+      }
+    }
+    if (flavorDesc) {
+      html += '<p class="compare-flavor-desc">' + escapeHtml(flavorDesc) + '</p>';
+    }
+
+    // Rarity detail (only for today)
+    var todayDate = new Date();
+    todayDate.setHours(12, 0, 0, 0);
+    var todayStr = toISODate(todayDate);
+    if (dateStr === todayStr && data && data.today && data.today.rarity) {
+      var rarity = data.today.rarity;
+      var gap = rarity.avg_gap_days;
+      var rarityText = '';
+      if (rarity.label === 'Ultra Rare' && gap) {
+        rarityText = 'Ultra Rare \u2014 only every ' + gap + ' days!';
+      } else if (gap) {
+        rarityText = 'Shows up roughly every ' + gap + ' days';
+      }
+      if (rarityText) {
+        html += '<p class="compare-rarity-detail">' + escapeHtml(rarityText) + '</p>';
+      }
+    }
+
+    // Directions link
+    if (store && store.address) {
+      html += '<a class="compare-directions" href="' + directionsUrl(store) + '" target="_blank" rel="noopener">Get Directions</a>';
+    }
+
+    detailEl.innerHTML = html;
+  }
+
+  function toggleExpand(rowEl) {
+    // Prevent expand on excluded rows (belt-and-suspenders with CSS pointer-events:none)
+    if (rowEl.classList.contains('compare-excluded')) return;
+
+    // Find the detail element (next sibling after the row)
+    var detailEl = rowEl.nextElementSibling;
+    if (!detailEl || !detailEl.classList.contains('compare-store-detail')) return;
+
+    // If this row is already expanded, collapse it
+    if (_expandedRow === rowEl) {
+      detailEl.hidden = true;
+      _expandedRow = null;
+      return;
+    }
+
+    // Collapse previously expanded row
+    if (_expandedRow) {
+      var prevDetail = _expandedRow.nextElementSibling;
+      if (prevDetail && prevDetail.classList.contains('compare-store-detail')) {
+        prevDetail.hidden = true;
+      }
+      _expandedRow = null;
+    }
+
+    // Expand this row
+    var slug = rowEl.getAttribute('data-slug');
+    var dateStr = rowEl.getAttribute('data-date');
+    populateDetail(detailEl, slug, dateStr);
+    detailEl.hidden = false;
+    _expandedRow = rowEl;
+  }
+
+  // ---------------------------------------------------------------------------
   // Grid rendering
   // ---------------------------------------------------------------------------
 
   function renderGrid() {
+    _expandedRow = null;
     if (!compareGrid) return;
     compareGrid.innerHTML = '';
 
@@ -288,7 +378,18 @@ var CustardCompare = (function () {
           rarityHtml +
           '<span class="compare-store-label">' + escapeHtml(storeName) + '</span>';
 
+        // Wire accordion click handler
+        row.addEventListener('click', (function (r) {
+          return function () { toggleExpand(r); };
+        })(row));
+
         dayCard.appendChild(row);
+
+        // Detail panel (hidden by default, expanded on click)
+        var detail = document.createElement('div');
+        detail.className = 'compare-store-detail';
+        detail.hidden = true;
+        dayCard.appendChild(detail);
       }
 
       compareGrid.appendChild(dayCard);
