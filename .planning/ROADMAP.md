@@ -100,11 +100,12 @@ Plans:
   1. All card-like elements across pages use a shared card system with consistent border, background, spacing, and typography
   2. Cone images render at appropriate quality tiers per context (hero-level on Today, compact in Compare cells, small on Map markers)
   3. Rarity and overdue copy does not make misleading cadence claims for seasonal flavors (e.g., does not say "overdue!" for a summer-only flavor in winter)
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- Design tokens, unified .card base class with variants, card migration across 4 nav pages, seasonal rarity cadence suppression
-- [ ] 05-02-PLAN.md -- Hero cone PNG asset pipeline with SVG fallback, service worker runtime caching, cache version bump, full regression suite
+- [x] 05-01-PLAN.md -- Design tokens, unified .card base class with variants, card migration across 4 nav pages, seasonal rarity cadence suppression
+- [x] 05-02-PLAN.md -- Hero cone PNG asset pipeline with SVG fallback, service worker runtime caching, cache version bump, full regression suite
+- [ ] 05-03-PLAN.md -- Adopt design tokens in nav page CSS rules (gap closure: token consumption)
 
 ## Progress
 
@@ -118,4 +119,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Today Page | 3/3 | Complete | 2026-03-07 |
 | 3. Compare Page | 3/3 | Complete | 2026-03-08 |
 | 4. Supporting Pages + Nav Activation | 3/4 | In Progress|  |
-| 5. Visual Polish | 1/2 | In Progress|  |
+| 5. Visual Polish | 2/3 | In Progress|  |
