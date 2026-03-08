@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Custard Calendar -- Compare Stores</title>
+  <meta name="description" content="Compare today's flavors across your saved stores and plan where to go.">
+  <meta property="og:title" content="Custard Forecast -- Compare Stores">
+  <meta property="og:description" content="Compare today's flavors across your saved stores and plan where to go.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/compare.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og/page/forecast.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#005696">
+  <link rel="stylesheet" href="style.css">
+  <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
+</head>
+<body>
+  <header class="forecast-header">
+    <h1 style="color:#005696;font-size:1.5rem;">Custard Forecast</h1>
+    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Compare flavors across your stores</p>
+
+    <div id="shared-nav" data-page="compare"></div>
+  </header>
+
+  <main>
+    <!-- Empty state: 0-1 saved stores -->
+    <section id="compare-empty" hidden>
+      <div class="compare-empty">
+        <p style="font-size:1.25rem;font-weight:600;margin-bottom:0.5rem;">Compare your stores</p>
+        <p>Add stores to compare flavors side-by-side across the next few days.</p>
+        <button class="btn-primary" id="compare-add-stores" style="margin-top:1rem;">Add stores</button>
+      </div>
+    </section>
+
+    <!-- Loading skeleton -->
+    <section id="compare-loading" hidden>
+      <div class="compare-skeleton">
+        <div class="today-card-skeleton"><div class="skeleton-line skeleton-short"></div><div class="skeleton-line skeleton-long"></div><div class="skeleton-line skeleton-medium"></div></div>
+        <div class="today-card-skeleton"><div class="skeleton-line skeleton-short"></div><div class="skeleton-line skeleton-long"></div><div class="skeleton-line skeleton-medium"></div></div>
+        <div class="today-card-skeleton"><div class="skeleton-line skeleton-short"></div><div class="skeleton-line skeleton-long"></div><div class="skeleton-line skeleton-medium"></div></div>
+      </div>
+    </section>
+
+    <!-- Error state -->
+    <section id="compare-error" hidden>
+      <div class="error-card">
+        <p id="compare-error-message">Something went wrong loading the compare data.</p>
+        <button class="btn-retry" id="compare-retry-btn">Try again</button>
+      </div>
+    </section>
+
+    <!-- Rarity nudge banner -->
+    <section id="compare-nudge" hidden>
+      <div class="compare-nudge" id="compare-nudge-content"></div>
+    </section>
+
+    <!-- Compare grid container -->
+    <section id="compare-grid"></section>
+
+  </main>
+
+  <footer>
+    <div class="footer-brands">Culver's / Kopp's / Gille's / Hefner's / Kraverz / Oscar's</div>
+    <div class="footer-links">
+      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
+  </footer>
+
+  <script src="planner-shared.js"></script>
+  <script src="shared-nav.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
+  <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
+  <script src="cone-renderer.js"></script>
+  <script src="compare-page.js"></script>
+</body>
+</html>
