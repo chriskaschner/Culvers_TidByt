@@ -284,10 +284,12 @@ var CustardCompare = (function () {
     if (dateStr === todayStr && data && data.today && data.today.rarity) {
       var rarity = data.today.rarity;
       var gap = rarity.avg_gap_days;
+      var flavorName = data.today.flavor || '';
+      var isSeasonal = CustardPlanner.isSeasonalFlavor(flavorName);
       var rarityText = '';
-      if (rarity.label === 'Ultra Rare' && gap) {
+      if (rarity.label === 'Ultra Rare' && gap && !isSeasonal) {
         rarityText = 'Ultra Rare \u2014 only every ' + gap + ' days!';
-      } else if (gap) {
+      } else if (gap && !isSeasonal) {
         rarityText = 'Shows up roughly every ' + gap + ' days';
       }
       if (rarityText) {

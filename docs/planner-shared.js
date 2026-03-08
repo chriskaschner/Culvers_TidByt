@@ -34,6 +34,18 @@ var CustardPlanner = (function () {
   var DRIVE_ALLOWED_SORTS = { match: true, detour: true, rarity: true, eta: true };
 
   // ---------------------------------------------------------------------------
+  // Seasonal flavor detection
+  // Mirrors SEASONAL_PATTERN from worker/src/flavor-tags.js -- keep in sync
+  // ---------------------------------------------------------------------------
+
+  var SEASONAL_PATTERN = /\b(pumpkin|peppermint|eggnog|holiday|gingerbread|apple\s*cider)\b/i;
+
+  function isSeasonalFlavor(flavorName) {
+    if (!flavorName) return false;
+    return SEASONAL_PATTERN.test(String(flavorName));
+  }
+
+  // ---------------------------------------------------------------------------
   // Utilities
   // ---------------------------------------------------------------------------
 
@@ -1477,6 +1489,9 @@ var CustardPlanner = (function () {
 
     // Share
     initShareButton: initShareButton,
+
+    // Seasonal detection
+    isSeasonalFlavor: isSeasonalFlavor,
   };
 
   // ---------------------------------------------------------------------------

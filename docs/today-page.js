@@ -321,20 +321,21 @@ var CustardToday = (function () {
   // Rarity badge rendering
   // ---------------------------------------------------------------------------
 
-  function renderRarity(rarity) {
+  function renderRarity(rarity, flavorName) {
     if (!todayRarity) return;
     if (!rarity) {
       todayRarity.hidden = true;
       return;
     }
+    var isSeasonal = CustardPlanner.isSeasonalFlavor(flavorName);
     var html = '';
     if (rarity.label) {
       var cssClass = 'rarity-badge rarity-badge-' + rarity.label.toLowerCase().replace(/\s+/g, '-');
       html += '<span class="' + cssClass + '">' + escapeHtml(rarity.label) + '</span>';
-      if (rarity.avg_gap_days) {
+      if (rarity.avg_gap_days && !isSeasonal) {
         html += 'Shows up roughly every ' + rarity.avg_gap_days + ' days at your store';
       }
-    } else if (rarity.avg_gap_days) {
+    } else if (rarity.avg_gap_days && !isSeasonal) {
       html += 'Back in about ' + rarity.avg_gap_days + ' days';
     }
     if (html) {
@@ -363,7 +364,7 @@ var CustardToday = (function () {
       todayFlavor.style.color = '';
       todayDesc.textContent = day.description || '';
       todayDesc.hidden = !day.description;
-      renderRarity(todayData && todayData.rarity);
+      renderRarity(todayData && todayData.rarity, day.flavor);
     } else if (day.type === 'predicted') {
       todayCard.style.borderLeftColor = '#bdbdbd';
       todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 6);
@@ -372,7 +373,7 @@ var CustardToday = (function () {
       todayFlavor.style.color = '';
       todayDesc.textContent = '';
       todayDesc.hidden = true;
-      renderRarity(null);
+      renderRarity(null, null);
     } else {
       todayCard.style.borderLeftColor = '#e0e0e0';
       todayCone.innerHTML = '';
@@ -381,7 +382,7 @@ var CustardToday = (function () {
       todayFlavor.style.color = '#999';
       todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
       todayDesc.hidden = false;
-      renderRarity(null);
+      renderRarity(null, null);
     }
 
     todaySection.hidden = false;
