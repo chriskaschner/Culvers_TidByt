@@ -8,7 +8,8 @@ from pathlib import Path
 
 DOCS_DIR = Path(__file__).resolve().parents[1] / "docs"
 
-# All 8 user-facing pages that must have SW registration
+# All 6 user-facing pages that must have SW registration
+# (widget.html and calendar.html are now redirect stubs -- no SW needed)
 USER_FACING_PAGES = [
     "index.html",
     "compare.html",
@@ -16,8 +17,6 @@ USER_FACING_PAGES = [
     "fun.html",
     "updates.html",
     "quiz.html",
-    "widget.html",
-    "calendar.html",
 ]
 
 # Pages that register via their JS file instead of inline HTML
@@ -27,13 +26,14 @@ JS_REGISTRATION = {
 }
 
 # Pages that must have inline SW registration in their HTML
-INLINE_PAGES = ["widget.html", "calendar.html", "fun.html", "updates.html", "quiz.html", "map.html"]
+# (widget.html and calendar.html removed -- now redirect stubs)
+INLINE_PAGES = ["fun.html", "updates.html", "quiz.html", "map.html"]
 
 
 class TestAllPagesHaveSWRegistration:
     """Every user-facing page must register sw.js (inline or via JS file)."""
 
-    def test_all_8_pages_have_sw_registration(self):
+    def test_all_6_pages_have_sw_registration(self):
         missing = []
         for page in USER_FACING_PAGES:
             if page in JS_REGISTRATION:

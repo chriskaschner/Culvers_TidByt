@@ -48,7 +48,7 @@ class TestNoCacheBustParams:
 
 
 class TestCacheVersionBumped:
-    """CACHE_VERSION must be bumped past v15 to invalidate old caches."""
+    """CACHE_VERSION must be bumped past v16 to invalidate old caches."""
 
     def test_cache_version_is_not_v15(self):
         sw_content = (DOCS_DIR / "sw.js").read_text()
@@ -58,5 +58,17 @@ class TestCacheVersionBumped:
         version = match.group(1)
         assert version != "custard-v15", (
             f"CACHE_VERSION is still 'custard-v15'. It must be bumped to "
-            "at least 'custard-v16' to invalidate old caches after adding stores.json."
+            "at least 'custard-v17' to invalidate old caches."
+        )
+
+    def test_cache_version_is_not_v16(self):
+        sw_content = (DOCS_DIR / "sw.js").read_text()
+        match = re.search(r"CACHE_VERSION\s*=\s*['\"]([^'\"]+)['\"]", sw_content)
+        assert match, "Could not find CACHE_VERSION in sw.js"
+
+        version = match.group(1)
+        assert version != "custard-v16", (
+            f"CACHE_VERSION is still 'custard-v16'. It must be bumped to "
+            "at least 'custard-v17' to invalidate caches after removing "
+            "calendar.html and widget.html redirect stubs."
         )

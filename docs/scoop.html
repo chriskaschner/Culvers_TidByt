@@ -1,79 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>The Scoop — Custard Calendar</title>
-  <meta name="description" content="Compatibility view for Today’s Drive route ranking and widget deep links.">
-  <meta property="og:title" content="The Scoop — Custard Calendar">
-  <meta property="og:description" content="Route-first flavor ranking for your stores today.">
-  <meta property="og:url" content="https://custard.chriskaschner.com/scoop.html">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://custard.chriskaschner.com/og/page/scoop.svg">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#005696">
-  <link rel="stylesheet" href="style.css">
-  <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
+  <meta http-equiv="refresh" content="0;url=index.html">
+  <title>Redirecting...</title>
 </head>
 <body>
-  <header>
-    <h1>The Scoop</h1>
-    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Compatibility alias for Today's Drive links</p>
-    <div id="shared-nav"></div>
-  </header>
-
-  <main>
-    <section>
-      <div id="todays-drive-root"></div>
-    </section>
-    <section class="calendar-cta">
-      <div class="calendar-cta-card">
-        <div class="calendar-cta-content">
-          <strong>Primary home moved to Forecast</strong>
-          <p>Use <a href="index.html">index.html</a> for the full decision-first homepage with Today’s Drive plus forecast modules below.</p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="footer-brands">Culver's / Kopp's / Gille's / Hefner's / Kraverz / Oscar's</div>
-    <div class="footer-links">
-      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
-      <a href="privacy.html">Privacy</a>
-    </div>
-    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
-    <div class="page-share-mount" id="page-share"></div>
-  </footer>
-
-  <script src="planner-shared.js"></script>
-  <script src="shared-nav.js"></script>
-  <script src="todays-drive.js"></script>
+  <p>Redirecting to <a href="index.html">index.html</a>...</p>
   <script>
-    CustardPlanner.emitPageView('scoop');
-    CustardPlanner.initShareButton('page-share');
-
-    async function initScoop() {
-      var storesResp = await fetch('stores.json');
-      var storesJson = await storesResp.json();
-      CustardDrive.mount({
-        root: 'todays-drive-root',
-        stores: storesJson.stores || [],
-        pageKey: 'scoop',
-        includeTomorrow: true,
-        workerBase: CustardPlanner.WORKER_BASE,
-      });
-    }
-
-    initScoop().catch(function () {
-      var mount = document.getElementById('todays-drive-root');
-      if (mount) {
-        mount.innerHTML = '<div class="drive-shell"><p class="drive-empty">Unable to load store list for Today\'s Drive.</p></div>';
-      }
-    });
+    var q = window.location.search;
+    var h = window.location.hash;
+    window.location.replace('index.html' + (q || '') + (h || ''));
   </script>
 </body>
 </html>

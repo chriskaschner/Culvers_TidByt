@@ -2,16 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=scoop.html">
+  <meta http-equiv="refresh" content="0;url=index.html">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Redirecting to The Scoop...</title>
+  <title>Redirecting to Today's Drive...</title>
 </head>
 <body>
   <script>
-    // Forward ?stores= param to The Scoop
+    // Forward ?stores= param and hash to Today's Drive
     var q = window.location.search;
-    window.location.replace('scoop.html' + (q || ''));
+    var h = window.location.hash;
+    window.location.replace('index.html' + (q || '') + (h || ''));
   </script>
 </body>
 </html>
