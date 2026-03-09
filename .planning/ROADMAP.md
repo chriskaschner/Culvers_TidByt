@@ -36,11 +36,11 @@
   2. No hardcoded spacing magic numbers remain in any CSS file -- all spacing uses token variables
   3. fun.html and updates.html contain zero inline style attributes with hardcoded values
   4. A user opening each quiz mode (Classic, Timed, Streak, Challenge) sees distinct visual treatment that makes the current mode obvious
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md -- Extend :root tokens, create test scaffold, tokenize style.css colors and spacing
+- [ ] 06-02-PLAN.md -- Tokenize inline styles in fun.html/updates.html/quiz.html, add quiz mode visual differentiation
 
 ### Phase 7: Production Deploy
 **Goal**: The site is live at custard.chriskaschner.com and verified working
@@ -67,7 +67,7 @@ Phases execute in numeric order: 6 -> 7
 | 3. Compare Page | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 4. Supporting Pages + Nav | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
-| 6. CSS + Quiz Polish | v1.1 | 0/0 | Not started | - |
+| 6. CSS + Quiz Polish | v1.1 | 0/2 | Not started | - |
 | 7. Production Deploy | v1.1 | 0/0 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
