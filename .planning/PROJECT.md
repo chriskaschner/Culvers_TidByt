@@ -8,6 +8,18 @@ Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen
 
 A family in the car (or on the couch) can instantly see what flavors are at their nearby stores and decide where to go -- no friction, no hunting through pages.
 
+## Current Milestone: v1.1 Production Launch + Polish
+
+**Goal:** Ship the v1.0 build to production and close out remaining active requirements (redirects, map filter, quiz polish, tech debt).
+
+**Target features:**
+- Production deployment (push 46 commits, deploy Worker)
+- Old page redirects preserving query params
+- Map flavor family exclusion filter
+- Quiz image-based answers + visual differentiation
+- Design token consumption across CSS
+- Hero cone PNGs for remaining flavors
+
 ## Requirements
 
 ### Validated
@@ -79,4 +91,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 | Phase 2+3 parallel execution | Both depend only on Phase 1, no interdependency | Good -- saved time |
 
 ---
-*Last updated: 2026-03-08 after v1.0 milestone*
+*Last updated: 2026-03-08 after v1.1 milestone started*

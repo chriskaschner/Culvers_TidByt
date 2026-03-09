@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Custard Calendar Site Restructuring
-status: milestone_complete
-stopped_at: v1.0 milestone archived
-last_updated: "2026-03-09T00:45:00.000Z"
-last_activity: 2026-03-08 -- v1.0 milestone completed and archived
+milestone: v1.1
+milestone_name: Production Launch + Polish
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-03-08T00:00:00.000Z"
+last_activity: 2026-03-08 -- Milestone v1.1 started
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,15 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.0 shipped -- planning next milestone
+**Current focus:** v1.1 Production Launch + Polish
 
 ## Current Position
 
-Milestone v1.0 complete and archived.
-All 15 plans across 5 phases shipped.
-Archives: `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.0-REQUIREMENTS.md`
-
-Next step: `/gsd:new-milestone` to define v1.1 scope
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements
+Last activity: 2026-03-08 -- Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -51,5 +50,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: v1.0 milestone archived
+Stopped at: Defining v1.1 requirements
 Resume file: None
