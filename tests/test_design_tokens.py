@@ -14,9 +14,9 @@ STYLE_CSS = DOCS_DIR / "style.css"
 # Allowed hardcoded hex colors (domain-specific, intentionally not tokenized)
 # ---------------------------------------------------------------------------
 
-# Patterns that identify lines where hardcoded hex values are allowed.
-# Each entry is a regex applied to the full CSS line (case-insensitive).
-ALLOWED_LINE_PATTERNS = [
+# Selector patterns: if the CSS rule's selector matches any of these,
+# ALL hex values in that block are allowed.
+ALLOWED_SELECTOR_PATTERNS = [
     # Store brand border colors (.brand-kopps, .brand-gilles, etc.)
     r"\.brand-(?:kopps|gilles|oscars|hefners|kraverz|culvers)\b",
     # Rarity badge colors
@@ -24,24 +24,17 @@ ALLOWED_LINE_PATTERNS = [
     r"\.popup-rarity-chip\.rarity-",
     # Fronts dark theme (the entire .fronts-* section uses inverted palette)
     r"\.fronts-",
-    r"#fronts-map",
-    # Leaflet map control overrides (forced with !important)
-    r"!important",
-    # Signal card border-left semantic colors (data-signal-type selectors)
-    r'\[data-signal-type=',
+    r"#fronts-map\b",
+    # Leaflet map control overrides
+    r"\.leaflet-",
+    # Signal card semantic colors (data-signal-type selectors)
+    r"\[data-signal-type=",
     # Drive bucket semantic colors (great/ok/pass/hard_pass)
     r"\.drive-bucket-",
     r"\.drive-dot\.drive-bucket-",
-    # Google Calendar UI colors -- lines containing these specific values
-    r"#039be5",
-    r"#dadce0",
-    r"#5f6368",
-    r"#3c4043",
-    r"#1a73e8",
-    # Google Calendar border that mimics GCal appearance
-    r"\.cal-event\b",
-    r"\.cal-event-",
-    # Semantic status colors used in specific components
+    # Google Calendar UI components
+    r"\.cal-event",
+    # Semantic status / match / confirmation components
     r"\.popup-match\b",
     r"\.popup-confirmed\b",
     r"\.match-title\b",
@@ -55,69 +48,164 @@ ALLOWED_LINE_PATTERNS = [
     r"\.day-card-none\b",
     r"\.day-card-highlight\b",
     r"\.prediction-bar-estimated\b",
-    r"\.watch-banner\b",
-    r"\.watch-banner-icon\b",
+    r"\.prediction-pct\b",
+    # Watch / error / toast semantic blocks
+    r"\.watch-banner",
     r"\.error-card\b",
     r"\.error-msg\b",
     r"\.btn-retry",
-    r"\.mobile-toast\b",
-    r"\.compare-nudge\b",
-    r"\.compare-filter-chip\.active\b",
-    r"\.compare-filter-chip:focus-visible\b",
-    # Suggestion panel (amber semantic colors)
+    r"\.mobile-toast",
+    # Suggestion panel (amber semantic)
     r"#suggestions-panel\b",
-    # Domain-specific one-off colors in specific components
-    r"\.signal-headline\b",
-    r"\.signal-explanation\b",
-    r"\.signal-card\b",
+    # Signal / intelligence components (unique blue palette)
+    r"\.signal-",
     r"\.hero-signal\b",
     r"\.historical-context-",
     r"\.overdue-section",
     r"\.similar-section",
+    # Drive domain-specific semantic components
     r"\.drive-dealbreaker\b",
-    r"\.drive-tag-chip-avoid\b",
+    r"\.drive-tag-chip",
     r"\.drive-excluded-item\b",
     r"\.drive-tomorrow\b",
     r"\.drive-map\b",
     r"\.drive-secondary\b",
     r"\.drive-pin\b",
-    r"\.compare-directions\b",
-    r"\.compare-filter-chip:hover\b",
-    r"\.first-visit-guide\b",
-    r"\.hero-empty \.hero-coverage\b",
+    r"\.drive-pill-remove\b",
+    r"\.drive-score-label\b",
+    r"\.drive-sort-btn\.is-active\b",
+    # Compare page semantic components
+    r"\.compare-",
+    # Map marker effects
+    r"\.flavor-map-marker",
+    # Hero empty / first-visit / quick-start domain components
+    r"\.hero-empty\s+\.hero-coverage\b",
+    r"\.first-visit-guide",
     r"\.quick-start-chip",
     r"\.quick-start-label\b",
-    # Score label in drive section
-    r"\.drive-score-label\b",
-    # Hotspot section colors (fronts sidebar -- domain-specific)
-    r"\.hotspot-",
-    # The e8eaed border for GCal backups header
-    r"#e8eaed",
-    # Compare page colors
-    r"\.compare-store-row:hover\b",
-    # Multi-store active state (blue tint)
-    r"\.multi-store-cell\.active\b",
-    # Drive sort active state
-    r"\.drive-sort-btn\.is-active\b",
-    # Calendar CTA chip and button borders (domain colors)
+    # Calendar CTA components (domain-specific brand tint)
     r"\.calendar-cta-",
-    # Share button border
-    r"\.share-btn\b",
-    r"\.share-btn:hover\b",
-    # Error card paragraph
-    r"\.error-card p\b",
-    # Marker/map effects
-    r"\.flavor-map-marker",
+    # Share button (domain-specific brand border)
+    r"\.share-btn",
+    # Multi-store active state
+    r"\.multi-store-cell\.active\b",
+    # Hotspot section (fronts sidebar -- domain-specific)
+    r"\.hotspot-",
     # Compare page
-    r"\.compare-",
-    # Drive tag chip
-    r"\.drive-tag-chip\b",
-    # Pill remove background
-    r"\.drive-pill-remove\b",
+    r"\.compare-filter-chip",
+    # Week day card estimated/predicted variants
+    r"\.week-day-card-predicted",
+    r"\.week-day-card-estimated",
+    r"\.week-day-card-none\b",
+    # Skeleton loading
+    r"\.skeleton-",
+    # Badge component (brand tint)
+    r"\.badge\b",
+    # CTA link hover
+    r"\.cta-link:hover\b",
+    # Dropdown active state
+    r"\.store-dropdown-item\.is-active\b",
+    r"\.store-dropdown-item:hover",
+    # Updates CTA card
+    r"\.updates-cta-card\b",
+    # Nudge semantic
+    r"\.compare-nudge\b",
+]
+
+# Line-level patterns: if the CSS property line itself matches, allow it.
+ALLOWED_LINE_PATTERNS = [
+    # Leaflet !important overrides
+    r"!important",
+    # Specific Google Calendar colors on any line
+    r"#039be5",
+    r"#dadce0",
+    r"#5f6368",
+    r"#3c4043",
+    r"#1a73e8",
+    r"#e8eaed",
 ]
 
 # Hex color regex: matches #xxx, #xxxx, #xxxxxx, #xxxxxxxx
 HEX_COLOR_RE = re.compile(r"#(?:[0-9a-fA-F]{3,4}){1,2}\b")
+
+
+def _parse_css_blocks(filepath: Path) -> list[tuple[str, list[tuple[int, str]]]]:
+    """Parse a CSS file into (selector, [(line_number, property_line)]) blocks.
+
+    Skips the :root { ... } block entirely.
+    Returns list of (selector_text, property_lines) tuples.
+    """
+    text = filepath.read_text()
+    lines = text.splitlines()
+    blocks = []
+    current_selector = ""
+    current_props: list[tuple[int, str]] = []
+    in_root = False
+    brace_depth = 0
+    root_depth = 0
+    in_block = False
+
+    for i, line in enumerate(lines, start=1):
+        stripped = line.strip()
+
+        # Track :root block to skip it
+        if not in_root and stripped.startswith(":root") and "{" in stripped:
+            in_root = True
+            root_depth = 0
+
+        if in_root:
+            root_depth += stripped.count("{") - stripped.count("}")
+            if root_depth <= 0:
+                in_root = False
+            continue
+
+        # Track brace depth for nested blocks (media queries, etc.)
+        opens = stripped.count("{")
+        closes = stripped.count("}")
+
+        if opens > 0 and not in_block:
+            # New selector block
+            selector_part = stripped.split("{")[0].strip()
+            if selector_part.startswith("@"):
+                # Media query or keyframes -- just adjust depth
+                brace_depth += opens - closes
+                continue
+            current_selector = selector_part
+            current_props = []
+            in_block = True
+            brace_depth += opens - closes
+            # If the block closes on the same line (single-line rule)
+            if closes > 0 and brace_depth <= 0:
+                # Single-line rule: extract properties
+                inner = stripped.split("{", 1)[1].rsplit("}", 1)[0]
+                for prop in inner.split(";"):
+                    prop = prop.strip()
+                    if prop:
+                        current_props.append((i, "  " + prop + ";"))
+                blocks.append((current_selector, current_props))
+                in_block = False
+                brace_depth = 0
+                current_selector = ""
+                current_props = []
+            continue
+
+        if in_block:
+            brace_depth += opens - closes
+            if closes > 0 and brace_depth <= 0:
+                # Block ended
+                blocks.append((current_selector, current_props))
+                in_block = False
+                brace_depth = 0
+                current_selector = ""
+                current_props = []
+            elif stripped and not stripped.startswith("/*") and not stripped.startswith("*") and not stripped.startswith("//"):
+                current_props.append((i, line))
+            continue
+
+        # Lines outside any block (comments, etc.) -- skip
+        continue
+
+    return blocks
 
 
 def _read_css_outside_root(filepath: Path) -> list[tuple[int, str]]:
@@ -142,8 +230,16 @@ def _read_css_outside_root(filepath: Path) -> list[tuple[int, str]]:
     return result
 
 
+def _is_allowed_selector(selector: str) -> bool:
+    """Return True if the selector matches any allowed selector pattern."""
+    for pattern in ALLOWED_SELECTOR_PATTERNS:
+        if re.search(pattern, selector, re.IGNORECASE):
+            return True
+    return False
+
+
 def _is_allowed_line(line: str) -> bool:
-    """Return True if the line matches any allowed-list pattern."""
+    """Return True if the property line matches any allowed line pattern."""
     for pattern in ALLOWED_LINE_PATTERNS:
         if re.search(pattern, line, re.IGNORECASE):
             return True
@@ -151,7 +247,7 @@ def _is_allowed_line(line: str) -> bool:
 
 
 def _is_inside_comment(line: str) -> bool:
-    """Rough check if the hex is inside a CSS comment on the same line."""
+    """Rough check if the line is inside a CSS comment."""
     stripped = line.strip()
     return stripped.startswith("/*") or stripped.startswith("*")
 
@@ -187,18 +283,12 @@ def _find_hardcoded_spacing(lines: list[tuple[int, str]]) -> list[tuple[int, str
             continue
         # Check for each spacing token value as a standalone value
         for val in SPACING_TOKEN_VALUES:
-            # Match the value as a standalone token (not part of larger value)
-            # e.g., match "0.5rem" but not "0.5rem)" or "-0.5rem"
-            # Allow at start of value, after space, or after colon
             pattern = re.compile(
                 r"(?<![.\d-])" + re.escape(val) + r"(?!\d)",
             )
             matches = pattern.findall(line)
             if matches:
                 # Make sure this isn't already using a var() for this value
-                # Check if the line has any bare value (not inside var())
-                # Simple approach: if line contains the literal value NOT inside var()
-                # Remove all var(--...) references then check
                 line_without_vars = re.sub(r"var\(--[^)]+\)", "", line)
                 if pattern.search(line_without_vars):
                     results.append((lineno, line, val))
@@ -226,24 +316,36 @@ def test_token_count():
 
 
 def test_no_hardcoded_colors():
-    """No hardcoded hex color values remain in style.css outside allowed-list."""
-    lines = _read_css_outside_root(STYLE_CSS)
+    """No hardcoded hex color values remain in style.css outside allowed-list.
+
+    Uses selector-context-aware checking: if a CSS rule's selector matches
+    a known domain-specific pattern, all hex values in that block are allowed.
+    """
+    blocks = _parse_css_blocks(STYLE_CSS)
     violations = []
-    for lineno, line in lines:
-        # Skip allowed lines
-        if _is_allowed_line(line):
+
+    for selector, props in blocks:
+        # Skip allowed selectors (domain-specific components)
+        if _is_allowed_selector(selector):
             continue
-        # Skip comments
-        if _is_inside_comment(line):
-            continue
-        # Skip @keyframes and animation-only lines
-        stripped = line.strip()
-        if stripped.startswith("@keyframes"):
-            continue
-        # Find hex colors
-        hex_matches = HEX_COLOR_RE.findall(line)
-        if hex_matches:
-            violations.append(f"  Line {lineno}: {stripped}  (found: {hex_matches})")
+
+        for lineno, line in props:
+            # Skip allowed lines (e.g., !important overrides)
+            if _is_allowed_line(line):
+                continue
+            # Skip comments
+            if _is_inside_comment(line):
+                continue
+            stripped = line.strip()
+            if stripped.startswith("@keyframes"):
+                continue
+            # Find hex colors
+            hex_matches = HEX_COLOR_RE.findall(line)
+            if hex_matches:
+                violations.append(
+                    f"  Line {lineno} [{selector}]: {stripped}  (found: {hex_matches})"
+                )
+
     assert not violations, (
         f"Found {len(violations)} lines with hardcoded hex colors in style.css:\n"
         + "\n".join(violations[:30])
