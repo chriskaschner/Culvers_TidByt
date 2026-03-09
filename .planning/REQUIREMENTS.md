@@ -68,25 +68,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFR-01 | -- | Pending |
-| INFR-02 | -- | Pending |
-| INFR-03 | -- | Pending |
-| INFR-04 | -- | Pending |
-| RDIR-01 | -- | Pending |
-| RDIR-02 | -- | Pending |
-| DSGN-01 | -- | Pending |
-| ARCH-01 | -- | Pending |
-| ARCH-02 | -- | Pending |
-| MAP-01 | -- | Pending |
-| MAP-02 | -- | Pending |
-| QUIZ-01 | -- | Pending |
-| CMPR-01 | -- | Pending |
+| INFR-01 | Phase 9 | Pending |
+| INFR-02 | Phase 9 | Pending |
+| INFR-03 | Phase 9 | Pending |
+| INFR-04 | Phase 9 | Pending |
+| RDIR-01 | Phase 10 | Pending |
+| RDIR-02 | Phase 10 | Pending |
+| DSGN-01 | Phase 10 | Pending |
+| ARCH-01 | Phase 11 | Pending |
+| ARCH-02 | Phase 11 | Pending |
+| MAP-01 | Phase 12 | Pending |
+| MAP-02 | Phase 12 | Pending |
+| QUIZ-01 | Phase 12 | Pending |
+| CMPR-01 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after initial definition*
+*Last updated: 2026-03-09 after roadmap creation*

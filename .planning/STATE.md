@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Feature Completion & Cleanup
 status: active
-stopped_at: Research complete, synthesis pending
+stopped_at: Roadmap created, ready to plan Phase 9
 last_updated: "2026-03-09"
-last_activity: 2026-03-09 -- 4 researchers completed, paused before synthesis
+last_activity: 2026-03-09 -- Roadmap created with 4 phases (9-12), 13 requirements mapped
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,47 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.2 milestone setup -- research done, awaiting synthesis + requirements + roadmap
+**Current focus:** Phase 9 -- Infrastructure & Deployment
 
 ## Current Position
 
 Milestone: v1.2 Feature Completion & Cleanup
-Phase: Not started (mid-milestone-setup)
-Status: Paused -- research complete, synthesis pending
-Last activity: 2026-03-09 -- 4 parallel researchers completed
+Phase: 9 of 12 (Infrastructure & Deployment) -- first of 4 new phases
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-03-09 -- Roadmap created
 
-## Resume Point
-
-**Workflow:** `/gsd:new-milestone` -- paused at Step 8 (Research)
-**What's done:**
-- PROJECT.md updated with v1.2 Current Milestone section
-- STATE.md reset for v1.2
-- Committed: `docs: start milestone v1.2 Feature Completion & Cleanup`
-- Config: workflow.research = true
-- 4 research files written: STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md
-
-**What's next (in order):**
-1. Spawn research synthesizer to create SUMMARY.md from 4 research files
-2. Commit research artifacts
-3. Define requirements (Step 9) -- scope features by category with user input
-4. Create REQUIREMENTS.md with REQ-IDs
-5. Spawn roadmapper to create ROADMAP.md (Step 10)
-6. Get roadmap approval and commit
-
-**Key research findings to carry forward:**
-- Zero new dependencies needed -- all features use existing browser APIs and tools
-- planner-shared.js refactor ordering is debated: Stack says first, Features says last. Needs decision.
-- Compare multi-store may already be partially implemented -- needs verification
-- Redirect pages need JS redirect (not meta refresh) to preserve query params
-- SW changes should land in same CACHE_VERSION bump as refactor
-- Hero cone PNGs are content authoring bottleneck, not technical
-- Compare page has cross-page state leak via shared localStorage key
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
+- v1.2: 0 plans completed
 - Total: 19 plans across 2 milestones
 
 ## Accumulated Context
@@ -70,22 +47,25 @@ Last activity: 2026-03-09 -- 4 parallel researchers completed
 
 Full decision log in PROJECT.md Key Decisions table.
 
+Recent decisions affecting current work:
+- [v1.2]: Hero cone PNGs deferred to future release (CONE-01 not in v1.2 scope)
+- [v1.2]: Monolith refactor isolated in own phase (highest-risk change)
+- [v1.2]: Compare localStorage state leak must be fixed before multi-store work (Phase 12)
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-- [Tech debt]: Hero cone PNGs cover 40/176 flavors -- in scope for v1.2
-- [Tech debt]: stores.json not in SW pre-cache -- in scope for v1.2
-- [Tech debt]: planner-shared.js is a 1,624-line untested monolith -- in scope for v1.2
-- [Tech debt]: Mad Libs chip CSS classes have no CSS definitions -- in scope for v1.2
-- [Bug]: Compare page multi-store comparison broken -- in scope for v1.2
-- [Deploy]: Phase 8 commits not pushed to origin/main -- in scope for v1.2
-- [CI]: Repo Structure Check fails (.planning/ not in REPO_CONTRACT.md) -- in scope for v1.2
+- [Phase 9]: stores.json ?v= cache-bust params in 4 files must be removed when adding to STATIC_ASSETS
+- [Phase 10]: Redirect stubs need decision on whether to keep in SW STATIC_ASSETS list
+- [Phase 11]: Split granularity debated (3, 6, or 11 files) -- start with 3-file approach per ARCHITECTURE.md
+- [Phase 12]: Compare multi-store may already work -- needs verification before implementation
+- [Phase 12]: Map vs Compare exclusion localStorage keys must be separate (different user intents)
 
 ## Session Continuity
 
 Last session: 2026-03-09
-Stopped at: Research complete, synthesis pending (mid /gsd:new-milestone workflow)
+Stopped at: Roadmap created, ready to plan Phase 9
 Resume file: None
