@@ -2,28 +2,11 @@
 
 ## What This Is
 
-Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores -- primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's). The presentation layer has been restructured from 11 loosely connected pages to a focused product organized around 4 use cases (Today, Compare, Map, Fun), with persistent store selection, progressive disclosure, a 37-token design system consumed across all CSS, and per-mode quiz theming. The site is live at custard.chriskaschner.com.
+Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores -- primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's). The presentation layer has been restructured from 11 loosely connected pages to a focused product organized around 4 use cases (Today, Compare, Map, Fun), with persistent store selection, progressive disclosure, a 37-token design system, per-mode quiz theming, modular JS architecture (4-file IIFE pattern), and full offline support via service worker. The site is live at custard.chriskaschner.com.
 
 ## Core Value
 
 A family in the car (or on the couch) can instantly see what flavors are at their nearby stores and decide where to go -- no friction, no hunting through pages.
-
-## Current Milestone: v1.2 Feature Completion & Cleanup
-
-**Goal:** Ship all carried-forward active requirements and resolve accumulated tech debt from v1.0/v1.1.
-
-**Target features:**
-- Old page redirects preserving query params
-- Map flavor family exclusion filter with persistent state
-- Quiz image-based answer options on mobile
-- Hero cone PNGs for remaining ~136 flavors
-- SW registered on fun.html and updates.html
-- planner-shared.js refactored from monolith
-- Compare page multi-store side-by-side comparison
-- Push unpushed phase 8 commits and verify deployment
-- Fix CI repo structure check
-- Mad Libs chip CSS definitions
-- stores.json in SW pre-cache
 
 ## Requirements
 
@@ -41,20 +24,20 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - Inline styles eliminated from fun.html, updates.html, quiz.html -- v1.1
 - Site deployed and verified at custard.chriskaschner.com -- v1.1
 - Quiz modes visually distinct with per-mode accent theming -- v1.1
+- CI repo structure check passes with .planning/ -- v1.2
+- All commits deployed to origin/main with smoke test verification -- v1.2
+- SW registered on all user-facing pages with stores.json pre-cached -- v1.2
+- Old pages redirect to correct destinations preserving query params -- v1.2
+- Mad Libs chips use CSS classes with design tokens instead of inline styles -- v1.2
+- planner-shared.js split into focused IIFE sub-modules preserving public API -- v1.2
+- All Playwright tests pass after refactoring with no regressions -- v1.2
+- Map flavor family exclusion filter with localStorage persistence -- v1.2
+- Quiz image-based answer options on mobile -- v1.2
+- Compare page multi-store side-by-side with isolated localStorage -- v1.2
 
 ### Active
 
-- [ ] Old page redirects preserving query params (scoop, radar, calendar, widget, siri, alerts)
-- [ ] Map flavor family exclusion filter with persistent state
-- [ ] Quiz image-based answer options on mobile
-- [ ] Hero cone PNGs for remaining ~136 flavors
-- [ ] SW registered on fun.html and updates.html
-- [ ] planner-shared.js refactored from 1,624-line monolith
-- [ ] Compare page multi-store comparison (currently switches stores instead of side-by-side)
-- [ ] Push phase 8 commits to origin/main and verify deployment
-- [ ] Fix CI Repo Structure Check (.planning/ in REPO_CONTRACT.md)
-- [ ] Mad Libs chip CSS classes need actual CSS definitions
-- [ ] stores.json added to SW pre-cache list
+- [ ] Hero cone PNGs for remaining ~136 flavors via existing sharp pipeline
 
 ### Out of Scope
 
@@ -67,20 +50,29 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - Analytics/stats dashboard -- enrichment as contextual nudges, not dashboards
 - Social features/sharing/reviews -- no transaction layer
 - Distance radius slider on map -- users think in "stores I'd drive to" not miles
+- ES modules for refactoring -- too disruptive; IIFE namespace extension preserves existing patterns
+- Shared exclusion state between Map and Compare -- different user intents on different pages
+- Server-side redirects via Cloudflare Worker -- worker is out of scope; client-side redirects sufficient
 
 ## Context
 
-Shipped v1.1 with 22,741 lines across HTML/CSS/JS files. Static HTML/CSS/JS on GitHub Pages.
-Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (browser tests), GitHub Pages (hosting).
+Shipped v1.2 with ~368,889 lines across HTML/CSS/JS files. Static HTML/CSS/JS on GitHub Pages.
+Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwright (browser tests), GitHub Pages (hosting).
 810+ Worker tests, 32+ Playwright tests, 179 Python tests.
 
 **Current state:**
 - 15 HTML pages with shared navigation and store indicator
+- 6 redirect stubs for legacy page URLs
 - 4 primary nav destinations (Today, Compare, Map, Fun)
 - Get Updates accessible via footer and contextual CTAs
 - 37-token design system fully consumed across all CSS (no hardcoded colors/spacing)
 - Per-mode quiz theming via data-quiz-mode attribute selectors (7 modes)
 - Hero cone PNG pipeline for 40 profiled flavors with SVG fallback
+- Modular JS: planner-shared.js facade (117 lines) + 3 sub-modules (data, domain, ui)
+- Service worker v18 covering all pages with stores.json offline
+- Map exclusion filter with localStorage persistence
+- Quiz image grid on mobile for icon-bearing questions
+- Compare page with isolated localStorage for multi-store selection
 - Live at custard.chriskaschner.com
 
 ## Constraints
@@ -88,14 +80,14 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 - **Hosting**: GitHub Pages for frontend (no build step, no SSR, static HTML/CSS/JS only)
 - **API**: Cloudflare Worker -- no changes to Worker code
 - **Mobile**: All decision-making views must work at 375px width
-- **Compatibility**: Old URLs must redirect to new locations (no broken bookmarks)
-- **No frameworks**: Vanilla JS with `window.CustardPlanner` global pattern
+- **Compatibility**: Old URLs redirect to new locations (no broken bookmarks)
+- **No frameworks**: Vanilla JS with `window.CustardPlanner` global pattern (4-file IIFE)
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Presentation-layer only | Backend is feature-complete; all gaps are UX/structure | Good -- 19 plans, ~2.5 hours, zero API changes |
+| Presentation-layer only | Backend is feature-complete; all gaps are UX/structure | Good -- 26 plans, ~3 hours, zero API changes |
 | IIFE module pattern | No build step on GitHub Pages, matches codebase conventions | Good -- all page modules use IIFE |
 | Day-first card stack for Compare | Mobile-first at 375px, better than table columns | Good -- usable, tested at 375px |
 | Get Updates as page (not drawer) | Simple, one URL, consolidates 4 setup flows | Good -- 5 UPDT requirements satisfied |
@@ -108,6 +100,11 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 | data-quiz-mode attribute theming | JS sets attribute, CSS responds with per-mode overrides | Good -- 7 modes, clean separation |
 | Curl-based production smoke tests | Bypass service worker cache for reliable deploy verification | Good -- all 5 pages verified |
 | CSS color-mix for derived accents | Project already uses modern CSS features | Good -- clean derived shades |
+| Meta-refresh redirect stubs | Bare HTML (~410 bytes), no JS stack, preserves query params | Good -- minimal, works with bookmarks |
+| 3-file monolith split | Balance between granularity and complexity; data/domain/ui separation | Good -- 60 exports preserved, zero regressions |
+| Uniform sub-module loading | All 3 sub-modules on every page, no selective loading | Good -- simple, cache-friendly |
+| Map exclusion (dimming not hiding) | 0.15 opacity preserves spatial context vs hiding markers | Good -- users see all stores |
+| Page-scoped localStorage keys | Separate keys per page prevent cross-page state leaks | Good -- compare/map/preferences isolated |
 
 ---
-*Last updated: 2026-03-09 after v1.2 milestone start*
+*Last updated: 2026-03-09 after v1.2 milestone*

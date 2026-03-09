@@ -1,5 +1,30 @@
 # Milestones
 
+## v1.2 Feature Completion & Cleanup (Shipped: 2026-03-09)
+
+**Phases completed:** 4 phases, 9 plans
+
+**Key accomplishments:**
+- Fixed CI pipeline and deployed all code with reusable 6-page smoke test script
+- Full SW coverage on all 8 user-facing pages with stores.json pre-cached for offline access (v16->v17->v18)
+- 6 legacy pages replaced with ~410-byte redirect stubs preserving query params and hash fragments
+- Mad Libs chips migrated from inline JS styles to CSS classes with design token integration
+- Monolith planner-shared.js split from 1,639 lines into 117-line facade + 3 focused IIFE sub-modules (60 exports preserved)
+- Map exclusion filter with localStorage persistence, quiz image grid on mobile, compare localStorage isolation
+
+**Stats:**
+- Files modified: 49 | Lines added: 8,205 | Lines removed: 1,186
+- Timeline: 1 day (2026-03-09)
+- Commits: 41
+- Requirements: 13/13 satisfied
+
+**Known tech debt:**
+- Hero cone PNGs cover 40/176 flavors (CONE-01 deferred to future release)
+- 14 pre-existing browser test failures (not regressions from v1.2 work)
+- Nyquist validation partial on all 4 phases (draft status)
+
+---
+
 ## v1.0 Custard Calendar Site Restructuring (Shipped: 2026-03-08)
 
 **Phases completed:** 5 phases, 17 plans, 0 tasks

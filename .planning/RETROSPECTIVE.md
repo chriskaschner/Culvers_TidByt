@@ -91,6 +91,52 @@
 
 ---
 
+## Milestone: v1.2 -- Feature Completion & Cleanup
+
+**Shipped:** 2026-03-09
+**Phases:** 4 | **Plans:** 9 | **Sessions:** ~6
+
+### What Was Built
+- CI pipeline fixed and all code deployed with reusable 6-page smoke test script
+- Full SW coverage on all 8 user-facing pages with stores.json pre-cached (v16->v17->v18)
+- 6 legacy pages replaced with ~410-byte redirect stubs preserving query params and hash fragments
+- Mad Libs chips migrated from inline JS styles to CSS classes with design token integration
+- planner-shared.js split from 1,639-line monolith into 117-line facade + 3 IIFE sub-modules (data/domain/ui)
+- Map exclusion filter with localStorage persistence, quiz image grid on mobile, compare localStorage isolation
+
+### What Worked
+- Milestone audit pre-flight caught no gaps -- all 13 requirements verified 3 ways before completion
+- 3-file monolith split was the right granularity -- avoided both under-splitting (no benefit) and over-splitting (complexity)
+- Test-api-surface.html harness caught split regressions before production wiring (all 60 exports verified)
+- Page-scoped localStorage keys (custard:map:exclusions, custard:compare:stores) cleanly isolated cross-page state
+- Phase ordering (infra -> redirects -> refactor -> features) reduced risk by stabilizing foundation first
+- Dimming excluded map markers (0.15 opacity) instead of hiding preserved spatial context
+
+### What Was Inefficient
+- ROADMAP.md progress table had misaligned columns for phases 10-12 (milestone column missing) -- carried forward from phase execution without cleanup
+- Nyquist validation remained partial on all 4 phases (draft status) -- validation ceremony without completion
+- cleanTelemetrySlug duplicated across modules to avoid load-time dependency -- minor duplication accepted as pragmatic trade-off
+
+### Patterns Established
+- IIFE + Object.assign sub-module pattern: `Object.assign(window.CustardPlanner, { ... })` for extending global namespace
+- Underscore-prefixed internal helpers (_normalizeStringList) to signal private APIs within public namespace
+- Meta-refresh redirect stubs: bare HTML (~410 bytes) with query param and hash forwarding
+- Exclusion filter pattern: Set-based filter with `.selected` class toggle and localStorage persistence
+- Page-scoped localStorage keys prevent cross-page state leaks
+
+### Key Lessons
+1. Monolith splits work best at 3-file granularity for codebases under 2K lines -- data/domain/ui is a natural boundary
+2. API surface smoke tests (test-api-surface.html) should be created BEFORE splitting, not after
+3. Redirect stubs should be bare HTML with no framework dependencies -- ~410 bytes is the right size
+4. Page-scoped localStorage keys should be namespaced by feature (custard:map:*, custard:compare:*) from day one
+
+### Cost Observations
+- Model mix: 100% opus (quality profile)
+- Sessions: ~6 across 1 day
+- Notable: 9 plans total, ~11 min average per plan, all 13 requirements satisfied
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -99,6 +145,7 @@
 |-----------|----------|--------|------------|
 | v1.0 | ~8 | 5 | Baseline: IIFE pattern, Playwright scaffolds, SW bump discipline |
 | v1.1 | ~4 | 3 | Audit-driven gap closure, CSS static analysis tests, production deploy with human verification |
+| v1.2 | ~6 | 4 | Monolith split (3-file IIFE), page-scoped localStorage, redirect stubs, API surface smoke tests |
 
 ### Cumulative Quality
 
@@ -106,9 +153,12 @@
 |-----------|-----------------|--------------|--------------|-------|
 | v1.0 | 32+ | 810+ | 179 | All 38 requirements verified 3 ways |
 | v1.1 | 32+ | 810+ | 179+ | 7/7 requirements satisfied, 5 static analysis tests added |
+| v1.2 | 50+ | 810+ | 179+ | 13/13 requirements satisfied, map/quiz/compare browser tests added |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. Audit before completing milestones -- caught deployment gap in v1.1, caught unused tokens in v1.0
+1. Audit before completing milestones -- caught deployment gap in v1.1, caught unused tokens in v1.0, confirmed clean v1.2
 2. Gap closure plans are high-value and fast -- budget 1-2 per milestone
 3. Static analysis tests for CSS/token compliance prevent silent regression
+4. Monolith splits at data/domain/ui boundaries work well for codebases under 2K lines -- verified in v1.2
+5. Page-scoped localStorage keys prevent cross-page state leaks -- established in v1.2, apply from day one
