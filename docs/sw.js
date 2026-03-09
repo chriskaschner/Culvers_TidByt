@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'custard-v15';
+const CACHE_VERSION = 'custard-v16';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -26,6 +26,7 @@ const STATIC_ASSETS = [
   './manifest.json',
   './icon-192.svg',
   './icon-512.svg',
+  './stores.json',
 ];
 
 // Install: pre-cache static assets

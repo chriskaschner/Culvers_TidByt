@@ -930,7 +930,7 @@
     async function loadBrandStores() {
       if (brandStores.length > 0) return brandStores;
       try {
-        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const resp = await fetch('stores.json');
         const data = await resp.json();
         brandStores = (data.stores || []).filter(s => s.brand);
       } catch (err) {
@@ -959,6 +959,11 @@
       readUrlParams();
     } else {
       initLocation();
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function() {});
     }
   </script>
 </body>

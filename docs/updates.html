@@ -241,5 +241,10 @@
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="updates-page.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function() {});
+    }
+  </script>
 </body>
 </html>

@@ -799,7 +799,7 @@
     // --- Store loading ---
     async function loadStores(defaultState) {
       try {
-        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const resp = await fetch('stores.json');
         const data = await resp.json();
         allStores = data.stores || [];
         populateStateFilter();

@@ -541,7 +541,7 @@
 
     async function loadStores() {
       try {
-        var resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        var resp = await fetch('stores.json');
         var data = await resp.json();
         allStores = data.stores || [];
         populateStates();

@@ -589,5 +589,10 @@
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script src="quizzes/sprites.js"></script>
   <script type="module" src="quizzes/engine.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function() {});
+    }
+  </script>
 </body>
 </html>

@@ -113,7 +113,7 @@ var CustardToday = (function () {
   // ---------------------------------------------------------------------------
 
   function loadStores() {
-    return fetch('stores.json?v=' + new Date().toISOString().slice(0, 10))
+    return fetch('stores.json')
       .then(function (resp) { return resp.json(); })
       .then(function (data) { _allStores = data.stores || []; })
       .catch(function (err) { console.error('Failed to load stores:', err); });

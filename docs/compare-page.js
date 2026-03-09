@@ -171,7 +171,7 @@ var CustardCompare = (function () {
   // ---------------------------------------------------------------------------
 
   function loadStores() {
-    return fetch('stores.json?v=' + new Date().toISOString().slice(0, 10))
+    return fetch('stores.json')
       .then(function (resp) { return resp.json(); })
       .then(function (data) {
         _allStoresArr = data.stores || [];

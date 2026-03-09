@@ -82,7 +82,7 @@ var SharedNav = (function () {
     } catch (_) { /* ignore */ }
 
     // Fetch from stores.json (local) or Worker API
-    var url = 'stores.json?v=' + new Date().toISOString().slice(0, 10);
+    var url = 'stores.json';
     fetch(url).then(function (resp) {
       if (!resp.ok) {
         // Try Worker API as fallback

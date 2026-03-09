@@ -57,7 +57,7 @@
     CustardPlanner.initShareButton('page-share');
 
     async function initScoop() {
-      var storesResp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+      var storesResp = await fetch('stores.json');
       var storesJson = await storesResp.json();
       CustardDrive.mount({
         root: 'todays-drive-root',
