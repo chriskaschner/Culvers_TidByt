@@ -94,12 +94,12 @@ Plans:
   3. Quiz questions on mobile show image-based answer options in a grid layout
   4. User can select 2+ stores on the compare page and see their flavors side-by-side in the day-first card stack
   5. Compare page store selections do not leak into Today page drive preferences (separate localStorage keys)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
-- [ ] 12-03: TBD
+- [ ] 12-01-PLAN.md -- Map exclusion filter: convert positive filter to exclusion chips with localStorage persistence
+- [ ] 12-02-PLAN.md -- Quiz image grid: 2x2 image-above-label layout for icon-bearing questions on mobile
+- [ ] 12-03-PLAN.md -- Compare localStorage isolation: separate key for store selections, verify multi-store picker
 
 ## Progress
 
@@ -119,7 +119,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 9. Infrastructure & Deployment | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 10. Redirects & CSS Cleanup | 2/2 | Complete    | 2026-03-09 | - |
 | 11. Monolith Refactoring | 2/2 | Complete    | 2026-03-09 | - |
-| 12. Feature Development | v1.2 | 0/? | Not started | - |
+| 12. Feature Development | v1.2 | 0/3 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
 Full v1.1 phase details archived: `.planning/milestones/v1.1-ROADMAP.md`
