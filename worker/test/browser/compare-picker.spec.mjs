@@ -107,9 +107,7 @@ async function setupComparePage(page, opts) {
 
   if (opts.storeSlugs) {
     await page.evaluate(function (slugs) {
-      localStorage.setItem("custard:v1:preferences", JSON.stringify({
-        activeRoute: { stores: slugs },
-      }));
+      localStorage.setItem("custard:compare:stores", JSON.stringify(slugs));
     }, opts.storeSlugs);
     await page.reload();
     if (opts.storeSlugs.length >= 2) {
@@ -345,7 +343,7 @@ test("picker close button closes without saving changes", async ({ page }) => {
 // ---------------------------------------------------------------------------
 // Preferences are persisted to localStorage
 // ---------------------------------------------------------------------------
-test("selected stores are saved to custard:v1:preferences", async ({ page }) => {
+test("selected stores are saved to custard:compare:stores", async ({ page }) => {
   await setupComparePage(page);
   await page.waitForSelector("#compare-empty", { timeout: 10000 });
 
@@ -359,16 +357,15 @@ test("selected stores are saved to custard:v1:preferences", async ({ page }) => 
   // Wait for grid
   await page.waitForSelector(".compare-day-card", { timeout: 10000 });
 
-  // Read localStorage
-  var prefs = await page.evaluate(function () {
-    var raw = localStorage.getItem("custard:v1:preferences");
+  // Read localStorage -- now a plain array under the new key
+  var stores = await page.evaluate(function () {
+    var raw = localStorage.getItem("custard:compare:stores");
     return raw ? JSON.parse(raw) : null;
   });
 
-  expect(prefs).not.toBeNull();
-  expect(prefs.activeRoute).toBeDefined();
-  expect(prefs.activeRoute.stores).toBeDefined();
-  expect(prefs.activeRoute.stores.length).toBeGreaterThanOrEqual(2);
-  expect(prefs.activeRoute.stores).toContain("mt-horeb");
-  expect(prefs.activeRoute.stores).toContain("verona");
+  expect(stores).not.toBeNull();
+  expect(Array.isArray(stores)).toBe(true);
+  expect(stores.length).toBeGreaterThanOrEqual(2);
+  expect(stores).toContain("mt-horeb");
+  expect(stores).toContain("verona");
 });

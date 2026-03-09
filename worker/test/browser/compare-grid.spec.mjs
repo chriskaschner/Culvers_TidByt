@@ -151,11 +151,9 @@ async function setupComparePage(page, opts) {
   // Navigate to compare.html
   await page.goto("/compare.html");
 
-  // Set localStorage with saved stores
+  // Set localStorage with saved stores (isolated compare key)
   await page.evaluate(function (slugs) {
-    localStorage.setItem("custard:v1:preferences", JSON.stringify({
-      activeRoute: { stores: slugs },
-    }));
+    localStorage.setItem("custard:compare:stores", JSON.stringify(slugs));
   }, storeSlugs);
 
   // Reload so the page picks up saved stores
@@ -325,11 +323,9 @@ test("single-store user sees prompt, not grid", async ({ page }) => {
 
   await page.goto("/compare.html");
 
-  // Set only 1 store in preferences
+  // Set only 1 store in compare key
   await page.evaluate(function () {
-    localStorage.setItem("custard:v1:preferences", JSON.stringify({
-      activeRoute: { stores: ["mt-horeb"] },
-    }));
+    localStorage.setItem("custard:compare:stores", JSON.stringify(["mt-horeb"]));
   });
 
   await page.reload();

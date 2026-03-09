@@ -5,9 +5,10 @@
  * rarity badges, and a rarity nudge banner. Accordion expand and
  * exclusion filters provide interactive filtering and detail views.
  *
- * Includes a compare-specific multi-store picker that manages the
- * activeRoute.stores array in custard:v1:preferences, allowing users
- * to add/remove stores for side-by-side comparison.
+ * Includes a compare-specific multi-store picker that manages store
+ * selections in its own localStorage key (custard:compare:stores),
+ * allowing users to add/remove stores for side-by-side comparison
+ * without affecting the Today page drive preferences.
  *
  * Usage: <script src="compare-page.js"></script> (after planner-shared.js, shared-nav.js, cone-renderer.js)
  * Exposes: window.CustardCompare (var, no build step required)
@@ -28,6 +29,7 @@ var CustardCompare = (function () {
 
   var MAX_COMPARE_STORES = 4;
   var MIN_COMPARE_STORES = 2;
+  var COMPARE_STORES_KEY = 'custard:compare:stores';
 
   // ---------------------------------------------------------------------------
   // Private state
@@ -127,12 +129,10 @@ var CustardCompare = (function () {
 
   function getSavedStoreSlugs() {
     try {
-      var raw = localStorage.getItem('custard:v1:preferences');
+      var raw = localStorage.getItem(COMPARE_STORES_KEY);
       if (raw) {
         var parsed = JSON.parse(raw);
-        if (parsed && parsed.activeRoute && Array.isArray(parsed.activeRoute.stores)) {
-          return parsed.activeRoute.stores.slice(0, MAX_COMPARE_STORES);
-        }
+        if (Array.isArray(parsed)) return parsed.slice(0, MAX_COMPARE_STORES);
       }
     } catch (e) {}
 
@@ -149,20 +149,7 @@ var CustardCompare = (function () {
   function saveStoreSlugs(slugs) {
     var cleaned = slugs.slice(0, MAX_COMPARE_STORES);
     try {
-      var raw = localStorage.getItem('custard:v1:preferences');
-      var prefs = raw ? JSON.parse(raw) : {};
-      if (!prefs.activeRoute) prefs.activeRoute = {};
-      prefs.activeRoute.stores = cleaned;
-      // Use saveDrivePreferences if available (writes to both keys)
-      if (typeof CustardPlanner.saveDrivePreferences === 'function') {
-        CustardPlanner.saveDrivePreferences(prefs);
-        // Flush immediately so reads pick it up
-        if (typeof CustardPlanner.flushDrivePreferences === 'function') {
-          CustardPlanner.flushDrivePreferences();
-        }
-      } else {
-        localStorage.setItem('custard:v1:preferences', JSON.stringify(prefs));
-      }
+      localStorage.setItem(COMPARE_STORES_KEY, JSON.stringify(cleaned));
     } catch (e) {}
   }
 

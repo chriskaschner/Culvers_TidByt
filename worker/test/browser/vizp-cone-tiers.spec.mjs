@@ -315,12 +315,7 @@ test("VIZP-01: Compare page cells use inline SVG not PNG", async ({ page }) => {
   // Set up multi-store preferences so Compare has stores to show
   await page.goto("/compare.html");
   await page.evaluate(function () {
-    localStorage.setItem(
-      "custard:v1:preferences",
-      JSON.stringify({
-        activeRoute: { stores: ["mt-horeb", "verona"] },
-      })
-    );
+    localStorage.setItem("custard:compare:stores", JSON.stringify(["mt-horeb", "verona"]));
   });
   await page.reload();
 

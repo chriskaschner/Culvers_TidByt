@@ -157,9 +157,7 @@ async function setupComparePage(page) {
 
   await page.goto("/compare.html");
   await page.evaluate(function () {
-    localStorage.setItem("custard:v1:preferences", JSON.stringify({
-      activeRoute: { stores: ["mt-horeb", "verona"] },
-    }));
+    localStorage.setItem("custard:compare:stores", JSON.stringify(["mt-horeb", "verona"]));
   });
   await page.reload();
   await page.waitForSelector(".compare-day-card", { timeout: 10000 });
