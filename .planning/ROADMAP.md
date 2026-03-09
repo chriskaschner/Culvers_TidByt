@@ -48,11 +48,11 @@
   2. custard.chriskaschner.com serves the latest code including phase 8 quiz mode theming
   3. Service worker installs and activates when visiting fun.html and updates.html
   4. stores.json is available offline after first visit (served from SW cache)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md -- CI fix, push commits, smoke test script, deploy verification
+- [ ] 09-02-PLAN.md -- Cache-bust cleanup, SW registration on remaining pages, stores.json pre-cache
 
 ### Phase 10: Redirects & CSS Cleanup
 **Goal**: Users with old bookmarks land on the correct new page with their query params intact, and Mad Libs chips render from CSS classes instead of inline styles
@@ -115,7 +115,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
-| 9. Infrastructure & Deployment | v1.2 | 0/? | Not started | - |
+| 9. Infrastructure & Deployment | v1.2 | 0/2 | Not started | - |
 | 10. Redirects & CSS Cleanup | v1.2 | 0/? | Not started | - |
 | 11. Monolith Refactoring | v1.2 | 0/? | Not started | - |
 | 12. Feature Development | v1.2 | 0/? | Not started | - |
