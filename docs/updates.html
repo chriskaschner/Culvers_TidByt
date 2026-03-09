@@ -21,91 +21,109 @@
   <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
 
   <style>
+    /* Page-level layout classes (replacing inline style attrs) */
+    .page-title {
+      color: var(--brand);
+      font-size: var(--text-xl);
+    }
+    .page-subtitle {
+      color: var(--text-muted);
+      margin-top: var(--space-1);
+      font-size: var(--text-base);
+    }
+    .more-link-inline {
+      margin-top: var(--space-2);
+      margin-bottom: 0;
+    }
+    .footer-disclaimer {
+      margin-top: var(--space-2);
+    }
+
     .updates-section {
-      border: 1px solid #e0e0e0;
-      border-radius: 0.75rem;
-      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-surface);
       padding: 1.25rem;
-      margin-bottom: 1rem;
+      margin-bottom: var(--space-4);
     }
 
     .updates-section h2 {
-      font-size: 1.125rem;
-      color: #005696;
+      font-size: var(--text-lg);
+      color: var(--brand);
       margin-bottom: 0.375rem;
     }
 
     .updates-section p {
-      font-size: 0.875rem;
-      color: #555;
-      margin-bottom: 0.75rem;
+      font-size: var(--text-base);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-3);
       line-height: 1.4;
     }
 
     .store-auto-fill {
       font-weight: 600;
-      color: #333;
+      color: var(--text);
     }
 
     .cal-action {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-3);
       flex-wrap: wrap;
     }
 
     .cal-action a.btn-primary {
-      padding: 0.5rem 1.25rem;
-      font-size: 0.875rem;
+      padding: var(--space-2) 1.25rem;
+      font-size: var(--text-base);
     }
 
     .cal-action .store-label {
-      font-size: 0.875rem;
-      color: #555;
+      font-size: var(--text-base);
+      color: var(--text-secondary);
     }
 
     .cal-action .more-link {
       font-size: 0.8125rem;
-      color: #005696;
+      color: var(--brand);
     }
 
     /* Alert form */
     #alert-form {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: var(--space-3);
     }
 
     #alert-form input[type="email"] {
       width: 100%;
-      padding: 0.625rem 0.75rem;
-      border: 1px solid #ccc;
+      padding: 0.625rem var(--space-3);
+      border: 1px solid var(--border-input);
       border-radius: 0.375rem;
-      font-size: 0.875rem;
+      font-size: var(--text-base);
     }
 
     #alert-form input[type="email"]:focus {
       outline: none;
-      border-color: #005696;
+      border-color: var(--brand);
       box-shadow: 0 0 0 2px rgba(0, 86, 150, 0.15);
     }
 
     .alert-store-row {
-      font-size: 0.875rem;
-      color: #555;
+      font-size: var(--text-base);
+      color: var(--text-secondary);
     }
 
     .alert-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: var(--space-2);
     }
 
     .alert-chip {
       padding: 0.375rem 0.875rem;
-      border: 1.5px solid #ccc;
-      border-radius: 999px;
-      background: #fff;
+      border: 1.5px solid var(--border-input);
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
       font-size: 0.8125rem;
       cursor: pointer;
       user-select: none;
@@ -114,46 +132,46 @@
     }
 
     .alert-chip:hover {
-      border-color: #999;
+      border-color: var(--text-subtle);
     }
 
     .alert-chip.selected {
-      background: #005696;
-      color: #fff;
-      border-color: #005696;
+      background: var(--brand);
+      color: var(--bg-surface);
+      border-color: var(--brand);
     }
 
     .alert-more-link {
       font-size: 0.8125rem;
-      color: #005696;
+      color: var(--brand);
     }
 
     #alert-form button[type="submit"] {
       align-self: flex-start;
-      padding: 0.5rem 1.5rem;
-      background: #005696;
-      color: #fff;
+      padding: var(--space-2) var(--space-5);
+      background: var(--brand);
+      color: var(--bg-surface);
       border: none;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
+      border-radius: var(--radius);
+      font-size: var(--text-base);
       font-weight: 600;
       cursor: pointer;
     }
 
     #alert-form button[type="submit"]:hover {
-      background: #004488;
+      background: var(--brand-hover);
     }
 
     #alert-status {
-      font-size: 0.875rem;
+      font-size: var(--text-base);
       min-height: 1.25em;
     }
   </style>
 </head>
 <body>
   <header class="forecast-header">
-    <h1 style="color:#005696;font-size:1.5rem;">Get Updates</h1>
-    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Never miss your favorite flavor</p>
+    <h1 class="page-title">Get Updates</h1>
+    <p class="page-subtitle">Never miss your favorite flavor</p>
 
     <div id="shared-nav" data-page="updates"></div>
   </header>
@@ -169,7 +187,7 @@
           <a id="cal-subscribe-btn" href="#" class="btn-primary">Subscribe</a>
           <span class="store-label">for <span class="store-auto-fill">your store</span></span>
         </div>
-        <p style="margin-top:0.5rem;margin-bottom:0;"><a href="calendar.html" class="more-link">Add more stores</a></p>
+        <p class="more-link-inline"><a href="calendar.html" class="more-link">Add more stores</a></p>
       </section>
 
       <!-- Section 2: Flavor Alerts -->
@@ -214,7 +232,7 @@
   </main>
 
   <footer>
-    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <p class="footer-disclaimer">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
     <div class="page-share-mount" id="page-share"></div>
   </footer>
 
