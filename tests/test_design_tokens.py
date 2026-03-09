@@ -495,3 +495,53 @@ def test_madlib_chip_uses_design_tokens():
         f".madlib-chip must use at least 2 design tokens (var(--...)), "
         f"found {len(token_refs)} in: {block_content.strip()}"
     )
+
+
+def test_madlib_chip_no_inline_styles():
+    """engine.js fill_in_madlib section has zero inline style manipulation.
+
+    Verifies that chip rendering and state changes use CSS classes exclusively,
+    with no style.cssText, style.background, style.color, or style.borderColor.
+    """
+    engine_js = DOCS_DIR / "quizzes" / "engine.js"
+    text = engine_js.read_text()
+
+    # Extract the fill_in_madlib section
+    start_marker = "fill_in_madlib"
+    start_idx = text.find(start_marker)
+    assert start_idx != -1, "fill_in_madlib section not found in engine.js"
+
+    # Find the next '} else {' after the start to bound the section
+    end_marker = "} else {"
+    end_idx = text.find(end_marker, start_idx)
+    if end_idx == -1:
+        # Fallback: use rest of file
+        section = text[start_idx:]
+    else:
+        section = text[start_idx:end_idx]
+
+    # Assert zero inline style manipulation
+    banned_patterns = [
+        ("style.background", "style.background"),
+        ("style.color", r"style\.color\b"),
+        ("style.borderColor", "style.borderColor"),
+        ("style.cssText", "style.cssText"),
+    ]
+    violations = []
+    for name, pattern in banned_patterns:
+        matches = re.findall(pattern, section)
+        if matches:
+            violations.append(f"{name}: {len(matches)} occurrence(s)")
+
+    assert not violations, (
+        f"fill_in_madlib section still has inline style manipulation: "
+        + ", ".join(violations)
+    )
+
+    # Assert class toggling IS present
+    assert "classList.add('selected')" in section, (
+        "fill_in_madlib must use classList.add('selected') for chip selection"
+    )
+    assert "classList.remove('selected')" in section, (
+        "fill_in_madlib must use classList.remove('selected') for chip deselection"
+    )
