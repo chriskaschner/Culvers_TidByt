@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Feature Completion & Cleanup
-status: executing
-stopped_at: Completed 11-01-PLAN.md (monolith split)
-last_updated: "2026-03-09T18:49:29Z"
-last_activity: 2026-03-09 -- Completed 11-01-PLAN.md (monolith split)
+status: completed
+stopped_at: Completed 11-02-PLAN.md (HTML wiring + SW update)
+last_updated: "2026-03-09T19:06:35.852Z"
+last_activity: 2026-03-09 -- Completed 11-02-PLAN.md (HTML wiring + SW update)
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
-  percent: 83
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -21,25 +21,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 11 in progress -- monolith split (Plan 01 complete, Plan 02 pending)
+**Current focus:** Phase 11 complete -- monolith refactoring done (both plans complete)
 
 ## Current Position
 
 Milestone: v1.2 Feature Completion & Cleanup
 Phase: 11 of 12 (Monolith Refactoring)
-Plan: 1 of 2 complete
-Status: Executing
-Last activity: 2026-03-09 -- Completed 11-01-PLAN.md (monolith split)
+Plan: 2 of 2 complete
+Status: Phase 11 Complete
+Last activity: 2026-03-09 -- Completed 11-02-PLAN.md (HTML wiring + SW update)
 
-Progress: [████████░░] 83%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
-- v1.2: 5 plans completed (~11 min avg)
-- Total: 24 plans across 3 milestones
+- v1.2: 6 plans completed (~11 min avg)
+- Total: 25 plans across 3 milestones
 
 ## Accumulated Context
 
@@ -51,6 +51,8 @@ Recent decisions affecting current work:
 - [Phase 11]: IIFE + Object.assign sub-module pattern; underscore-prefixed internal helpers (_normalizeStringList etc.)
 - [Phase 11]: cleanTelemetrySlug duplicated in domain module to avoid cross-module load-time dependency
 - [Phase 11]: test-api-surface.html harness for split verification; production HTML updated in Plan 02
+- [Phase 11]: All 3 sub-modules loaded on every page uniformly (no selective per-page loading)
+- [Phase 11]: 14 pre-existing browser test failures documented as out-of-scope (not regressions)
 - [v1.2]: Hero cone PNGs deferred to future release (CONE-01 not in v1.2 scope)
 - [v1.2]: Monolith refactor isolated in own phase (highest-risk change)
 - [v1.2]: Compare localStorage state leak must be fixed before multi-store work (Phase 12)
@@ -63,6 +65,7 @@ Recent decisions affecting current work:
 - [Phase 09]: Cache-bust params removed from all 9 files as prerequisite for SW exact-match caching
 - [Phase 09]: Inline SW registration snippet matches existing widget.html/calendar.html pattern
 - [Phase 09]: Cache-bust params removed from all 9 files as prerequisite for SW exact-match caching
+- [Phase 11]: All 3 sub-modules loaded on every page uniformly; no selective per-page loading
 
 ### Pending Todos
 
@@ -77,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-09T18:49:29Z
-Stopped at: Completed 11-01-PLAN.md (monolith split)
-Resume file: .planning/phases/11-monolith-refactoring/11-01-SUMMARY.md
+Last session: 2026-03-09T19:06:35.037Z
+Stopped at: Completed 11-02-PLAN.md (HTML wiring + SW update)
+Resume file: None
