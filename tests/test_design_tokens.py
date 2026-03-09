@@ -399,3 +399,36 @@ def test_no_inline_hardcoded_values():
         f"Found {len(violations)} inline styles with hardcoded values:\n"
         + "\n".join(violations[:20])
     )
+
+
+def test_quiz_mode_visual_differentiation():
+    """Verify quiz mode visual differentiation wiring (QUIZ-01).
+
+    Static analysis checks:
+    1. engine.js sets data-quiz-mode attribute (>= 2 occurrences: init + variant change)
+    2. quiz.html has >= 5 [data-quiz-mode] CSS attribute selectors (per-mode styling)
+    3. quiz.html has a CSS fallback for --quiz-tint (default appearance without attribute)
+    """
+    engine_js = DOCS_DIR / "quizzes" / "engine.js"
+    quiz_html = DOCS_DIR / "quiz.html"
+
+    # 1. engine.js contains >= 2 occurrences of "data-quiz-mode"
+    engine_text = engine_js.read_text()
+    engine_count = engine_text.count("data-quiz-mode")
+    assert engine_count >= 2, (
+        f"engine.js must contain >= 2 occurrences of 'data-quiz-mode' "
+        f"(init + variant change), found {engine_count}"
+    )
+
+    # 2. quiz.html contains >= 5 [data-quiz-mode] CSS attribute selectors
+    quiz_text = quiz_html.read_text()
+    mode_selectors = re.findall(r'\[data-quiz-mode', quiz_text)
+    assert len(mode_selectors) >= 5, (
+        f"quiz.html must contain >= 5 [data-quiz-mode] CSS selectors, "
+        f"found {len(mode_selectors)}"
+    )
+
+    # 3. quiz.html contains a CSS fallback for --quiz-tint
+    assert "var(--quiz-tint" in quiz_text, (
+        "quiz.html must contain a var(--quiz-tint) CSS fallback for default styling"
+    )
