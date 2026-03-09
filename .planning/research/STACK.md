@@ -1,365 +1,568 @@
-# Technology Stack: Presentation-Layer Restructuring
+# Technology Stack: v1.2 Feature Completion & Cleanup
 
-**Project:** Custard Calendar Site Restructuring
-**Researched:** 2026-03-07
-**Scope:** CSS layout, progressive disclosure, vanilla JS component patterns for the `docs/` directory
+**Project:** Custard Calendar v1.2
+**Researched:** 2026-03-09
+**Scope:** Stack additions for 11 new features on the existing vanilla JS / GitHub Pages foundation
+**Confidence:** HIGH (most recommendations extend proven patterns already in the codebase)
 
-## Constraints (Non-Negotiable)
+## Constraints (Unchanged from v1.0/v1.1)
 
-These are inherited from the existing system and are not up for debate:
+These are inherited and non-negotiable. Repeated here because every recommendation below must fit within them:
 
-| Constraint | Source | Implication |
-|------------|--------|-------------|
-| No build step | GitHub Pages hosting | No bundlers, no preprocessors, no PostCSS. Raw CSS and JS only. |
-| No frameworks | Project convention | No React, Vue, Svelte. Vanilla JS with `window.CustardPlanner` IIFE pattern. |
-| Vanilla JS (ES5-ish) | Existing `planner-shared.js`, `todays-drive.js` | `var`, IIFEs, no ES module imports. Must match existing code style. |
-| Mobile-first at 375px | Core use case: "family in the car" | Compare grid must work on iPhone SE/Mini. Every layout decision starts here. |
-| Single CSS file | Current `docs/style.css` | Extend existing file. No CSS imports, no CSS modules. |
-| CDN only for vendored libs | Leaflet loaded via CDN | New dependencies must be zero or CDN-loaded. No npm for frontend. |
+| Constraint | Implication for v1.2 |
+|------------|---------------------|
+| No build step (GitHub Pages) | No bundlers, no preprocessors. Raw CSS/JS only. |
+| No frameworks | Vanilla JS with `window.CustardPlanner` IIFE pattern. |
+| Vanilla JS (var, IIFEs) | Must match existing code style across all 9 JS files. |
+| Mobile-first at 375px | All new features (compare multi-store, quiz images, chips) must work at 375px. |
+| Single CSS file (`docs/style.css`) | All new styles go here. No CSS imports. |
+| CDN only for vendored libs | Leaflet is the only CDN dependency. No new CDN libraries needed for v1.2. |
 
-## Recommended Stack
+## Recommended Stack Additions
 
-### CSS Layout: Comparison Grid
+### 1. Old Page Redirects (scoop, radar, calendar, widget, siri, alerts)
 
-| Technology | Version/Spec | Purpose | Why | Confidence |
-|------------|-------------|---------|-----|------------|
-| CSS Grid + `auto-fit`/`minmax()` | CSS Grid Level 2 | Primary layout for comparison grid (stores x days) | 97%+ browser support. Handles 2-4 column layouts natively. `repeat(auto-fit, minmax(min(100%, 160px), 1fr))` gives single-column at 375px, multi-column on wider screens without media queries. | HIGH |
-| CSS Subgrid | `grid-template-rows: subgrid` | Align card content (flavor name, description, rarity) across sibling cards | 95%+ browser support (Chrome 117+, Safari 16+, Firefox 71+). Ensures flavor names and rarity badges align across comparison columns without fixed heights. | HIGH |
-| Flexbox | CSS Flexbox | Internal card layout, chip rows, nav items | Already used extensively in existing `style.css`. Use for one-dimensional arrangements within grid cells. | HIGH |
-| CSS Scroll Snap | `scroll-snap-type: x mandatory` | Horizontal swipe for Compare grid on 375px | The comparison grid at 375px cannot show 4 stores side-by-side. Use horizontal scroll-snap to let users swipe between store columns. Each column snaps into view. 97%+ support. | HIGH |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `<meta http-equiv="refresh">` + inline JS | HTML5 / ES5 | Redirect old URLs to new destinations while preserving query params | GitHub Pages has no server-side redirect capability. Meta refresh is the standard static-hosting approach. JS runs first to capture and forward query params; meta refresh acts as a no-JS fallback (without params). |
 
-**Compare Grid Layout Strategy (375px):**
+**Approach:** Replace each old page's full content with a minimal redirect stub. The old pages (scoop.html, radar.html, calendar.html, widget.html, siri.html, alerts.html) are full-featured pages today -- the redirect replaces their content entirely.
 
-The core challenge is displaying a stores-x-days grid at 375px. A 4-store x 3-day table would need 12 cells on a phone screen -- that does not work. The solution is a layered approach:
+**How it works:**
 
-1. **Mobile (375px):** Horizontal scroll-snap container. Each "slide" shows ONE store's multi-day forecast as a vertical card stack. Partial peek of the next store (show ~20px of next card) signals scrollability. `scroll-snap-align: start` on each store column.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="1;url=updates.html">
+  <link rel="canonical" href="https://custard.chriskaschner.com/updates.html">
+  <title>Redirecting...</title>
+  <script>
+    // Preserve query params and hash during redirect
+    var target = 'updates.html';
+    var qs = window.location.search || '';
+    var hash = window.location.hash || '';
+    window.location.replace(target + qs + hash);
+  </script>
+</head>
+<body>
+  <p>Redirecting to <a href="updates.html">updates.html</a>...</p>
+</body>
+</html>
+```
 
-2. **Medium (600px+):** 2-column grid of store cards. Each card contains its multi-day forecast stacked vertically within. `grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))`.
+**Key details:**
+- `window.location.replace()` (not `.href`) so the old URL does not pollute browser history
+- `rel="canonical"` tells search engines the canonical URL, preventing duplicate content
+- Meta refresh `content="1"` (1-second delay) gives JS time to execute; if JS is disabled, the meta tag redirects without params after 1 second
+- Each old page maps to a specific new destination (see mapping table below)
 
-3. **Wide (800px+):** Full comparison grid. Stores as columns, days as rows. `grid-template-columns: repeat(var(--store-count, 2), 1fr)` with subgrid on each card for row alignment.
+**Redirect mapping:**
 
-```css
-/* Mobile-first: single store per view with horizontal swipe */
-.compare-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: calc(100% - 2rem); /* peek at next card */
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  gap: 0.75rem;
-  padding-right: 1rem;
-}
+| Old Page | New Destination | Query Params to Preserve |
+|----------|----------------|------------------------|
+| scoop.html | index.html | `?store=`, any drive params |
+| radar.html | index.html | `?store=`, `?days=` |
+| calendar.html | updates.html | `?primary=`, `?secondary=` |
+| widget.html | updates.html | `?store=` |
+| siri.html | updates.html | none expected |
+| alerts.html | updates.html | `?store=`, `?flavor=` |
 
-.compare-column {
-  scroll-snap-align: start;
-}
+**What NOT to use:**
+- Jekyll redirect plugin (`jekyll-redirect-from`) -- requires Jekyll build step, this project uses raw HTML
+- 404.html SPA-style routing -- breaks expectations, confuses crawlers
+- Cloudflare Worker redirects -- out of scope (no Worker changes)
 
-/* Medium: 2-up grid, no horizontal scroll */
-@media (min-width: 600px) {
-  .compare-grid {
-    grid-auto-flow: unset;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    overflow-x: visible;
-    scroll-snap-type: none;
-    padding-right: 0;
-  }
-}
+**Confidence:** HIGH. This is the universally documented approach for GitHub Pages redirects. Verified against multiple GitHub-specific guides.
 
-/* Wide: full comparison matrix */
-@media (min-width: 800px) {
-  .compare-grid {
-    grid-template-columns: repeat(var(--store-count, 2), 1fr);
-  }
-  .compare-column {
-    display: grid;
-    grid-template-rows: subgrid;
-    grid-row: span var(--day-count, 3);
-  }
+---
+
+### 2. Service Worker Registration on fun.html and updates.html
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `navigator.serviceWorker.register()` | Service Worker API | Register the existing `sw.js` on pages that currently lack registration | fun.html and updates.html do not register the service worker. The existing sw.js has root scope (`./`) and the same registration call is used on 4 other pages already. |
+
+**Current state of SW registration across pages:**
+
+| Page | Has SW Registration? |
+|------|---------------------|
+| index.html (today-page.js) | Yes |
+| compare.html (compare-page.js) | Yes |
+| calendar.html | Yes |
+| widget.html | Yes |
+| **fun.html** | **No** |
+| **updates.html** | **No** |
+| map.html | No (intentional -- map is heavy, SW pre-cache would slow initial load) |
+| quiz.html | No (loaded via fun.html link) |
+
+**Implementation:** Add the standard registration snippet to fun.html and updates.html, matching the pattern in today-page.js:
+
+```javascript
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
 }
 ```
 
-### CSS: Progressive Disclosure
+Place this at the end of the page's inline `<script>` block (after DOMContentLoaded or module init). Calling `register()` on an already-registered SW is a no-op -- the browser deduplicates automatically, so there is no harm in multiple pages registering the same script.
 
-| Technology | Spec | Purpose | Why | Confidence |
-|------------|------|---------|-----|------------|
-| `<details>/<summary>` | HTML5 | Week-ahead section, cell expansion (description + patterns), Get Updates flows | Native browser widget. Zero JS needed for basic open/close. Accessible by default (keyboard, screen reader). Already styled in existing `style.css`. | HIGH |
-| `<details name="...">` | HTML Exclusive Accordion | Only-one-open sections (e.g., Compare cell expansion) | Browser-native exclusive accordion. Chrome 120+, Safari 17.2+, Firefox 130+. ~85% global support. Graceful degradation: all sections can be open simultaneously on unsupported browsers -- still functional, just not exclusive. | MEDIUM |
-| `::details-content` pseudo | CSS Pseudo-Elements L4 | Animate `<details>` open/close transitions | Baseline since September 2025. Enables fade + opacity transitions on details content without JS. Cross-browser. | MEDIUM |
-| `interpolate-size: allow-keywords` | CSS Sizing L4 | Animate height 0 to auto on `<details>` | **Chromium-only as of March 2026.** Firefox and Safari do NOT support it. Do NOT rely on this for production. Use as progressive enhancement only -- Chromium users get smooth height animation, others get instant open/close (which is fine). | LOW |
-| `aria-expanded` + toggle | ARIA + vanilla JS | Custom progressive disclosure beyond `<details>` (e.g., "Show more" on flavor descriptions) | Standard accessible pattern. Button toggles `aria-expanded`, JS shows/hides target via `[hidden]` attribute. | HIGH |
+**Also needed:** Add `stores.json` to the `STATIC_ASSETS` array in `sw.js`. Currently it is fetched at runtime but not pre-cached, causing an unnecessary network dependency on repeat visits.
 
-**Progressive Disclosure Strategy:**
-
-Use `<details>/<summary>` as the primary mechanism. It is the correct semantic element, requires zero JavaScript for basic functionality, and is already styled in the codebase.
-
-For animated transitions, layer CSS on top as progressive enhancement:
-
-```css
-/* Base: works everywhere, instant open/close */
-details::details-content {
-  opacity: 0;
-  transition: opacity 300ms ease, content-visibility 300ms allow-discrete;
-}
-details[open]::details-content {
-  opacity: 1;
-}
-
-/* Progressive enhancement: smooth height animation (Chromium only) */
-@supports (interpolate-size: allow-keywords) {
-  :root { interpolate-size: allow-keywords; }
-  details::details-content {
-    height: 0;
-    overflow: clip;
-    transition: height 300ms ease, opacity 300ms ease,
-                content-visibility 300ms allow-discrete;
-  }
-  details[open]::details-content {
-    height: auto;
-  }
-}
+```javascript
+// In sw.js STATIC_ASSETS array, add:
+'./stores.json',
 ```
 
-### CSS: Card System and Container Queries
+After adding stores.json, bump `CACHE_VERSION` (currently `'custard-v15'` -> `'custard-v16'`) to trigger a cache refresh.
 
-| Technology | Spec | Purpose | Why | Confidence |
-|------------|------|---------|-----|------------|
-| CSS Custom Properties | CSS Variables | Theme tokens, card spacing, brand colors | Already in use (`:root` has `--brand`, `--text`, etc.). Extend with `--card-gap`, `--card-radius`, `--card-border`. | HIGH |
-| `container-type: inline-size` | CSS Containment L3 | Cards adapt to container width (not viewport) for reuse in Compare, Today, Fun | 93%+ global support. Cards placed in a narrow scroll-snap column should adapt independently of viewport width. Use `@container` queries for card-internal layout shifts. | HIGH |
-| `:has()` selector | CSS Selectors L4 | Style cards based on content (e.g., card with rarity badge gets highlight border) | 97%+ support. Replaces JS class-toggling. `card:has(.rarity-ultra-rare) { border-left-color: #7b1fa2; }` | HIGH |
+**Confidence:** HIGH. The registration pattern is already proven on 4 pages. The Service Worker API documentation confirms that duplicate registrations are safely ignored.
 
-**Unified Card Pattern:**
+---
 
-The existing codebase has `.store-card`, `.day-card`, and `.cal-event` -- three different card patterns doing similar things. Introduce a base `.card` class and use modifiers:
+### 3. planner-shared.js Refactoring Strategy
 
-```css
-.card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem 1rem;
-  container-type: inline-size;
-}
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Multiple IIFE files with `<script>` ordering | Vanilla JS | Split 1,639-line monolith into focused modules | The file currently mixes 7 distinct responsibility groups (see analysis below). Splitting preserves the IIFE pattern, requires no build step, and allows page-specific loading. |
 
-/* Content-aware styling via :has() */
-.card:has(.rarity-ultra-rare) { border-left: 4px solid #7b1fa2; }
-.card:has(.rarity-rare) { border-left: 4px solid #1565c0; }
-.card:has(.rarity-uncommon) { border-left: 4px solid #2e7d32; }
+**Current responsibility analysis of planner-shared.js (1,639 lines):**
 
-/* Card adapts to its container, not the viewport */
-@container (min-width: 300px) {
-  .card-header { display: flex; justify-content: space-between; align-items: center; }
-}
+| Responsibility Group | Lines (approx) | Functions | Consumers |
+|---------------------|----------------|-----------|-----------|
+| Store/localStorage management | ~120 | getPrimaryStoreSlug, setSavedStore, getFavorites, addFavorite, removeFavorite | All pages |
+| Drive preferences (route, filters, URL state) | ~250 | getDrivePreferences, saveDrivePreferences, parseDriveUrlState, buildDriveUrlState, sanitize* | today-page.js, scoop.html |
+| Flavor families & similarity | ~180 | FLAVOR_FAMILIES, getFamilyForFlavor, findSimilarFlavors, findSimilarToFavorites, normalizeFamilyConfig | map.html, compare-page.js, quiz engine |
+| Certainty/confidence display | ~80 | certaintyTier, certaintyBadgeHTML, certaintyCardClass, confidenceStripClass | today-page.js, compare-page.js |
+| Timeline building | ~100 | buildTimeline, _findForecastDay, _addDays | today-page.js |
+| Telemetry | ~100 | emitInteractionEvent, emitPageView, bindInteractionTelemetry, cleanTelemetry* | All pages |
+| Rarity, CTAs, historical context, signals, share | ~300 | rarityLabel*, formatCadenceText, actionCTAsHTML, historicalContextHTML, signalCardHTML, initShareButton | today-page.js, compare-page.js |
+| Core utilities (escapeHtml, normalize, haversine, brand helpers) | ~80 | escapeHtml, normalize, haversineMiles, brandFromSlug | All files |
 
-@container (max-width: 299px) {
-  .card-header { display: block; }
-  .card-meta { margin-top: 0.25rem; }
-}
+**Recommended split:**
+
+| New File | Source Lines | Contains | Load Order |
+|----------|-------------|----------|------------|
+| `planner-core.js` | ~80 | Constants (WORKER_BASE, keys), escapeHtml, normalize, haversineMiles, brand helpers | 1st (all pages) |
+| `planner-store.js` | ~120 | getPrimaryStoreSlug, setSavedStore, getFavorites, localStorage management | 2nd (all pages) |
+| `planner-telemetry.js` | ~100 | emitInteractionEvent, emitPageView, bindInteractionTelemetry | 3rd (all pages) |
+| `planner-drive.js` | ~250 | Drive preferences, URL state, sanitization | Only on today page |
+| `planner-flavors.js` | ~180 | FLAVOR_FAMILIES, similarity, family lookup | Map, compare, quiz |
+| `planner-display.js` | ~480 | Certainty, timeline, rarity, CTAs, historical context, signals, share | Today, compare |
+
+**Critical constraint -- backward compatibility:** The existing public API is `window.CustardPlanner.methodName`. After splitting, each sub-module attaches its exports to the same `window.CustardPlanner` object. No consumer code needs to change.
+
+```javascript
+// planner-core.js -- loaded first, creates the namespace
+var CustardPlanner = (function () {
+  'use strict';
+  var WORKER_BASE = 'https://custard.chriskaschner.com';
+  // ... core functions ...
+  return { WORKER_BASE: WORKER_BASE, escapeHtml: escapeHtml, /* ... */ };
+})();
+
+// planner-store.js -- extends CustardPlanner
+(function (CP) {
+  'use strict';
+  function getPrimaryStoreSlug() { /* ... */ }
+  // ... store functions ...
+  CP.getPrimaryStoreSlug = getPrimaryStoreSlug;
+  CP.setSavedStore = setSavedStore;
+  // ...
+})(window.CustardPlanner);
 ```
 
-### CSS: Filter Chips (Flavor Family Exclusion)
+**Script loading in HTML:**
 
-| Technology | Spec | Purpose | Why | Confidence |
-|------------|------|---------|-----|------------|
-| `<button>` with `aria-pressed` | HTML + ARIA | Flavor family exclusion filter chips | Semantic toggle button. Existing `.brand-chip` and `.flavor-chip` classes in `style.css` already implement this visual pattern. Ensure `aria-pressed="true/false"` toggled by JS and min 44x44px touch target per WCAG 2.5.5. | HIGH |
+```html
+<!-- All pages load core + store + telemetry -->
+<script src="planner-core.js"></script>
+<script src="planner-store.js"></script>
+<script src="planner-telemetry.js"></script>
 
-The codebase already has chip patterns (`.brand-chips`, `.flavor-chip`). Extend for the flavor family exclusion filter on Compare and Map:
+<!-- Today page additionally loads: -->
+<script src="planner-drive.js"></script>
+<script src="planner-flavors.js"></script>
+<script src="planner-display.js"></script>
+
+<!-- Map page only needs: -->
+<script src="planner-flavors.js"></script>
+```
+
+**What NOT to do:**
+- Do NOT switch to ES modules (`import/export`). Requires `type="module"` on all script tags, changes load semantics (deferred), and the SW pre-cache list would need updating. The codebase convention is `<script src>` with IIFE globals.
+- Do NOT rename the `CustardPlanner` namespace. It is referenced in 9+ files. Changing the name creates unnecessary churn.
+- Do NOT create a single "barrel" file that re-exports everything. That defeats the purpose of splitting.
+
+**Confidence:** HIGH. The "extend the namespace object" pattern is exactly how jQuery plugins, Lodash mixins, and pre-ES-module libraries have worked for 15+ years. It is battle-tested and matches the codebase's existing conventions.
+
+---
+
+### 4. Hero Cone PNGs for Remaining ~136 Flavors
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `sharp` | 0.34.x (currently installed) | SVG-to-PNG rasterization with nearest-neighbor interpolation | Already used by `scripts/generate-hero-cones.mjs`. Supports `kernel: 'nearest'` for pixel-art-appropriate scaling. macOS `sips` fallback also exists. |
+| Worker `renderConeHeroSVG()` | Existing | Generates 36x42 pixel-grid SVG at scale 4 (144x168px) | Already implemented in `worker/src/flavor-colors.js`. The pipeline is proven for 40 flavors. |
+
+**Current state:** 40 hero cone PNGs exist in `docs/assets/cones/`. The Worker has 40 `FLAVOR_PROFILES` entries (38 uniquely named, a couple with aliases). To generate PNGs for the remaining ~136 flavors, the bottleneck is **adding FLAVOR_PROFILES entries**, not the pipeline itself.
+
+**Scaling the pipeline:**
+
+1. **Add profiles to `worker/src/flavor-colors.js`:** Each profile is ~5 lines (base color, ribbon, toppings, density). The 136 new entries bring the file from ~130 lines of profiles to ~800. This is tedious but mechanically simple.
+
+2. **Run the existing generator:** `node scripts/generate-hero-cones.mjs` already iterates all profiles and outputs PNGs. No changes to the script are needed.
+
+3. **Runtime caching via SW:** The service worker already handles hero cone PNGs via stale-while-revalidate (line 64-77 of sw.js). New PNGs are cached on first load automatically.
+
+**Output specifications (unchanged from v1.0):**
+- Input: SVG at scale 4 (144x168px pixel grid)
+- Output: 120px-wide PNG via `sharp.resize({ width: 120, kernel: 'nearest' })`
+- Filename: `docs/assets/cones/{slug}.png` where slug = `flavorName.toLowerCase().replace(/[^a-z0-9]+/g, '-')`
+
+**Disk budget:** 40 PNGs currently total ~150KB. Adding 136 more at similar sizes adds ~500KB. Total asset directory ~650KB -- well within GitHub Pages limits and acceptable for a static site.
+
+**What NOT to do:**
+- Do NOT pre-cache all 176 cone PNGs in the SW `STATIC_ASSETS` array. That would bloat the install event. The runtime stale-while-revalidate strategy is correct -- only cache PNGs the user actually views.
+- Do NOT switch to WebP for the cones. The pixel-art aesthetic benefits from PNG's lossless compression. WebP would save negligible bytes at these sizes (<5KB each) while complicating the fallback chain.
+
+**Confidence:** HIGH. The pipeline exists and is proven. The work is profile authoring, not infrastructure.
+
+---
+
+### 5. Map Flavor Family Exclusion Filter with Persistent State
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `<button aria-pressed>` | HTML + ARIA | Toggle chips for excluding flavor families on the map | The map already has flavor family chips (`.flavor-chip` class in style.css, lines 680-701). Current behavior is "show only this family" (inclusive). The new feature inverts to "hide this family" (exclusive). |
+| `localStorage` | Web Storage API | Persist exclusion state across sessions | compare-page.js already persists exclusions to `custard-exclusions`. Map should use the same key for cross-page consistency. |
+| `CustardPlanner.FLAVOR_FAMILY_MEMBERS` | Existing | Family-to-flavors lookup | Already exposed from planner-shared.js and consumed by map.html. |
+
+**Current state in map.html:** The map has `#flavor-family-chips` container (line 66), flavor chip rendering (lines 178-187), and an `activeFamily` variable that tracks a single inclusive selection. The chip CSS is defined (`.flavor-chip`, `.flavor-chip.active`).
+
+**What changes for exclusion mode:**
+
+The existing inclusive filter ("show only chocolate") becomes an exclusion filter ("hide chocolate, hide mint"). The key UX difference:
+
+- **Inclusive (current):** One chip active at a time, `activeFamily = 'chocolate'`, show only matching markers
+- **Exclusive (new):** Multiple chips can be active, `excludedFamilies = new Set(['chocolate', 'mint'])`, hide matching markers
+
+**CSS change:** The existing `.flavor-chip.active` style (brand blue background, white text) already works. For exclusion semantics, rename the visual state to use `aria-pressed` instead of class toggling:
 
 ```css
-.filter-chip {
-  min-height: 44px;        /* WCAG 2.5.5 touch target */
-  min-width: 44px;
-  padding: 0.375rem 0.875rem;
+/* Already exists -- keep as-is */
+.flavor-chip {
+  padding: 0.3rem var(--space-3);
   border: 1.5px solid var(--border);
-  border-radius: 999px;
-  background: white;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 150ms, color 150ms, border-color 150ms;
+  border-radius: var(--radius-full);
+  /* ... */
 }
 
-.filter-chip[aria-pressed="true"] {
+/* Replace .flavor-chip.active with: */
+.flavor-chip[aria-pressed="true"] {
   background: var(--brand);
-  color: white;
+  color: var(--bg-surface);
   border-color: transparent;
 }
 ```
 
-### JavaScript: Component Patterns
-
-| Technology | Pattern | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| IIFE Revealing Module | `var X = (function() { ... return { mount, destroy }; })();` | New page modules (Compare, Fun, Today) | **Matches existing pattern exactly.** `CustardPlanner` and `CustardDrive` both use this. No migration cost, no learning curve, no build step. | HIGH |
-| `mount(config)` entry point | Convention | Each page module has a single `mount()` that takes a root element ID and config | `CustardDrive.mount({ root: '...', stores: [...] })` is the proven pattern from `todays-drive.js`. New modules follow the same signature. | HIGH |
-| `document.createElement` | DOM API | Build dynamic UI (comparison cells, filter chips) from API data | Existing pattern in `todays-drive.js`. `innerHTML` for static blocks, `createElement` for interactive elements needing event listeners. | HIGH |
-| `localStorage` | Web Storage API | Persistent store selection, filter preferences | Already used for `custard-primary`, `custard-secondary`, `custard-favorites`. Extend for filter state persistence (e.g., `custard:v1:excluded-families`). | HIGH |
-| `CustomEvent` dispatch | DOM Events | Cross-component communication (store changed, filter applied) | Lightweight pub/sub without coupling modules. `document.dispatchEvent(new CustomEvent('custard:store-changed', { detail: { slug } }))`. Allows header indicator to update when any page changes the store. | MEDIUM |
-
-**New Module Structure:**
+**JS change:** Toggle `aria-pressed` on click, update `excludedFamilies` Set, filter markers, persist to localStorage:
 
 ```javascript
-/* compare.js -- Compare page module */
-var CustardCompare = (function () {
-  'use strict';
-
-  // Private state
-  var _stores = [];
-  var _excluded = {};
-
-  function mount(config) {
-    var root = document.getElementById(config.root);
-    _stores = config.stores || [];
-    _renderGrid(root);
-    _bindFilters(root);
+function toggleFamilyExclusion(familyKey, chipEl) {
+  if (excludedFamilies.has(familyKey)) {
+    excludedFamilies.delete(familyKey);
+    chipEl.setAttribute('aria-pressed', 'false');
+  } else {
+    excludedFamilies.add(familyKey);
+    chipEl.setAttribute('aria-pressed', 'true');
   }
-
-  function destroy() {
-    // cleanup event listeners
-  }
-
-  function _renderGrid(root) { /* ... */ }
-  function _bindFilters(root) { /* ... */ }
-
-  return { mount: mount, destroy: destroy };
-})();
+  saveExclusions();  // localStorage
+  refreshMapMarkers();
+}
 ```
 
-### CSS: Navigation (4-Item Bottom Tab Bar)
+**Persistence:** Use the same `custard-exclusions` localStorage key that compare-page.js already uses. This means exclusions are shared between map and compare pages -- if you exclude mint on the map, it is also excluded on compare. This is the correct behavior (user preference is global).
 
-| Technology | Spec | Purpose | Why | Confidence |
-|------------|------|---------|-----|------------|
-| Sticky bottom nav | `position: sticky; bottom: 0` | 4-item nav (Today/Compare/Map/Fun) always visible on mobile | 4 items fit at ~94px each at 375px. Sticky (not fixed) avoids iOS Safari viewport unit bugs. Below-fold content scrolls above it. | HIGH |
-| `scroll-behavior: smooth` | CSS Scroll | Smooth scroll to anchor-linked sections on Today page | Supported everywhere. Use sparingly (only for same-page navigation). | HIGH |
+**Confidence:** HIGH. The chip UI, family data, and localStorage patterns all exist. This is wiring them together with inverted filter logic.
+
+---
+
+### 6. Quiz Image-Based Answer Options on Mobile
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `QuizSprites.resolve()` | Existing (`quizzes/sprites.js`) | Render pixel-art SVG sprites for quiz option icons | The sprite system already exists and renders owls, foxes, drums, etc. Currently used for desktop quiz options via the `icon` field in quiz JSON. |
+| `heroConeSrc()` / `renderHeroCone()` | Existing (`cone-renderer.js`) | Display flavor cone images in quiz results and potentially answer options | Already used for quiz results. Can be extended for answer options that reference specific flavors. |
+
+**Current state:** Quiz answer options have an `icon` field in the JSON that can reference pixel sprites (`"icon": "pixel:owl"`) or color swatches (`"icon": "color:#7ecfa0"`). The engine (engine.js lines 493-508) renders these as small icons beside the label text. On mobile, options display as a vertical list with radio buttons.
+
+**What "image-based answer options on mobile" means:**
+
+Instead of small text labels with tiny icons, mobile quiz options should display as a 2x2 grid of image cards where the image is the primary visual element and the label is secondary. This makes touch targets larger and the quiz feel more visual/engaging.
+
+**CSS needed (new):**
 
 ```css
-.site-nav {
-  display: flex;
-  justify-content: space-around;
-  position: sticky;
-  bottom: 0;
-  background: white;
-  border-top: 1px solid var(--border);
-  padding: 0.5rem 0;
-  z-index: 100;
-}
+/* Mobile: quiz options as image-first grid */
+@media (max-width: 599px) {
+  .quiz-options-grid.has-images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
 
-.site-nav a {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 0.375rem 0.5rem;
-  min-width: 64px;
-  min-height: 48px;    /* touch target */
-}
+  .quiz-option.has-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-3);
+    min-height: 100px;
+    text-align: center;
+  }
 
-.site-nav a.active {
-  color: var(--brand);
+  .quiz-option.has-icon .quiz-option-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--space-2);
+  }
+
+  .quiz-option.has-icon .quiz-option-copy {
+    font-size: 0.8125rem;
+  }
 }
 ```
 
-## What NOT to Use
+**JS change (minimal):** In `renderQuestions()` (engine.js ~480), add a `has-images` class to the grid when all options have icons:
 
-| Technology | Why NOT |
-|------------|---------|
-| **Any CSS preprocessor (Sass, Less, PostCSS)** | No build step. GitHub Pages serves raw files. The single `style.css` file is manageable at current size (~1500 lines). |
-| **CSS Modules / CSS-in-JS** | Requires bundler. Incompatible with constraints. |
-| **Tailwind CSS** | Requires build step. Even the CDN "play" version is 300KB+ and produces class soup that conflicts with existing semantic class naming. |
-| **Web Components / Custom Elements** | Overkill for 4 pages. The IIFE module pattern is simpler, matches existing code, and the `<details>` element already provides native disclosure behavior. |
-| **ES Modules (`import/export`) in browser** | Current codebase uses `<script src>` loading with IIFE globals. Switching requires `type="module"` on every script tag, changes load order semantics (deferred by default), and could break the service worker. Not worth the disruption for a presentation restructure. |
-| **Any SPA router / client-side routing** | 4 pages with distinct URLs and distinct data needs. Separate HTML files are correct for GitHub Pages. SPAs add complexity and break browser back/forward behavior. |
-| **CSS `@layer`** | The codebase has a single `style.css` with no specificity wars. Cascade layers add mental overhead without solving an actual problem here. |
-| **View Transitions API** | ~80% support, Safari gaps. Cross-page transitions require `<meta name="view-transition" content="same-origin">` and coordination between pages. Nice-to-have for a later polish pass, not worth the complexity now. |
-| **`interpolate-size` as a required feature** | Chromium-only (~67% support). Must be progressive enhancement behind `@supports`, never a dependency. |
+```javascript
+var allHaveIcons = question.options.every(function(opt) { return !!opt.icon; });
+if (allHaveIcons) grid.classList.add('has-images');
+```
+
+**No new libraries needed.** The existing sprite system and cone renderer provide all image assets. The change is purely layout (CSS grid for mobile) and a conditional class toggle.
+
+**Confidence:** HIGH. All image rendering infrastructure exists. The change is CSS layout for mobile.
+
+---
+
+### 7. Mad Libs Chip CSS Definitions
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| CSS classes in `style.css` | CSS | Replace inline `style.cssText` on Mad Libs chips with proper CSS classes | engine.js lines 435-457 currently apply all chip styles via `style.cssText` inline. This bypasses the design system and makes theming impossible. |
+
+**Current problem (engine.js lines 439-442):**
+
+```javascript
+chip.style.cssText = 'padding:0.375rem 0.875rem;border:1.5px solid #ccc;border-radius:999px;background:white;color:#444;font-size:0.8125rem;font-weight:600;cursor:pointer;';
+```
+
+And the selected state (lines 451):
+
+```javascript
+chip.style.background = '#005696'; chip.style.color = 'white'; chip.style.borderColor = '#005696';
+```
+
+This hardcodes colors instead of using design tokens, and the inline styles have higher specificity than any CSS class.
+
+**CSS to add to style.css:**
+
+```css
+/* Mad Libs word chips (FUN-02) */
+.madlib-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.madlib-chip {
+  padding: 0.375rem 0.875rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  min-height: 44px;  /* WCAG touch target */
+}
+
+.madlib-chip:hover {
+  border-color: var(--text-subtle);
+}
+
+.madlib-chip.selected {
+  background: var(--brand);
+  color: var(--bg-surface);
+  border-color: transparent;
+}
+```
+
+**JS change:** Remove all `style.cssText` assignments and `style.background/color/borderColor` assignments from the Mad Libs chip code in engine.js. Replace with class toggling:
+
+```javascript
+// Before (remove):
+chip.style.cssText = '...';
+// After:
+// (no inline styles -- CSS class handles it)
+
+// Before (remove):
+chip.style.background = '#005696'; chip.style.color = 'white';
+// After:
+chip.classList.add('selected');
+```
+
+Also remove the inline `chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;'` -- the `.madlib-chip-group` class handles that.
+
+**Confidence:** HIGH. The chip pattern is identical to existing `.flavor-chip` and `.compare-filter-chip` patterns already in style.css. This is a straightforward port from inline styles to design-token-based classes.
+
+---
+
+### 8. Compare Page Multi-Store Side-by-Side Comparison
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| CSS Scroll Snap | CSS Scroll Snap L1 | Horizontal swipe between store columns at 375px | Already documented in v1.0 STACK.md research. 97%+ browser support. compare.html already has the skeleton markup. |
+| CSS Grid + `auto-fit` | CSS Grid L2 | Multi-column layout at wider breakpoints | Already documented and partially implemented in compare-page.js. |
+| CSS Custom Property `--store-count` | CSS Variables | Dynamic column count based on selected stores | Set via JS when stores are loaded. CSS uses `repeat(var(--store-count, 2), 1fr)`. |
+
+**Current state:** compare-page.js (line 29) defines `MAX_COMPARE_STORES = 4` and already supports a multi-store picker. The page renders a day-first card stack (days as rows, one store per card). The requirement is to show stores side-by-side instead of switching between them.
+
+**What changes:** The compare grid needs a layout mode where each store gets its own column. The v1.0 STACK.md already fully specifies the CSS (mobile scroll-snap, medium 2-up grid, wide full matrix). That CSS should now be implemented.
+
+**JS changes in compare-page.js:**
+- Fetch flavor data for ALL selected stores in parallel (currently fetches one at a time)
+- Render one column per store, each column containing the day cards for that store
+- Set `--store-count` CSS custom property on the grid container
+
+**No new libraries.** All patterns were researched in v1.0 and documented in the existing STACK.md.
+
+**Confidence:** HIGH. The CSS patterns and JS module structure are already in place from v1.0/v1.1.
+
+---
+
+### 9. CI Repo Structure Check Fix
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| REPO_CONTRACT.md | Markdown | Add `.planning/` to the documented repo structure | The CI check validates that the repo structure matches REPO_CONTRACT.md. The `.planning/` directory was added but not declared in the contract. |
+
+**No stack changes.** This is a documentation fix: add `.planning/` (and any subdirectories) to REPO_CONTRACT.md's directory listing.
+
+**Confidence:** HIGH.
+
+---
+
+### 10. stores.json in SW Pre-Cache
+
+Covered in section 2 above. Add `'./stores.json'` to `STATIC_ASSETS` in `sw.js` and bump `CACHE_VERSION`.
+
+---
+
+## What NOT to Add for v1.2
+
+| Technology | Why NOT | Relevant Feature |
+|------------|---------|-----------------|
+| **Jekyll redirect plugin** | Requires Jekyll build step. Project uses raw HTML. | Redirects |
+| **Workbox (SW toolkit)** | The 95-line hand-written sw.js is simpler, lighter, and already correct. Workbox adds 20KB+ for features this project does not need (background sync, push, etc.). | SW registration |
+| **ES Modules (import/export)** | Requires `type="module"` on all script tags. Changes load order semantics. Breaks SW pre-cache expectations. Not worth the disruption for a refactor. | planner-shared.js refactoring |
+| **Web Worker for image generation** | Hero cone PNGs are generated at build time via Node.js, not in the browser. No need for client-side Web Workers. | Hero cone PNGs |
+| **IndexedDB** | localStorage is sufficient for all persistence needs (exclusion set, store preferences). The data is simple key-value pairs, not complex queries. | Map exclusion filter |
+| **CSS preprocessor (Sass/Less)** | No build step. style.css is manageable at current size (~3500 lines). | Mad Libs chips |
+| **View Transitions API** | Cross-page transitions add complexity without solving a user problem in v1.2. Defer to a polish pass. | Redirects |
+| **Any new CDN library** | All v1.2 features can be built with existing browser APIs and the code already in the repo. | All features |
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Compare layout | CSS Grid + scroll-snap | HTML `<table>` | Tables are semantically wrong for browsing UX. They cannot scroll-snap per column, cannot stack on mobile without JS rewrite. |
-| Compare layout | CSS Grid + scroll-snap | Flexbox-only | Flexbox is one-dimensional. The stores-x-days comparison is inherently 2D. Grid handles both axes natively. |
-| Progressive disclosure | `<details>/<summary>` | JS-built accordion | `<details>` is free, accessible, works without JS, already styled. A custom accordion needs ARIA management, keyboard handling, and animation code -- more work for the same result. |
-| JS pattern | IIFE Revealing Module | ES6 classes with `render()` | Class-based patterns conflict with existing `var`-based IIFE convention. Consistency with `CustardPlanner` and `CustardDrive` matters more than modernity. |
-| Content animation | `::details-content` + opacity fade | CSS Grid `0fr`-to-`1fr` hack | `::details-content` is now cross-browser Baseline (Sept 2025). The grid hack requires an extra wrapper `<div>` inside `<details>`, adding meaningless markup. |
-| Container responsiveness | Container queries | Media queries only | Container queries let cards respond to their placement context (narrow scroll-snap column vs. full-width section) rather than the viewport. At 93%+ support, production-ready. |
-| Card styling | `:has()` selector | JS class toggling | `:has()` at 97%+ eliminates the JS needed to toggle `.card-has-rare-flavor` type classes. Pure CSS. |
+| Redirect approach | Meta refresh + JS `location.replace()` | Cloudflare Worker redirects | Worker code is out of scope for v1.2. Worker changes add deployment complexity. |
+| Redirect approach | Meta refresh + JS | 404.html catch-all | Breaks direct navigation, confuses crawlers, complex URL parsing |
+| JS refactoring | Split into 6 IIFEs extending `CustardPlanner` | Convert to ES modules | `type="module"` changes load behavior (deferred), requires updating all 15 HTML files, breaks SW assumptions |
+| JS refactoring | Split into 6 IIFEs | Keep as monolith, just add sections | 1,639 lines is already hard to navigate. Adding more for v1.2 features (exclusion filter, multi-store compare) would push toward 2,000+ |
+| Exclusion filter persistence | `localStorage` (same key as compare) | URL query params | Exclusion is a user preference, not a shareable link state. localStorage is the right persistence for preferences. |
+| Quiz image layout | CSS Grid 2x2 with existing sprites | Actual photographs of custard | No photograph assets exist. Pixel-art sprites are the established visual language. Photos would clash with the design system. |
+| SW pre-cache for stores.json | Add to STATIC_ASSETS | Runtime cache only | stores.json changes infrequently (new stores added monthly). Pre-caching ensures offline access for the store picker on all pages. |
 
-## Browser Support Summary
+## Browser Support (v1.2 Additions)
 
-All recommended technologies and their production readiness:
+All v1.2 features use technologies already at Baseline or universally supported:
 
-| Feature | Global Support | Baseline? | Fallback Strategy |
-|---------|---------------|-----------|------------------|
-| CSS Grid | 97%+ | Yes (2017) | None needed |
-| CSS Subgrid | 95%+ | Yes (2023) | `@supports (grid-template-rows: subgrid)` with regular grid fallback |
-| CSS Scroll Snap | 97%+ | Yes (2020) | Degrades to free scroll (still functional) |
-| Container Queries | 93%+ | Yes (2023) | `@supports (container-type: inline-size)` with media query fallback |
-| `:has()` selector | 97%+ | Yes (2023) | JS class fallback for the ~3% |
-| `<details name="">` | ~85% | Newly available (2025) | Degrades to all-open (still works, not exclusive) |
-| `::details-content` | Baseline | Yes (Sept 2025) | Degrades to instant open/close (no animation) |
-| `interpolate-size` | ~67% (Chromium only) | **NO** | `@supports` progressive enhancement ONLY |
-| Custom Properties | 97%+ | Yes (2017) | None needed |
-| `aria-pressed` | 100% | Yes | None needed |
+| Feature | Technology | Support | Notes |
+|---------|-----------|---------|-------|
+| Redirects | `<meta http-equiv="refresh">` | 100% | HTML standard since the 90s |
+| Redirects | `window.location.replace()` | 100% | ES3+ |
+| SW registration | Service Worker API | 97%+ | Already used on 4 pages |
+| JS refactoring | IIFE pattern | 100% | ES3+ |
+| Exclusion filter | `aria-pressed`, localStorage | 100% | Already used |
+| Quiz images | CSS Grid | 97%+ | Already used |
+| Mad Libs chips | CSS classes, design tokens | 97%+ | Already used |
+| Multi-store compare | CSS Scroll Snap, Grid | 97%+ | Already researched in v1.0 |
+| Hero cone PNGs | sharp 0.34.x (build-time) | N/A (Node.js) | Already installed |
+
+No new browser support risks for v1.2. Every technology is already in use or at 97%+ support.
 
 ## Installation
 
 ```bash
-# Nothing to install. Zero new dependencies.
-# All CSS is written directly in docs/style.css
-# All JS uses <script src> tags loading IIFEs
+# Nothing new to install for frontend.
+# All v1.2 features use existing browser APIs and codebase patterns.
+
+# For hero cone PNG generation (already set up):
+cd custard-calendar && npm install sharp  # if not already installed
+node scripts/generate-hero-cones.mjs
 ```
 
-**New files to create** (all in `custard-calendar/docs/`):
+**New files to create (all in `custard-calendar/docs/`):**
 
 | File | Purpose | Pattern |
 |------|---------|---------|
-| `compare.js` | Compare page module | `var CustardCompare = (function() { ... })();` |
-| `today.js` | Today page module (refactor of inline script in index.html) | `var CustardToday = (function() { ... })();` |
-| `fun.js` | Fun page module (quiz + mad libs) | `var CustardFun = (function() { ... })();` |
-| `compare.html` | Compare page | New HTML file |
-| `fun.html` | Fun page | New HTML file |
-| `updates.html` | Get Updates page (consolidates calendar/widget/siri/alerts setup) | New HTML file |
+| `planner-core.js` | Core constants, utilities, brand helpers | `var CustardPlanner = (function() { ... })();` |
+| `planner-store.js` | Store/localStorage management | `(function(CP) { ... })(window.CustardPlanner);` |
+| `planner-telemetry.js` | Telemetry and interaction events | `(function(CP) { ... })(window.CustardPlanner);` |
+| `planner-drive.js` | Drive preferences and URL state | `(function(CP) { ... })(window.CustardPlanner);` |
+| `planner-flavors.js` | Flavor families and similarity | `(function(CP) { ... })(window.CustardPlanner);` |
+| `planner-display.js` | Certainty, timeline, rarity, CTAs, signals, share | `(function(CP) { ... })(window.CustardPlanner);` |
 
 **Files to modify:**
 
 | File | Changes |
 |------|---------|
-| `style.css` | Add comparison grid, unified card, bottom nav, filter chip, disclosure animation styles |
-| `planner-shared.js` | Add shared filter utilities, store header indicator renderer, CustomEvent helpers |
-| `index.html` | Simplify to Today page with progressive disclosure, new nav |
-| `map.html` | Add flavor family filter chips, new nav |
-| `quiz.html` | Merge into Fun page or redirect |
-| Old pages (radar, calendar, widget, siri, alerts, scoop, forecast-map, group) | Redirect to new locations |
+| `sw.js` | Add `stores.json` to STATIC_ASSETS, bump CACHE_VERSION, add new JS files to STATIC_ASSETS |
+| `style.css` | Add `.madlib-chip-group`, `.madlib-chip`, `.madlib-chip.selected` classes; add `quiz-options-grid.has-images` mobile layout; migrate `.flavor-chip.active` to `[aria-pressed="true"]` |
+| `fun.html` | Add SW registration snippet |
+| `updates.html` | Add SW registration snippet |
+| `scoop.html` | Replace with redirect stub -> index.html |
+| `radar.html` | Replace with redirect stub -> index.html |
+| `calendar.html` | Replace with redirect stub -> updates.html |
+| `widget.html` | Replace with redirect stub -> updates.html |
+| `siri.html` | Replace with redirect stub -> updates.html |
+| `alerts.html` | Replace with redirect stub -> updates.html |
+| `map.html` | Switch flavor family chips from inclusive to exclusive filter; add localStorage persistence |
+| `compare-page.js` | Implement multi-store side-by-side grid rendering |
+| `quizzes/engine.js` | Remove inline styles from Mad Libs chips; add `has-images` class for image-based quiz options |
+| `worker/src/flavor-colors.js` | Add ~136 new FLAVOR_PROFILES entries |
+| All HTML files loading planner-shared.js | Update `<script>` tags to load split modules instead of monolith |
 
 ## Sources
 
-- [MDN: CSS Grid Basic Concepts](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Basic_concepts) -- HIGH confidence
-- [MDN: CSS Subgrid](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Subgrid) -- HIGH confidence
-- [MDN: CSS Scroll Snap](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Scroll_snap) -- HIGH confidence
-- [MDN: `::details-content`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/::details-content) -- HIGH confidence
-- [MDN: `:has()` Selector](https://developer.mozilla.org/en-US/docs/Web/CSS/:has) -- HIGH confidence
-- [MDN: Exclusive Accordions with `<details name>`](https://developer.mozilla.org/en-US/blog/html-details-exclusive-accordions/) -- HIGH confidence
-- [Can I Use: CSS Container Queries -- 93.68%](https://caniuse.com/css-container-queries) -- HIGH confidence
-- [Can I Use: CSS Subgrid -- 95%+](https://caniuse.com/css-subgrid) -- HIGH confidence
-- [Can I Use: `interpolate-size` -- Chromium only](https://caniuse.com/mdn-css_properties_interpolate-size) -- HIGH confidence
-- [Chrome Developers: Animate to height: auto](https://developer.chrome.com/docs/css-ui/animate-to-height-auto) -- HIGH confidence
-- [Josh W. Comeau: Brand New Layouts with CSS Subgrid](https://www.joshwcomeau.com/css/subgrid/) -- MEDIUM confidence
-- [Josh W. Comeau: The Undeniable Utility of CSS :has](https://www.joshwcomeau.com/css/has/) -- MEDIUM confidence
-- [nerdy.dev: Open/Close Transitions for details](https://nerdy.dev/open-and-close-transitions-for-the-details-element) -- MEDIUM confidence
-- [Go Make Things: Accessible disclosure component](https://gomakethings.com/building-an-accessible-show/hide-disclosure-component-with-vanilla-js/) -- MEDIUM confidence
-- [FED Mentor: Accessible disclosure](https://fedmentor.dev/posts/disclosure-ui/) -- MEDIUM confidence
-- [Piccalilli: Progressive disclosure component](https://piccalil.li/blog/a-progressive-disclosure-component/) -- MEDIUM confidence
-- [Envato Tuts+: Scrolling Card UI with Flexbox and CSS Grid](https://webdesign.tutsplus.com/horizontal-scrolling-card-ui-flexbox-and-css-grid--cms-41922t) -- MEDIUM confidence
-- [CSS-Tricks: Practical CSS Scroll Snapping](https://css-tricks.com/practical-css-scroll-snapping/) -- MEDIUM confidence
-- [TestParty: Accessible Toggle Buttons](https://testparty.ai/blog/accessible-toggle-buttons-modern-web-apps-complete-guide) -- MEDIUM confidence
-- [DEV.to: Building a Responsive Layout in 2025](https://dev.to/smriti_webdev/building-a-responsive-layout-in-2025-css-grid-vs-flexbox-vs-container-queries-234m) -- MEDIUM confidence
-- [FrontendTools: CSS Subgrid Browser Support 2025-2026](https://www.frontendtools.tech/blog/mastering-css-grid-2025) -- MEDIUM confidence
+- [MDN: Service Worker Registration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register) -- HIGH confidence
+- [MDN: meta refresh](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta#http-equiv) -- HIGH confidence
+- [MDN: window.location.replace()](https://developer.mozilla.org/en-US/docs/Web/API/Location/replace) -- HIGH confidence
+- [MDN: aria-pressed](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-pressed) -- HIGH confidence
+- [web.dev: Service Worker Registration](https://web.dev/articles/service-workers-registration) -- HIGH confidence
+- [web.dev: Service Workers (PWA)](https://web.dev/learn/pwa/service-workers) -- HIGH confidence
+- [sharp: Resize API (kernel options)](https://sharp.pixelplumbing.com/api-resize) -- HIGH confidence (v0.34.x, `kernel: 'nearest'` confirmed)
+- [sharp npm package](https://www.npmjs.com/package/sharp) -- v0.34.5, HIGH confidence
+- [GitHub Pages redirect guide](https://pasdam.github.io/blog/posts/github_pages_redirect/) -- MEDIUM confidence
+- [Preserving hash and query string with redirects](https://maxchadwick.xyz/blog/preserving-the-hash-and-query-string-with-jekyll-redirects) -- MEDIUM confidence
+- [Inclusive Components: Toggle Buttons](https://inclusive-components.design/toggle-button/) -- HIGH confidence
+- [Josh Collinsworth: Accessible Toggle Buttons](https://joshcollinsworth.com/blog/accessible-toggle-buttons) -- MEDIUM confidence
+- [Fireship: JS Modules from IIFEs to ES6](https://fireship.dev/javascript-modules-iifes-commonjs-esmodules) -- MEDIUM confidence
 
 ---
 
-*Stack research: 2026-03-07*
+*Stack research: 2026-03-09 -- v1.2 Feature Completion & Cleanup*

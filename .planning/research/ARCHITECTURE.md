@@ -1,553 +1,619 @@
-# Architecture Patterns
+# Architecture Patterns: v1.2 Feature Integration
 
-**Domain:** Static vanilla JS site restructuring (11 pages to 4 views)
-**Researched:** 2026-03-07
+**Domain:** Static site feature integration (GitHub Pages + Cloudflare Worker)
+**Researched:** 2026-03-09
+**Confidence:** HIGH (based on direct codebase analysis, no external APIs changing)
 
-## Current Architecture (As-Is)
+---
 
-The `docs/` directory is a flat collection of 14+ HTML pages, each containing its own copy of the nav, header, and inline `<script>` blocks. Three shared JS files provide common functionality:
+## Overview
 
-```
-docs/
-  planner-shared.js    -- IIFE exposing window.CustardPlanner (1,500+ lines)
-                           State mgmt (localStorage), brand constants, scoring,
-                           similarity groups, certainty tiers, timeline builder,
-                           action CTAs, telemetry, signals, share buttons
-  cone-renderer.js     -- SVG pixel-art cone generation (global functions)
-  todays-drive.js      -- IIFE exposing window.CustardDrive (drive ranking UI)
-  style.css            -- Single shared stylesheet (3,000+ lines)
-  *.html               -- Each page: full <html>, duplicated nav, inline JS
-```
+All v1.2 features are presentation-layer changes. No Worker/API modifications are needed. The integration challenge is fitting 11 features into the existing static-site architecture without introducing a build step, breaking the IIFE global pattern, or creating service worker cache incoherence.
 
-**Problems this restructure solves:**
+This document maps each feature to concrete integration points, identifies new vs. modified components, and recommends a build order that respects dependency chains.
 
-1. **Nav duplication.** Every page has a hand-coded `<nav class="nav-links">` with 11 items. Changing the nav means touching 14 files.
-2. **No shared header component.** Each page has its own `<header>` with varying structure.
-3. **Inline JS coupling.** Page-specific logic lives in `<script>` blocks inside HTML, making it hard to test or share.
-4. **No store indicator.** Only `index.html` shows the selected store. Other pages silently read `localStorage` without surfacing which store is active.
+---
 
-## Recommended Architecture (To-Be)
+## Feature Integration Maps
 
-### Component Model: JS Module Functions, Not Classes
+### 1. Old Page Redirects (scoop, radar, calendar, widget, siri, alerts)
 
-The codebase already uses the right pattern: IIFE modules attached to `window` globals (`window.CustardPlanner`, `window.CustardDrive`). Do NOT introduce Web Components, ES modules, or a build step. Instead, add two more shared JS files following the same IIFE pattern:
+**Problem:** GitHub Pages has no server-side redirects. The six old pages (scoop.html, radar.html, calendar.html, widget.html, siri.html, alerts.html) need to redirect to new locations while preserving query parameters.
 
-```
-docs/
-  planner-shared.js       -- Existing. No changes needed.
-  cone-renderer.js        -- Existing. No changes needed.
-  todays-drive.js         -- Existing. No changes needed.
-  shared-nav.js           -- NEW. Renders nav + store indicator into placeholder.
-  compare-grid.js         -- NEW. Compare page grid rendering + logic.
-  style.css               -- Existing. Add new component styles at end.
-  index.html              -- Restructured: Today page
-  compare.html            -- NEW: Compare page
-  map.html                -- Existing: Map page (minor nav update)
-  fun.html                -- NEW: Fun page (quiz modes, mad libs, fronts)
-  updates.html            -- NEW: Get Updates consolidation page
-  privacy.html            -- Existing: unchanged
-  404.html                -- NEW: Redirect handler
-  [old pages].html        -- Redirect stubs (calendar, radar, alerts, siri, etc.)
-```
+**Integration Pattern: Client-Side Meta Refresh + JS Redirect**
 
-### Component Boundaries
+GitHub Pages supports exactly three redirect mechanisms:
+1. **`<meta http-equiv="refresh">`** -- works without JS, no query param forwarding
+2. **Inline JS redirect** -- preserves `window.location.search`
+3. **Jekyll `redirect_from` plugin** -- not available on GitHub Pages without build step
 
-| Component | File | Responsibility | Communicates With |
-|-----------|------|---------------|-------------------|
-| **CustardPlanner** | `planner-shared.js` | State (localStorage), API client, scoring, constants, telemetry | All pages read from it |
-| **ConeRenderer** | `cone-renderer.js` | SVG cone generation, flavor color lookups | Today, Compare, Map |
-| **CustardDrive** | `todays-drive.js` | Drive ranking UI, preference chips | Today page (index.html) |
-| **SharedNav** | `shared-nav.js` (NEW) | Renders nav bar + persistent store indicator into a DOM placeholder | All pages include it |
-| **CompareGrid** | `compare-grid.js` (NEW) | Store x day comparison grid, cell expansion, family exclusion filter | Compare page |
-| **Page-specific JS** | Inline `<script>` or page-specific `.js` | Page initialization, API calls, DOM wiring | CustardPlanner + page DOM |
+Use a combined approach: a `<meta>` tag for no-JS fallback, and an inline `<script>` that forwards query params.
 
-### Why NOT Web Components
+**Component Changes:**
 
-Web Components (Custom Elements) would work technically but are wrong for this codebase:
+| File | Change | Type |
+|------|--------|------|
+| `scoop.html` | Replace full page with redirect stub to `index.html` | MODIFY (rewrite) |
+| `radar.html` | Replace full page with redirect stub to `index.html` or remove | MODIFY (rewrite) |
+| `calendar.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
+| `widget.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
+| `siri.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
+| `alerts.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
 
-1. **Mismatch with existing patterns.** Every existing module uses IIFE + `window` globals. Introducing `class extends HTMLElement` creates two competing patterns.
-2. **Shadow DOM CSS isolation is counterproductive.** The site shares a single `style.css`. Shadow DOM would require duplicating styles or using CSS custom properties for everything.
-3. **No real encapsulation need.** There are no third-party consumers. The "components" are project-internal.
-4. **Browser support concern is zero** (both patterns work), but **team cognitive load** of maintaining two paradigms matters for a solo/small-team project.
-
-**Use the IIFE pattern that already exists.** It works, it is understood, and it avoids needless architectural churn.
-
-## Shared Navigation Pattern
-
-### Approach: JS-Rendered Nav with HTML Placeholder
-
-Each page includes a minimal placeholder, and `shared-nav.js` populates it:
-
-```html
-<!-- In every page's <header> -->
-<div id="shared-nav"></div>
-
-<!-- Before </body> -->
-<script src="planner-shared.js"></script>
-<script src="shared-nav.js"></script>
-```
-
-```javascript
-// shared-nav.js (IIFE pattern matching existing codebase)
-var CustardNav = (function () {
-  'use strict';
-
-  var NAV_ITEMS = [
-    { href: 'index.html', label: 'Today', key: 'index' },
-    { href: 'compare.html', label: 'Compare', key: 'compare' },
-    { href: 'map.html', label: 'Map', key: 'map' },
-    { href: 'fun.html', label: 'Fun', key: 'fun' },
-  ];
-
-  function render(containerId) {
-    var container = document.getElementById(containerId || 'shared-nav');
-    if (!container) return;
-
-    var slug = CustardPlanner.getPrimaryStoreSlug();
-    var storeHTML = '';
-    if (slug) {
-      storeHTML = '<div class="store-indicator">' +
-        '<span class="store-indicator-slug">' +
-        CustardPlanner.escapeHtml(slug.replace(/-/g, ' ')) +
-        '</span>' +
-        ' <a href="index.html?change=1" class="store-indicator-change">change</a>' +
-        '</div>';
-    }
-
-    var currentKey = inferCurrentPage();
-    var navHTML = NAV_ITEMS.map(function (item) {
-      var cls = item.key === currentKey ? ' class="nav-active"' : '';
-      return '<a href="' + item.href + '"' + cls + '>' + item.label + '</a>';
-    }).join('');
-
-    container.innerHTML = storeHTML +
-      '<nav class="nav-links">' + navHTML + '</nav>';
-  }
-
-  function inferCurrentPage() {
-    var path = window.location.pathname;
-    var file = path.substring(path.lastIndexOf('/') + 1);
-    if (!file || file === 'index.html') return 'index';
-    return file.replace('.html', '');
-  }
-
-  return { render: render };
-})();
-
-// Auto-render on load
-CustardNav.render();
-```
-
-**Rationale:** This is lightweight, follows the existing codebase conventions exactly, avoids `fetch()` overhead (no extra HTTP request for a nav partial), and ensures the nav definition lives in one place.
-
-### Store Indicator Behavior
-
-The persistent store indicator in the nav:
-
-1. Reads `localStorage` key `custard-primary` via `CustardPlanner.getPrimaryStoreSlug()`.
-2. Shows store name (slug formatted as display text) + "change" link.
-3. If no store is saved, shows nothing (first-visit flow handles geolocation + selection on the Today page).
-4. The "change" link navigates to `index.html?change=1`, which triggers the store picker on the Today page.
-
-## Data Flow
-
-### State Management via localStorage
-
-The codebase already has a well-structured localStorage state layer in `planner-shared.js`. No changes needed to the mechanism -- only the UI surfaces need to expose it more visibly.
-
-```
-localStorage keys (existing):
-  custard-primary          -- Store slug string (e.g., "mt-horeb")
-  custard-secondary        -- JSON array of secondary store slugs
-  custard-favorites        -- JSON array of favorite flavor names
-  custard:v1:preferences   -- JSON object: drive preferences, route, sort, tags
-
-Read path:  Page JS --> CustardPlanner.getPrimaryStoreSlug() --> localStorage
-Write path: Page JS --> CustardPlanner.setPrimaryStoreSlug() --> localStorage
-```
-
-### API Data Flow (unchanged)
-
-```
-Page Load
-  |
-  +--> planner-shared.js loads (synchronous, defines window.CustardPlanner)
-  |
-  +--> Page JS reads store slug from localStorage
-  |
-  +--> Page JS calls fetch(WORKER_BASE + '/api/v1/...?slug=X')
-  |     (Worker API is the single source of truth)
-  |
-  +--> Page JS renders response into DOM
-  |
-  +--> User interactions trigger further API calls or localStorage writes
-```
-
-### Compare Page Data Flow (new)
-
-```
-compare.html loads
-  |
-  +--> Reads primary + secondary stores from localStorage
-  |    (CustardPlanner.getPrimaryStoreSlug() + secondary stores key)
-  |
-  +--> For each store, fetches /api/v1/flavors?slug=X
-  |    (parallel fetches, Promise.all)
-  |
-  +--> Builds store x day grid (2-4 stores x 2-3 days)
-  |    Each cell: flavor name, certainty badge, rarity chip
-  |
-  +--> Cell click/tap expands: description, directions link, historical pattern
-  |    (fetches /api/v1/metrics/context/flavor/X lazily)
-  |
-  +--> Family exclusion filter: toggle chips filter grid cells
-  |    (client-side filter using CustardPlanner.FLAVOR_FAMILY_MEMBERS)
-```
-
-## Progressive Disclosure Pattern
-
-Use native `<details>/<summary>` elements. The codebase already has CSS for them in `style.css` (lines 275-291). The pattern:
-
-```html
-<!-- Today page: week-ahead collapsed by default -->
-<details class="week-ahead">
-  <summary>This week's flavors</summary>
-  <div class="week-grid" id="week-ahead-grid">
-    <!-- Populated by JS -->
-  </div>
-</details>
-
-<!-- Compare page: cell expansion -->
-<details class="compare-cell-detail">
-  <summary>Butter Pecan <span class="rarity-chip rarity-rare">Rare</span></summary>
-  <div class="compare-detail-body">
-    <p class="flavor-desc">Rich vanilla custard with... </p>
-    <a href="..." class="directions-link">Directions</a>
-    <p class="flavor-pattern">Shows up roughly every 18 days at this store</p>
-  </div>
-</details>
-```
-
-**Key decisions:**
-
-1. **Do NOT use the `name` attribute** for exclusive accordion behavior on the Compare grid. Users may want multiple cells expanded simultaneously to compare descriptions.
-2. **DO use `name` attribute** on the Fun page quiz mode selector, where only one quiz mode should show details at a time.
-3. **Animation is a progressive enhancement.** Use `interpolate-size: allow-keywords` and `::details-content` transition where supported; graceful fallback to instant open/close. Browser support in 2026 is good but not universal.
-4. **Content inside `<details>` is NOT searchable** in Safari and has quirks in Firefox. Keep the primary information (flavor name, store name, certainty tier) in the `<summary>`, not hidden inside the details body.
-
-## Page Redirect Strategy for GitHub Pages
-
-### Approach: Lightweight HTML Redirect Stubs + 404.html Catch-All
-
-GitHub Pages has no server-side redirect configuration. Use two complementary strategies:
-
-**Strategy 1: Per-page redirect stubs** for known old URLs.
-
-For each retired page (`calendar.html`, `radar.html`, `alerts.html`, `siri.html`, `widget.html`, `scoop.html`, `forecast-map.html`), replace the content with a redirect stub:
-
+**Redirect Template:**
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="refresh" content="0;url=updates.html">
-  <link rel="canonical" href="https://custard.chriskaschner.com/updates.html">
   <title>Redirecting...</title>
+  <script>
+    (function() {
+      var target = 'updates.html';
+      var qs = window.location.search;
+      window.location.replace(target + qs);
+    })();
+  </script>
 </head>
 <body>
-  <p>This page has moved. <a href="updates.html">Go to Get Updates</a>.</p>
-  <script>
-    // Preserve query params
-    var dest = 'updates.html';
-    if (location.search) dest += location.search;
-    location.replace(dest);
-  </script>
+  <p>Redirecting to <a href="updates.html">updates</a>...</p>
 </body>
 </html>
 ```
 
-**Redirect mapping:**
+**Redirect Mapping:**
 
-| Old URL | New URL | Rationale |
-|---------|---------|-----------|
-| `calendar.html` | `updates.html` | Calendar sub = delivery channel setup |
-| `alerts.html` | `updates.html` | Alert sub = delivery channel setup |
-| `siri.html` | `updates.html` | Siri setup = delivery channel setup |
-| `widget.html` | `updates.html` | Widget setup = delivery channel setup |
-| `radar.html` | `index.html` | Radar data absorbed into Today page |
-| `scoop.html` | `index.html` | Scoop was already an alias for Today's Drive |
-| `forecast-map.html` | `fun.html` | Fronts accessible from Fun page |
+| Old Page | Destination | Rationale |
+|----------|-------------|-----------|
+| `scoop.html` | `index.html` | Scoop was the old "Today's Drive" home |
+| `radar.html` | `index.html` | Radar was 7-day outlook, now on index |
+| `calendar.html` | `updates.html` | Calendar subscription moved to Get Updates |
+| `widget.html` | `updates.html` | Widget setup moved to Get Updates |
+| `siri.html` | `updates.html` | Siri setup moved to Get Updates |
+| `alerts.html` | `updates.html` | Alert signup moved to Get Updates |
 
-**Strategy 2: `404.html` catch-all** for any other broken links.
+**Query Param Preservation:** The JS redirect appends `window.location.search` directly. The destination pages already read `URLSearchParams` -- for example, `updates.html` can accept `?slug=mt-horeb` to pre-select a store. The `scoop.html` currently accepts no meaningful params, but preserving them is zero-cost insurance.
 
-```html
-<!-- 404.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Page Not Found - Custard Calendar</title>
-  <meta http-equiv="refresh" content="3;url=index.html">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <header><h1>Page Not Found</h1></header>
-  <main>
-    <p>This page doesn't exist. Redirecting to <a href="index.html">Today</a> in 3 seconds...</p>
-  </main>
-  <script>
-    // Preserve known params (slug, store) when redirecting
-    var params = new URLSearchParams(location.search);
-    var dest = 'index.html';
-    if (params.get('slug') || params.get('store')) {
-      dest += '?' + params.toString();
-    }
-    setTimeout(function() { location.replace(dest); }, 3000);
-  </script>
-</body>
-</html>
-```
+**Service Worker Interaction:** The old page URLs are already in the SW pre-cache list (calendar.html, widget.html are listed). After the redirect rewrite, these entries still work -- the SW caches the redirect stubs. Users who have old cached versions will get the full old page until the SW updates. The `skipWaiting()` + `clients.claim()` pattern ensures the update happens on next visit. Remove old pages from `STATIC_ASSETS` in `sw.js` after redirect stubs are deployed and stable.
 
-**Key decisions:**
-
-1. Use `meta http-equiv="refresh"` as the primary redirect mechanism. It works with JS disabled.
-2. Layer JS `location.replace()` on top for query param preservation and instant redirect.
-3. Use `location.replace()` (not `location.href =`) so the old URL does not pollute browser history.
-4. Include `<link rel="canonical">` in redirect stubs to signal permanence to search engines.
-5. The 404.html uses a 3-second delay so users see the "not found" message briefly, confirming the URL was wrong.
-
-## Compare Grid: Mobile-First Responsive Pattern
-
-The Compare page is the most architecturally novel piece. It must work at 375px (phone in the car).
-
-### Desktop Layout (>640px): CSS Grid Table
-
-```
-          | Today (Mon) | Tomorrow (Tue) | Wednesday  |
-Store A   | [cell]      | [cell]         | [cell]     |
-Store B   | [cell]      | [cell]         | [cell]     |
-Store C   | [cell]      | [cell]         | [cell]     |
-```
-
-```css
-.compare-grid {
-  display: grid;
-  grid-template-columns: minmax(100px, 0.8fr) repeat(var(--days, 3), 1fr);
-  gap: 1px;
-  background: var(--border);  /* Gap becomes grid lines */
-}
-
-.compare-cell {
-  background: white;
-  padding: 0.75rem;
-}
-```
-
-### Mobile Layout (<=640px): Stacked Day Cards
-
-At 375px, a multi-column grid is unreadable. Transform to day-first stacked cards:
-
-```
-=== Today (Monday) ===
-  Store A: Butter Pecan [Rare]
-  Store B: Mint Explosion [Common]
-  Store C: Turtle [Uncommon]
-
-=== Tomorrow (Tuesday) ===
-  Store A: Chocolate Volcano [Ultra Rare]
-  ...
-```
-
-```css
-@media (max-width: 640px) {
-  .compare-grid {
-    display: block;  /* Collapse grid */
-  }
-
-  .compare-day-group {
-    margin-bottom: 1rem;
-  }
-
-  .compare-cell {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border);
-  }
-}
-```
-
-**Key decisions:**
-
-1. **Day-first on mobile, store-first on desktop.** On mobile, the user's question is "what's happening today?" not "what does Store A have all week?" The mobile layout groups by day.
-2. **Use CSS `display: block` override**, not a separate HTML structure. The same DOM serves both layouts; CSS alone handles the transformation.
-3. **`<details>` for cell expansion.** Each cell is a `<summary>` (flavor name + rarity chip). Tapping expands the description, directions, and historical context. This keeps the grid scannable.
-4. **2-4 stores maximum, 2-3 days maximum.** Hard-cap the grid dimensions. The API supports more, but the UI should not overwhelm.
-5. **`gap: 1px` with background color trick** gives table-like grid lines without borders on individual cells.
-
-## How to Add New Pages Without Duplicating Shared Code
-
-### Checklist for a New Page
-
-1. Create `docs/new-page.html` with minimal boilerplate:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="...">
-  <title>Page Title - Custard Calendar</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Cloudflare Analytics -->
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
-    data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script>
-</head>
-<body data-page="new-page">
-  <header>
-    <h1>Page Title</h1>
-    <p>Page subtitle</p>
-    <div id="shared-nav"></div>
-  </header>
-
-  <main>
-    <!-- Page content -->
-  </main>
-
-  <footer>
-    <p><a href="privacy.html">Privacy</a> &middot; ...</p>
-    <div class="page-share-mount" id="page-share"></div>
-  </footer>
-
-  <script src="planner-shared.js"></script>
-  <script src="shared-nav.js"></script>
-  <script>CustardPlanner.emitPageView('new-page');</script>
-  <script>CustardPlanner.initShareButton('page-share');</script>
-  <!-- Page-specific JS here -->
-</body>
-</html>
-```
-
-2. Add `style.css` rules for page-specific styles (namespaced: `.new-page-section { ... }`).
-3. If the page has significant JS, create `docs/new-page.js` as an IIFE exposing `window.CustardNewPage`.
-4. Update the `NAV_ITEMS` array in `shared-nav.js` if the page should appear in navigation.
-
-### What Shared Code Provides (no duplication needed)
-
-| Need | Provided By | How |
-|------|-------------|-----|
-| Navigation | `shared-nav.js` | `<div id="shared-nav">` auto-populated |
-| Store state | `planner-shared.js` | `CustardPlanner.getPrimaryStoreSlug()` |
-| API base URL | `planner-shared.js` | `CustardPlanner.WORKER_BASE` |
-| Flavor rendering | `cone-renderer.js` | `renderMiniConeSVG(flavor, scale)` |
-| Brand constants | `planner-shared.js` | `CustardPlanner.BRAND_COLORS` |
-| Telemetry | `planner-shared.js` | `CustardPlanner.emitPageView()` |
-| HTML escaping | `planner-shared.js` | `CustardPlanner.escapeHtml()` |
-| Rarity labels | `planner-shared.js` | `CustardPlanner.rarityLabelFromRank()` |
-
-## Build Order (Dependency Graph)
-
-The restructure has clear dependencies that dictate phase ordering:
-
-```
-Phase 1: Foundation (no page depends on these yet, but everything will)
-  |
-  +-- shared-nav.js (new file)
-  +-- Store indicator CSS in style.css
-  +-- Update index.html to use shared-nav.js
-  +-- Test: nav renders, store indicator shows/hides
-  |
-Phase 2: Today Page Simplification (depends on Phase 1)
-  |
-  +-- Restructure index.html content: cone + flavor above fold
-  +-- Week-ahead as <details> collapsed by default
-  +-- Multi-store glance row
-  +-- "Want this every day?" CTA
-  +-- Test: progressive disclosure works, mobile layout
-  |
-Phase 3: Compare Page (depends on Phase 1; can parallel Phase 2)
-  |
-  +-- compare.html + compare-grid.js (new files)
-  +-- Reads primary + secondary stores from localStorage
-  +-- Grid rendering, cell expansion
-  +-- Family exclusion filter
-  +-- Mobile day-first card transformation
-  +-- Test: grid renders at 375px, cell expansion, filter
-  |
-Phase 4: Nav Consolidation + Redirects (depends on Phase 1)
-  |
-  +-- Replace old page content with redirect stubs
-  +-- 404.html catch-all
-  +-- fun.html page (quiz modes + fronts + group)
-  +-- updates.html page (calendar + widget + siri + alerts)
-  +-- Update shared-nav.js NAV_ITEMS to final 4 items
-  +-- Test: all old URLs redirect correctly, params preserved
-  |
-Phase 5: Polish (depends on Phases 2-4)
-  |
-  +-- Map page nav update + flavor family exclusion filter
-  +-- First-visit geolocation flow
-  +-- Visual coherence pass
-  +-- Cross-page test suite
-```
-
-**Why this order:**
-
-1. **Phase 1 first** because every other phase depends on having shared-nav.js and the store indicator in place.
-2. **Phases 2 and 3 can run in parallel** -- they are independent pages that both depend only on Phase 1.
-3. **Phase 4 after Phase 1** because redirects need the new destination pages to exist, and the Fun/Updates pages need the nav component.
-4. **Phase 5 last** because polish should happen after all structural changes are complete.
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Introducing a Build Step
-**What:** Adding webpack, Vite, esbuild, or any compilation step.
-**Why bad:** Violates the project constraint (GitHub Pages, no build step). Also breaks the current `git push -> live` deployment model.
-**Instead:** Keep using `<script src="...">` tags and IIFE modules.
-
-### Anti-Pattern 2: ES Modules (import/export)
-**What:** Using `<script type="module">` with import/export syntax.
-**Why bad:** While browser-supported, it breaks the established `window.CustardPlanner` global pattern. Every existing page uses `CustardPlanner.X` without imports. Mixing patterns creates confusion.
-**Instead:** Keep using IIFE + `var CustardX = (function() { ... })();` pattern.
-
-### Anti-Pattern 3: Fetch-Based HTML Includes
-**What:** Loading `nav.html` via `fetch()` and injecting into DOM.
-**Why bad:** Extra HTTP request on every page load. Flash of unstyled/missing nav on slow connections. CORS complexity if testing locally with `file://` protocol.
-**Instead:** Generate nav from JS (data is 4 items -- cheaper to define in code than fetch).
-
-### Anti-Pattern 4: Single Page Application (SPA) with Hash Routing
-**What:** Making `index.html` handle all routes via `#/today`, `#/compare`, etc.
-**Why bad:** Breaks GitHub Pages assumptions. Loses per-page `<title>`, `<meta>` tags for SEO/social cards. The site already has per-page OG images. Each page has unique CSP needs (map.html loads Leaflet).
-**Instead:** Keep multi-page architecture. Share code via JS includes, not routing.
-
-### Anti-Pattern 5: Over-Engineering the Compare Grid
-**What:** Building a fully generic data-grid component with sorting, pagination, virtual scrolling.
-**Why bad:** The grid is 2-4 stores by 2-3 days. Maximum 12 cells. No need for virtual scrolling or pagination. Keep it simple: render all cells, CSS handles layout.
-**Instead:** A single IIFE module (`compare-grid.js`) that renders the specific compare UI. Not a generic grid library.
-
-## Scalability Considerations
-
-| Concern | At Current Scale | At 10x (10 pages) | Notes |
-|---------|-----------------|-------------------|-------|
-| Nav maintenance | 1 file (shared-nav.js) | Same 1 file | Solved by this restructure |
-| Shared CSS | Single style.css ~3K lines | May want to split | Use CSS custom properties + BEM-like naming to avoid conflicts |
-| State complexity | 4 localStorage keys | Same 4 keys | localStorage pattern is sufficient; no need for IndexedDB or state library |
-| JS bundle size | ~50KB total (planner-shared + cone-renderer) | Same | No build-time tree-shaking needed at this scale |
-| Page load latency | 3 script tags, each cached | Same | Browser caching handles this; no need for concatenation |
-
-## Sources
-
-- Current codebase analysis: `docs/planner-shared.js`, `docs/cone-renderer.js`, `docs/todays-drive.js`, `docs/style.css`, `docs/index.html`, `docs/map.html`, `docs/quiz.html`, `docs/alerts.html`, `docs/scoop.html` (HIGH confidence -- primary sources)
-- [MDN: `<details>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/details) (HIGH confidence)
-- [CSS-Tricks: The Simplest Ways to Handle HTML Includes](https://css-tricks.com/the-simplest-ways-to-handle-html-includes/) (MEDIUM confidence)
-- [freeCodeCamp: Reusable HTML Components](https://www.freecodecamp.org/news/reusable-html-components-how-to-reuse-a-header-and-footer-on-a-website/) (MEDIUM confidence)
-- [GitHub Pages redirect techniques](https://opensource.com/article/19/7/permanently-redirect-github-pages) (MEDIUM confidence)
-- [GitHub Pages 404.html redirect pattern](https://gist.github.com/domenic/1f286d415559b56d725bee51a62c24a7) (MEDIUM confidence)
-- [CSS Grid responsive card patterns](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Common_grid_layouts) (HIGH confidence)
-- [LogRocket: Styling `<details>` with modern CSS](https://blog.logrocket.com/styling-html-modern-css/) (MEDIUM confidence)
+**Risk:** Search engines have indexed old URLs. The JS redirect is not ideal for SEO -- Google processes `<meta http-equiv="refresh" content="0">` as a 301, which is acceptable. The `content="0"` (zero delay) is treated as a permanent redirect by Google.
 
 ---
 
-*Architecture analysis: 2026-03-07*
+### 2. Map Flavor Family Exclusion Filter with Persistent State
+
+**Problem:** The map page has flavor family filter chips (mint, chocolate, caramel, etc.) but they: (a) currently work as inclusion-only (highlight matching stores), (b) reset on every `refreshResults()` call, and (c) have no persistent state across page loads.
+
+**Current Architecture:**
+- `activeFamily` variable in map.html inline script (line 189)
+- `applyFamilyFilter()` adjusts marker opacity (0.15 for non-matching, 1 for matching)
+- `storeMatchesFamily()` uses `CustardPlanner.FLAVOR_FAMILY_MEMBERS` reverse lookup
+- Filter resets to 'all' on every `refreshResults()` call (line 331-333)
+
+**Integration Pattern: Exclusion Toggle + localStorage Persistence**
+
+Change the chip semantics from "show only this family" to "exclude these families" (multi-select). This matches the Compare page's exclusion chip pattern (`custard-exclusions` in localStorage).
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `map.html` | Refactor `activeFamily` to `excludedFamilies: Set`, update chip click handlers, add localStorage read/write | MODIFY |
+| `style.css` | Add `.flavor-chip.excluded` state (strikethrough + muted) to differentiate from `.flavor-chip.active` | MODIFY |
+
+**Data Flow:**
+```
+User taps "Mint" chip
+  -> toggles "mint" in excludedFamilies Set
+  -> saves Set to localStorage('custard-map-excluded-families')
+  -> calls applyFamilyFilter()
+  -> markers with mint family get opacity 0.15
+  -> results list filters out excluded family cards
+```
+
+**Persistence Key:** Use `custard-map-excluded-families` (JSON array in localStorage). Separate from `custard-exclusions` used by Compare page because the Compare exclusions are ingredient-based ("No Nuts") while Map exclusions are family-based ("Chocolate").
+
+**State Restoration Flow:**
+```
+Page load
+  -> read localStorage('custard-map-excluded-families')
+  -> parse JSON array into excludedFamilies Set
+  -> apply .excluded class to matching chip buttons
+  -> applyFamilyFilter() runs after first refreshResults()
+```
+
+**Key Change:** Remove the filter reset on lines 331-333 of map.html. The family filter should persist across search refreshes -- users set exclusions once and expect them to stick as they browse the map.
+
+---
+
+### 3. Quiz Image-Based Answer Options on Mobile
+
+**Problem:** Quiz answer options are currently text-only labels. On mobile, image-based options (e.g., showing cone images for "which looks most appealing?") improve engagement and reduce reading fatigue.
+
+**Current Architecture:**
+- Quiz engine `renderQuestions()` (engine.js line 330) creates `<label class="quiz-option">` elements
+- Already supports `option.icon` via `window.QuizSprites.resolve(option.icon, 4)` which renders SVG sprites
+- The `has-icon` class is added to labels with icons (line 502)
+- Question type `multiple_choice` is the default path
+
+**Integration Pattern: Extend Existing Icon System with Cone Renderer**
+
+The quiz engine already has an icon slot. The gap is that `window.QuizSprites` is either undefined or only handles sprite-sheet icons. For image-based answers, connect `cone-renderer.js` (already loaded on quiz page? No -- it is NOT currently loaded on quiz.html).
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `quiz.html` | Add `<script src="cone-renderer.js"></script>` before engine.js | MODIFY |
+| `quizzes/engine.js` | In multiple_choice renderer, check for `option.image_type === 'cone'` and render via `renderMiniConeSVG()` instead of QuizSprites | MODIFY |
+| `quizzes/quiz-*.json` | Add `image_type: "cone"` and `image_flavor: "Mint Explosion"` fields to options that should show cone images | MODIFY |
+| `style.css` or `quiz.html <style>` | Add `.quiz-option-cone` class for sizing the inline SVG at mobile-friendly dimensions | MODIFY |
+
+**Rendering Path:**
+```
+For option with image_type === 'cone':
+  1. Call renderMiniConeSVG(option.image_flavor, 6) for a ~48px cone
+  2. Wrap in <span class="quiz-option-cone">
+  3. Place before the text label inside .quiz-option-copy
+
+For option with option.icon (existing):
+  4. Existing QuizSprites path, no change
+
+For text-only option:
+  5. No change
+```
+
+**Mobile Layout:** The `.quiz-options-grid` already uses CSS grid. For image options, switch to a 2-column grid at 375px (currently text options stack vertically). Add a media query or a `.quiz-options-grid.has-images` modifier that sets `grid-template-columns: repeat(2, 1fr)`.
+
+**Dependency:** cone-renderer.js depends on planner-shared.js (already loaded) and the `loadFlavorColors()` async init. The quiz page must call `loadFlavorColors()` before rendering questions with cone images.
+
+---
+
+### 4. Hero Cone PNGs for Remaining ~136 Flavors
+
+**Problem:** The flavor catalog has ~176 flavors, but only 40 have FLAVOR_PROFILES entries in `worker/src/flavor-colors.js`. The remaining ~136 need profile entries before `generate-hero-cones.mjs` can produce their PNGs.
+
+**Current Architecture:**
+- `FLAVOR_PROFILES` object in `worker/src/flavor-colors.js` -- 40 entries
+- `generate-hero-cones.mjs` in `scripts/` -- iterates FLAVOR_PROFILES, calls `renderConeHeroSVG()` at scale 4, rasterizes via `sharp` (or macOS `sips` fallback)
+- Output: `docs/assets/cones/{slug}.png` at 120px width
+- `cone-renderer.js` in browser falls back to SVG if no PNG exists
+- SW has runtime caching for `/assets/cones/*.png` (stale-while-revalidate)
+
+**Integration Pattern: Batch Profile Creation + Pipeline Run**
+
+This is primarily a data entry task, not an architecture change. Each new flavor needs a `FLAVOR_PROFILES` entry with: `base`, `ribbon`, `toppings[]`, `density`.
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `worker/src/flavor-colors.js` | Add ~136 new FLAVOR_PROFILES entries | MODIFY |
+| `docs/assets/cones/*.png` | ~136 new PNG files generated by pipeline | NEW |
+| `scripts/generate-hero-cones.mjs` | No changes needed -- already iterates all profiles | NO CHANGE |
+
+**Pipeline Execution:**
+```bash
+cd custard-calendar
+node scripts/generate-hero-cones.mjs
+# Output: docs/assets/cones/ will have ~176 PNGs
+```
+
+**Scaling Concern:** The pipeline processes flavors sequentially. At ~40 flavors it takes seconds; at ~176 flavors it should still complete in under a minute since each SVG render + PNG rasterization is fast (in-memory, no network). No parallelization needed.
+
+**Storage Impact:** Current 40 PNGs total ~250KB. At ~176 PNGs, expect ~1.1MB total in `docs/assets/cones/`. This is within GitHub Pages limits (1GB soft, 100MB per file hard). The SW caches these at runtime (not pre-cached), so initial page loads are not affected.
+
+**Data Entry Strategy:** Profile entries can be templated. Most Culver's flavors follow patterns:
+- Chocolate base + toppings: `base: 'chocolate'`
+- Vanilla base + flavored ribbon: `base: 'vanilla', ribbon: '[flavor]'`
+- Fruit base: `base: '[fruit]'`
+
+Use the existing flavor catalog endpoint (`/api/flavors/catalog`) to get the full list, then categorize. A helper script could generate skeleton entries from flavor names.
+
+---
+
+### 5. Service Worker Registration on fun.html and updates.html
+
+**Problem:** SW is only registered on 4 pages (index.html via today-page.js, compare.html via compare-page.js, calendar.html, widget.html). fun.html and updates.html are missing SW registration.
+
+**Current Registration Points:**
+| Page | Registration Location |
+|------|----------------------|
+| index.html | today-page.js line 647 |
+| compare.html | compare-page.js line 925 |
+| calendar.html | inline script line 673 |
+| widget.html | inline script line 965 |
+| fun.html | **MISSING** |
+| updates.html | **MISSING** |
+
+**Integration Pattern: Add Registration to Page JS Modules**
+
+Each page has a dedicated JS module. Add SW registration to the init functions.
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `fun-page.js` | Add SW registration in `init()` | MODIFY |
+| `updates-page.js` | Add SW registration in `init()` | MODIFY |
+
+**Registration Code (same pattern as existing):**
+```javascript
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+```
+
+**Why Not a Shared Registration Module?** The SW registration is a one-liner. Creating a shared module adds a script tag and a network request for minimal code reuse. The existing pattern (one-liner in each page JS) is the right trade-off for a no-build-step static site.
+
+**Lifecycle Consideration:** SW scope is path-based. Since `sw.js` is at `docs/` root, registering from any page in `docs/` gives the same scope (`/`). Multiple registrations from different pages are idempotent -- the browser only registers once per scope.
+
+---
+
+### 6. planner-shared.js Refactored from 1,624-Line Monolith
+
+**Problem:** `planner-shared.js` is a single 1,639-line IIFE containing: scoring helpers, brand constants, similarity groups, flavor families, certainty vocabulary, timeline building, reliability fetching, historical context, action CTAs, interaction events, signal cards, and share button. This makes maintenance difficult and change risk high.
+
+**Current Architecture:**
+- Single `var CustardPlanner = (function() { ... })();` IIFE
+- Exposes ~50 public methods/properties on `window.CustardPlanner`
+- Loaded via `<script src="planner-shared.js">` on every page
+- No module system -- all consumers access `window.CustardPlanner.X`
+
+**Integration Pattern: Extract to Separate IIFEs, Extend Shared Object**
+
+The constraint is no build step. ES modules (`import`/`export`) are supported via `<script type="module">`, but the codebase uses `var` declarations and IIFEs. A full migration would touch every HTML page and every consuming JS file -- too large a change surface.
+
+**Recommended Approach: Two-file extraction**
+
+Split planner-shared.js into a core file (keeps the return object) plus 2 extension files that attach methods to the existing `window.CustardPlanner` object. This minimizes HTML changes (only pages that use the extracted features need new script tags).
+
+**Proposed Split:**
+
+| File | Contents | Approx Lines |
+|------|----------|--------------|
+| `planner-shared.js` | Core: constants, normalize, localStorage helpers, haversine, brand/flavor data, rarity/certainty helpers, drive preferences | ~900 |
+| `planner-ui.js` | Timeline building, reliability fetch/banner, historical context fetch/HTML, action CTAs (directions/calendar/alert URLs + CTA HTML), share button | ~500 |
+| `planner-signals.js` | Signal card HTML, fetchSignals, trackSignalViews, IntersectionObserver setup, interaction events, page view tracking | ~250 |
+
+**Extension Pattern:**
+```javascript
+// planner-ui.js
+(function() {
+  'use strict';
+  var CP = window.CustardPlanner;
+
+  function buildTimeline(/* ... */) { /* ... */ }
+  function fetchReliability(/* ... */) { /* ... */ }
+  // ...
+
+  CP.buildTimeline = buildTimeline;
+  CP.fetchReliability = fetchReliability;
+  CP.actionCTAsHTML = actionCTAsHTML;
+  CP.initShareButton = initShareButton;
+  // etc.
+})();
+```
+
+**Script Loading in HTML:**
+```html
+<!-- Every page (no change for most pages) -->
+<script src="planner-shared.js"></script>
+<script src="shared-nav.js"></script>
+
+<!-- Pages with card UIs: index.html, compare.html -->
+<script src="planner-ui.js"></script>
+
+<!-- Pages with signals: index.html -->
+<script src="planner-signals.js"></script>
+```
+
+**HTML Pages Requiring Script Tag Additions:**
+
+| Page | Needs planner-ui.js | Needs planner-signals.js |
+|------|--------------------|-----------------------|
+| index.html | YES | YES |
+| compare.html | YES | NO |
+| map.html | NO (CTAs built inline) | NO |
+| fun.html | NO | NO |
+| updates.html | NO | NO |
+| quiz.html | NO | NO |
+| Redirect stubs | NO | NO |
+
+**Critical Constraint:** `window.CustardPlanner` must remain the single access point. The core IIFE creates the object; extension IIFEs attach to it. No new globals introduced.
+
+**Testing Strategy:** The public API surface does not change. All existing Playwright and Python tests should pass without modification. Add a lightweight test that verifies every method in the original return object is still accessible after the split.
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `planner-shared.js` | Remove UI and signal code (~740 lines removed) | MODIFY |
+| `planner-ui.js` | Timeline, reliability, historical context, CTAs, share | NEW |
+| `planner-signals.js` | Signal cards, fetch, tracking, events | NEW |
+| `index.html` | Add 2 script tags | MODIFY |
+| `compare.html` | Add 1 script tag | MODIFY |
+| `sw.js` | Add planner-ui.js and planner-signals.js to STATIC_ASSETS | MODIFY |
+
+---
+
+### 7. Compare Page Multi-Store Side-by-Side Comparison
+
+**Problem:** The Compare page currently "switches stores" according to the project brief. The requirement is side-by-side comparison of 2-4 stores.
+
+**Current Architecture Assessment:**
+
+After code review, the multi-store comparison **already appears to be implemented**:
+- `MAX_COMPARE_STORES = 4`, `MIN_COMPARE_STORES = 2`
+- `getSavedStoreSlugs()` returns array of up to 4 slugs
+- `loadCompareData(slugs)` fetches all stores in parallel
+- `renderGrid()` renders all store rows inside each day card
+- Store picker modal with search, add, and remove is implemented
+- `renderStoreBar()` shows selected stores with management controls
+
+**What may need attention:**
+
+| Concern | Status | Action Needed |
+|---------|--------|---------------|
+| Day-first card stack layout | Implemented | Verify works at 375px with 4 stores |
+| Store-as-columns for desktop | Not implemented | Optional: CSS grid with store columns at 768px+ |
+| Empty state (0-1 stores) | Shows "Add stores" CTA | Working |
+| Store add/remove UX | Picker modal with search | Working |
+
+**If desktop column layout is desired:**
+
+```css
+@media (min-width: 768px) {
+  .compare-grid-desktop {
+    display: grid;
+    grid-template-columns: auto repeat(var(--compare-store-count), 1fr);
+    gap: var(--space-2);
+  }
+}
+```
+
+This would be a new render path for desktop only. Mobile keeps the current day-first card stack.
+
+**Recommendation:** Test the existing implementation with 2-4 stores. If the day-first layout is acceptable (the PROJECT.md says "Day-first card stack for Compare" was a deliberate decision), this feature may already be complete. File as "verify and close" rather than "implement."
+
+---
+
+### 8. Push Unpushed Commits and Verify Deployment
+
+Not an architecture concern. Git operation + GitHub Pages auto-deploy verification.
+
+**Verification:** `git log --oneline origin/main..HEAD`, `git push origin main`, then smoke test all 5 primary pages via curl.
+
+---
+
+### 9. Fix CI Repo Structure Check
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `scripts/check_repo_structure.py` | Add `'.planning'` to `ALLOWED_DIRS` set | MODIFY |
+| `REPO_CONTRACT.md` | Add `.planning/` row to Allowed Top-Level Directories table | MODIFY |
+
+One-line fix in two files. No architecture implications.
+
+---
+
+### 10. Mad Libs Chip CSS Definitions
+
+**Problem:** `.madlib-chip` and `.madlib-chip-group` classes are applied in engine.js but styled entirely via inline `style.cssText` assignments. Selected/deselected states use direct style manipulation rather than class toggling. This violates the project's CSS token pattern.
+
+**Current State (engine.js lines 434-476):**
+- Container: `chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;...'`
+- Chip: `chip.style.cssText = 'padding:0.375rem 0.875rem;border:1.5px solid #ccc;...'`
+- Selected: `chip.style.background = '#005696'; chip.style.color = 'white';`
+- Deselected: `chip.style.background = 'white'; chip.style.color = '#444';`
+
+**Integration Pattern: Move to CSS Classes Using Design Tokens**
+
+Follow the existing `.brand-chip` / `.flavor-chip` patterns (style.css lines 635-700).
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `style.css` | Add `.madlib-chip-group`, `.madlib-chip`, `.madlib-chip:hover`, `.madlib-chip.selected` rules | MODIFY |
+| `quizzes/engine.js` | Remove all `style.cssText` assignments; replace inline style toggling with `classList.add/remove('selected')` | MODIFY |
+
+**CSS Definitions:**
+```css
+.madlib-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.madlib-chip {
+  padding: 0.375rem 0.875rem;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.madlib-chip:hover {
+  border-color: var(--text-subtle);
+}
+
+.madlib-chip.selected {
+  background: var(--brand);
+  color: var(--bg-surface);
+  border-color: var(--brand);
+}
+```
+
+---
+
+### 11. stores.json in SW Pre-Cache
+
+**Problem:** `stores.json` (213KB) is fetched by multiple pages but not in the SW pre-cache list.
+
+**Component Changes:**
+
+| File | Change | Type |
+|------|--------|------|
+| `sw.js` | Add `'./stores.json'` to STATIC_ASSETS array | MODIFY |
+| `sw.js` | Bump CACHE_VERSION from `custard-v15` to `custard-v16` | MODIFY |
+
+**Cache-Bust Interaction:** Pages fetch `stores.json?v=2026-03-09` but the pre-cached URL is `./stores.json`. The SW's `caches.match()` does not match URLs with different query strings by default.
+
+**Resolution:** Remove the `?v=` cache-bust param from all `stores.json` fetches. The SW handles freshness via stale-while-revalidate, making the manual cache-bust redundant.
+
+**Files to Update (remove `?v=` from stores.json fetch):**
+
+| File | Function |
+|------|----------|
+| `map.html` | `loadBrandStores()` |
+| `compare-page.js` | `loadStores()` |
+| `scoop.html` | `initScoop()` (if not already a redirect stub) |
+| `shared-nav.js` | `loadStoreManifest()` |
+
+---
+
+## Component Boundary Diagram
+
+```
+HTML Pages (15)
+  |
+  |-- <script src="planner-shared.js">     (every page)
+  |     -> window.CustardPlanner { core, flavor, rarity, certainty, prefs }
+  |
+  |-- <script src="planner-ui.js">         (index, compare)
+  |     -> extends CustardPlanner { timeline, reliability, CTAs, share }
+  |
+  |-- <script src="planner-signals.js">    (index)
+  |     -> extends CustardPlanner { signalCards, fetchSignals, events }
+  |
+  |-- <script src="shared-nav.js">         (every page)
+  |     -> window.SharedNav { render, storeChange events }
+  |
+  |-- <script src="cone-renderer.js">      (index, compare, map, quiz)
+  |     -> window functions { renderMiniConeSVG, loadFlavorColors }
+  |
+  |-- Page-specific modules:
+  |     today-page.js, compare-page.js, fun-page.js,
+  |     updates-page.js, quizzes/engine.js
+  |
+  |-- sw.js (registered from page JS modules)
+  |     -> pre-caches STATIC_ASSETS incl. stores.json
+  |     -> runtime-caches /assets/cones/*.png
+  |
+  |-- stores.json (213KB, pre-cached by SW)
+  |-- assets/cones/*.png (~176 files, runtime-cached by SW)
+```
+
+---
+
+## New vs. Modified Files Summary
+
+### New Files
+
+| File | Purpose | Created By Feature |
+|------|---------|-------------------|
+| `docs/planner-ui.js` | UI helpers extracted from monolith | #6 Refactoring |
+| `docs/planner-signals.js` | Signal helpers extracted from monolith | #6 Refactoring |
+| `docs/assets/cones/*.png` (~136 new) | Hero cone images | #4 PNG pipeline |
+
+### Modified Files
+
+| File | Features Touching It |
+|------|---------------------|
+| `docs/sw.js` | #3 (stores.json), #6 (new static assets), #11 (stores.json pre-cache) |
+| `docs/planner-shared.js` | #6 (refactoring -- code removal) |
+| `docs/style.css` | #2 (excluded chip state), #3 (quiz cone options), #10 (madlib chips) |
+| `docs/map.html` | #2 (exclusion filter), #11 (remove ?v= from stores.json) |
+| `docs/quizzes/engine.js` | #3 (cone image options), #10 (madlib chip CSS) |
+| `docs/quiz.html` | #3 (add cone-renderer.js script tag) |
+| `docs/fun-page.js` | #5 (SW registration) |
+| `docs/updates-page.js` | #5 (SW registration) |
+| `docs/index.html` | #6 (add planner-ui.js, planner-signals.js script tags) |
+| `docs/compare.html` | #6 (add planner-ui.js script tag) |
+| `docs/compare-page.js` | #11 (remove ?v= from stores.json) |
+| `docs/shared-nav.js` | #11 (remove ?v= from stores.json) |
+| `docs/scoop.html` | #1 (redirect stub) |
+| `docs/radar.html` | #1 (redirect stub) |
+| `docs/calendar.html` | #1 (redirect stub) |
+| `docs/widget.html` | #1 (redirect stub) |
+| `docs/siri.html` | #1 (redirect stub) |
+| `docs/alerts.html` | #1 (redirect stub) |
+| `scripts/check_repo_structure.py` | #9 (add .planning) |
+| `REPO_CONTRACT.md` | #9 (add .planning) |
+| `worker/src/flavor-colors.js` | #4 (add ~136 FLAVOR_PROFILES) |
+
+---
+
+## Recommended Build Order
+
+Dependencies flow downward. Features higher in the list are prerequisites or risk-reducers for features below.
+
+### Phase A: Foundation (no user-visible changes, reduces risk)
+
+1. **Fix CI repo structure check** (#9) -- Unblocks CI. 2 files, 2 lines. Zero risk.
+2. **Push unpushed commits** (#8) -- Establishes clean baseline. Verify deployment.
+3. **stores.json in SW pre-cache** (#11) -- Touch sw.js once here, avoid multiple cache version bumps later. Also remove `?v=` cache-bust params from 4 files.
+
+### Phase B: Cleanup (low-risk, high-value)
+
+4. **Old page redirects** (#1) -- 6 files replaced with stubs. Low risk since old pages become trivial.
+5. **Mad Libs chip CSS** (#10) -- Inline styles to style.css. Low risk, code quality improvement.
+6. **SW registration on fun.html and updates.html** (#5) -- Two one-liner additions. Zero risk.
+
+### Phase C: Core Refactoring (moderate risk)
+
+7. **planner-shared.js refactoring** (#6) -- Extract planner-ui.js and planner-signals.js. Largest change. Must be done before adding new shared functionality. Run full Playwright suite after.
+
+### Phase D: Feature Development (independent features, can parallelize)
+
+8. **Map exclusion filter** (#2) -- Modify map.html inline JS. Independent of other features.
+9. **Compare page multi-store verification** (#7) -- May already work. Test with 2-4 stores.
+10. **Quiz image-based answers** (#3) -- Add cone-renderer.js to quiz page, modify engine.js.
+
+### Phase E: Asset Pipeline (independent, can run in parallel)
+
+11. **Hero cone PNGs** (#4) -- Bulk data entry in FLAVOR_PROFILES then run pipeline. Independent of all other features. Fallback (SVG rendering) works fine in the interim.
+
+**Ordering Rationale:**
+- CI fix and push first because nothing else can deploy without them
+- SW changes batched early (Phase A) to minimize cache version bumps
+- Redirects early because they simplify the site (fewer pages to maintain)
+- Monolith refactoring before new feature work because new features add code
+- Asset pipeline last because it is independent and the fallback works
+
+---
+
+## Anti-Patterns to Avoid
+
+### Multiple SW Version Bumps
+Bumping CACHE_VERSION in separate commits for each feature forces users to re-download all cached assets each time. Batch all SW changes (stores.json, new static assets, version bump) into a single deployment.
+
+### Breaking the Public API During Refactoring
+Splitting planner-shared.js and changing how methods are accessed would break every consuming page. Keep `window.CustardPlanner.methodName` as the sole access pattern. Extension files attach to the existing object.
+
+### Adding Build Steps
+Introducing concatenation, bundling, or transpilation violates the core constraint (static files on GitHub Pages, no build step). Use multiple `<script>` tags with deterministic load order.
+
+### Redirect Loops
+After creating redirect stubs, search all HTML for links to old page URLs (calendar.html, widget.html, siri.html, alerts.html) and update them to point to the new destinations. Navigation and footer links are the most likely sources.
+
+### Stale Cache-Bust Params After SW Pre-Cache
+If stores.json is pre-cached but fetched with `?v=date`, the SW cache miss means two copies in cache. Remove the `?v=` param from all fetch calls when adding stores.json to STATIC_ASSETS.
+
+---
+
+## Sources
+
+- All findings based on direct codebase analysis of custard-calendar repository (HIGH confidence)
+- GitHub Pages redirect behavior: `<meta http-equiv="refresh" content="0">` treated as permanent redirect by search engines (MEDIUM confidence -- based on documented Google crawler behavior)
+- Service worker lifecycle and `caches.match()` query string behavior: Web platform specifications (HIGH confidence)
+- CSS custom properties and design token patterns: observed in style.css :root block (HIGH confidence)
