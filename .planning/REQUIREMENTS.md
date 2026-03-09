@@ -21,7 +21,7 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Design System
 
-- [ ] **DSGN-01**: Mad Libs chip elements use CSS classes with design tokens instead of inline styles
+- [x] **DSGN-01**: Mad Libs chip elements use CSS classes with design tokens instead of inline styles
 
 ### Architecture
 
@@ -74,7 +74,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFR-04 | Phase 9 | Complete |
 | RDIR-01 | Phase 10 | Pending |
 | RDIR-02 | Phase 10 | Pending |
-| DSGN-01 | Phase 10 | Pending |
+| DSGN-01 | Phase 10 | Complete |
 | ARCH-01 | Phase 11 | Pending |
 | ARCH-02 | Phase 11 | Pending |
 | MAP-01 | Phase 12 | Pending |
