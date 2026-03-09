@@ -78,10 +78,11 @@ Plans:
   2. window.CustardPlanner exposes the exact same public API after refactoring (no missing symbols)
   3. All existing Playwright tests pass with zero regressions
   4. New JS files are included in the SW STATIC_ASSETS list with a CACHE_VERSION bump
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: TBD
+- [ ] 11-01-PLAN.md -- API surface smoke test, extract 3 sub-modules (data/domain/ui), slim facade to ~200 lines
+- [ ] 11-02-PLAN.md -- Wire sub-modules into all 9 HTML pages, update SW STATIC_ASSETS + CACHE_VERSION, full regression suite
 
 ### Phase 12: Feature Development
 **Goal**: Users can filter the map by flavor family, see image-based quiz answers on mobile, and compare flavors across multiple stores side-by-side
@@ -117,7 +118,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 9. Infrastructure & Deployment | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 10. Redirects & CSS Cleanup | 2/2 | Complete    | 2026-03-09 | - |
-| 11. Monolith Refactoring | v1.2 | 0/? | Not started | - |
+| 11. Monolith Refactoring | v1.2 | 0/2 | Not started | - |
 | 12. Feature Development | v1.2 | 0/? | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
