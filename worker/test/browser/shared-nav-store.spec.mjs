@@ -166,8 +166,9 @@ test("STOR-05: store selection persists across page navigation", async ({ page }
   await expect(indexIndicator).toBeVisible();
   const indexText = await indexIndicator.textContent();
 
-  // Navigate to calendar.html (localStorage persists across navigations on same origin)
-  await page.goto("/calendar.html");
+  // Navigate to updates.html (calendar.html is now a redirect stub)
+  // localStorage persists across navigations on same origin
+  await page.goto("/updates.html");
   await page.evaluate(() => {
     if (!document.getElementById("shared-nav")) {
       var c = document.createElement("div");
@@ -185,7 +186,7 @@ test("STOR-05: store selection persists across page navigation", async ({ page }
   });
   await page.waitForTimeout(2000);
 
-  // Verify same store shows on calendar.html
+  // Verify same store shows on updates.html
   const calIndicator = page.locator("#shared-nav .store-indicator");
   await expect(calIndicator).toBeVisible();
   const calText = await calIndicator.textContent();

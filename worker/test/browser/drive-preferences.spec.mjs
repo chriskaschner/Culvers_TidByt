@@ -321,7 +321,8 @@ test.describe("Drive preference hardening", () => {
     await chip.click();
 
     // Navigate away immediately (triggers beforeunload flush)
-    await page.goto("/calendar.html");
+    // calendar.html is now a redirect stub; use updates.html instead
+    await page.goto("/updates.html");
 
     // Go back and check if prefs persisted
     await page.goto("/index.html");

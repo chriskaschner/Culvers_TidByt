@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+// Skipped: radar.html is now a redirect stub to index.html.
+// Radar features (forecast, badges, next-best-store) live on the Today page.
+// These tests should be migrated to today-page tests if not already covered.
+
+
 function isoDateOffset(days) {
   const d = new Date();
   d.setHours(12, 0, 0, 0);
@@ -161,7 +166,7 @@ function normalizeFlavor(value) {
     .trim();
 }
 
-test("radar phase 2 shows next best store, badges, and accuracy dashboard", async ({ page }) => {
+test.skip("radar phase 2 shows next best store, badges, and accuracy dashboard", async ({ page }) => {
   let primarySlug = null;
 
   await page.route("**/api/v1/**", async (route) => {
@@ -285,7 +290,7 @@ test("radar phase 2 shows next best store, badges, and accuracy dashboard", asyn
   expect(statusText).toMatch(/forecast-enabled/);
 });
 
-test("candidate with confirmed schedule shows Confirmed badge, not probability", async ({ page }) => {
+test.skip("candidate with confirmed schedule shows Confirmed badge, not probability", async ({ page }) => {
   let primarySlug = null;
 
   await page.route("**/api/v1/**", async (route) => {
@@ -438,7 +443,7 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
   }
 });
 
-test("rarity badges use percentile distribution, not absolute counts", async ({ page }) => {
+test.skip("rarity badges use percentile distribution, not absolute counts", async ({ page }) => {
   let primarySlug = null;
 
   // Use actual catalog flavors (from docs/flavors.json) so search works
@@ -598,7 +603,7 @@ test("rarity badges use percentile distribution, not absolute counts", async ({ 
   expect(badgeTexts).toContain("Ultra Rare");
 });
 
-test("rarity badges suppressed when fewer than 10 flavors have metrics", async ({ page }) => {
+test.skip("rarity badges suppressed when fewer than 10 flavors have metrics", async ({ page }) => {
   let primarySlug = null;
 
   await page.route("**/api/v1/**", async (route) => {

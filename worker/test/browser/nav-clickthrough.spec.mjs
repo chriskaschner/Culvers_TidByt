@@ -34,14 +34,13 @@ test("nav click-through across existing pages", async ({ page }) => {
 
 // Test nav consistency on all pages
 // TODO: Add updates.html after Plan 03 creates it
+// calendar.html and scoop.html removed: now redirect stubs without #shared-nav
 const ALL_PAGES = [
   "/index.html",
   "/compare.html",
   "/map.html",
   "/fun.html",
-  "/calendar.html",
   "/quiz.html",
-  "/scoop.html",
   "/group.html",
 ];
 

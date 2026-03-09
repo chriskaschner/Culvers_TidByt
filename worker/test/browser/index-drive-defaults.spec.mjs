@@ -168,13 +168,15 @@ test.skip("geoIP defaults: first-visit stores are nearest to user, not alphabeti
   }
 });
 
-test("minimap renders pins for all route stores", async ({ page }) => {
+// Skipped: scoop.html is now a redirect stub and CustardDrive was removed
+// from index.html in Phase 2 (TDAY-07). Minimap no longer renders on either page.
+test.skip("minimap renders pins for all route stores", async ({ page }) => {
   await setupRoutes(page, { preservePrefs: true });
   // Seed prefs so geoIP auto-pick doesn't override the URL stores
   await page.addInitScript(() => {
     localStorage.setItem("custard-primary", "mt-horeb");
   });
-  await page.goto("/scoop.html?stores=mt-horeb,madison-todd-drive");
+  await page.goto("/index.html?stores=mt-horeb,madison-todd-drive");
 
   await expect(page.locator(".drive-card").first()).toBeVisible();
 
