@@ -24,7 +24,7 @@
 
 - [x] **Phase 6: CSS + Quiz Polish** - Consume design tokens across all CSS and add visual differentiation to quiz modes
 - [x] **Phase 7: Production Deploy** - Push site and Worker to production, verify everything works end-to-end
-- [ ] **Phase 8: Quiz Mode Visual Differentiation** - Implement distinct visual styling per quiz mode (QUIZ-01 gap closure)
+- [x] **Phase 8: Quiz Mode Visual Differentiation** - Implement distinct visual styling per quiz mode (QUIZ-01 gap closure)
 
 ## Phase Details
 

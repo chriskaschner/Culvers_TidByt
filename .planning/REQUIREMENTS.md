@@ -72,10 +72,10 @@ Deferred from v1.1. Tracked for future milestones.
 
 **Coverage:**
 - v1.1 requirements: 7 total
-- Satisfied: 6
-- Pending: 1 (QUIZ-01 -- gap closure Phase 8)
+- Satisfied: 7
+- Pending: 0
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-08*
-*Last updated: 2026-03-09 after 07-01 completion (DEPL-01, DEPL-02, DEPL-03 complete)*
+*Last updated: 2026-03-09 after Phase 8 completion (all 7 requirements satisfied)*
