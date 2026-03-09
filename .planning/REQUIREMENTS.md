@@ -9,8 +9,8 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFR-01**: CI repo structure check passes with .planning/ included in REPO_CONTRACT.md
-- [ ] **INFR-02**: All commits pushed to origin/main and deployment verified at custard.chriskaschner.com
+- [x] **INFR-01**: CI repo structure check passes with .planning/ included in REPO_CONTRACT.md
+- [x] **INFR-02**: All commits pushed to origin/main and deployment verified at custard.chriskaschner.com
 - [ ] **INFR-03**: Service worker registered on fun.html and updates.html
 - [ ] **INFR-04**: stores.json included in SW pre-cache for offline access
 
@@ -68,8 +68,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFR-01 | Phase 9 | Pending |
-| INFR-02 | Phase 9 | Pending |
+| INFR-01 | Phase 9 | Complete |
+| INFR-02 | Phase 9 | Complete |
 | INFR-03 | Phase 9 | Pending |
 | INFR-04 | Phase 9 | Pending |
 | RDIR-01 | Phase 10 | Pending |
