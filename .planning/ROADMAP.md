@@ -1,5 +1,19 @@
 # Roadmap
 
+## Phase 12: Feature Development
+
+**Status:** PLANNED
+**Goal:** Three independent frontend features: map exclusion chips, quiz image grid, compare localStorage isolation
+**Plans:** 3 plans
+**Requirements:** [MAP-01, MAP-02, QUIZ-01, CMPR-01]
+
+Plans:
+- [ ] 12-01-PLAN.md -- Map exclusion chips with localStorage persistence
+- [ ] 12-02-PLAN.md -- Quiz image-based answer grid on mobile
+- [ ] 12-03-PLAN.md -- Compare page localStorage isolation
+
+---
+
 ## Phase 5: Visual Polish
 
 **Status:** COMPLETE
