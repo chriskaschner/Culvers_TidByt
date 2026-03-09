@@ -432,3 +432,12 @@ def test_quiz_mode_visual_differentiation():
     assert "var(--quiz-tint" in quiz_text, (
         "quiz.html must contain a var(--quiz-tint) CSS fallback for default styling"
     )
+
+    # 4. fun.html contains >= 6 border-left accent declarations for quiz cards
+    fun_html = DOCS_DIR / "fun.html"
+    fun_text = fun_html.read_text()
+    border_left_lines = re.findall(r'border-left.*solid.*#', fun_text)
+    assert len(border_left_lines) >= 6, (
+        f"fun.html must contain >= 6 border-left accent declarations for quiz cards, "
+        f"found {len(border_left_lines)}"
+    )
