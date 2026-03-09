@@ -65,7 +65,10 @@ Plans:
   1. engine.js sets a `data-quiz-mode` attribute on the body element corresponding to the active quiz mode
   2. quiz.html contains `[data-quiz-mode]` CSS selectors with distinct styling per mode
   3. A user opening each quiz mode sees visually distinct treatment (colors, borders, or accents) that makes the current mode obvious
-**Plans:** TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md -- Implement data-quiz-mode JS/CSS wiring, per-mode accent colors, fun.html card accents, static analysis test
 
 ## Progress
 
@@ -81,6 +84,6 @@ Phases execute in numeric order: 6 -> 7 -> 8
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
-| 8. Quiz Mode Visual Differentiation | v1.1 | 0/0 | Not Started | - |
+| 8. Quiz Mode Visual Differentiation | v1.1 | 0/1 | Not Started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
