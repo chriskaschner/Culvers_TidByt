@@ -440,6 +440,60 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── Per-mode accent overrides (QUIZ-01) ────────────────────────── */
+    :root {
+      --quiz-tint: #e8f6ff;
+    }
+    [data-quiz-mode="classic-v1"] {
+      --quiz-accent: #1373c2;
+      --quiz-tint: #e8f6ff;
+    }
+    [data-quiz-mode="weather-v1"] {
+      --quiz-accent: #b8860b;
+      --quiz-tint: #fef9e7;
+    }
+    [data-quiz-mode="trivia-v1"] {
+      --quiz-accent: #0f7b4f;
+      --quiz-tint: #e8f8f0;
+    }
+    [data-quiz-mode="date-night-v1"] {
+      --quiz-accent: #b5337f;
+      --quiz-tint: #fce8f4;
+    }
+    [data-quiz-mode="build-scoop-v1"] {
+      --quiz-accent: #c65d07;
+      --quiz-tint: #fef3e2;
+    }
+    [data-quiz-mode="compatibility-v1"] {
+      --quiz-accent: #6b21a8;
+      --quiz-tint: #f3e8ff;
+    }
+    [data-quiz-mode="mad-libs-v1"] {
+      --quiz-accent: #0d7377;
+      --quiz-tint: #e6fafa;
+    }
+
+    /* Mode-aware accent styling */
+    [data-quiz-mode] .quiz-hero {
+      border-color: var(--quiz-accent);
+      background: linear-gradient(140deg, #fafdff 0%, var(--quiz-tint) 100%);
+    }
+    [data-quiz-mode] .quiz-panel {
+      border-color: color-mix(in srgb, var(--quiz-accent) 30%, #d5e6f4);
+    }
+    [data-quiz-mode] .quiz-submit {
+      background: linear-gradient(130deg, var(--quiz-accent) 0%, color-mix(in srgb, var(--quiz-accent) 70%, #000) 52%, var(--quiz-accent-2) 100%);
+    }
+    [data-quiz-mode] .quiz-option input:checked + .quiz-option-copy {
+      border-color: var(--quiz-accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--quiz-accent) 14%, transparent);
+    }
+    [data-quiz-mode] .quiz-control input:focus,
+    [data-quiz-mode] .quiz-control select:focus {
+      border-color: color-mix(in srgb, var(--quiz-accent) 50%, #6fa9d7);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--quiz-accent) 16%, transparent);
+    }
   </style>
   <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
 </head>

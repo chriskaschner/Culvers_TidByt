@@ -525,6 +525,11 @@ function getQuizById(id) {
   return state.quizzes.find((quiz) => quiz.id === id) || null;
 }
 
+/** Set data-quiz-mode on <body> so CSS can apply per-mode accent styling. */
+function setQuizModeAttribute(quizId) {
+  document.body.setAttribute('data-quiz-mode', quizId);
+}
+
 /**
  * Score free-text input against each option's keyword list.
  * Returns the best-matching option, or null if nothing matches.
@@ -1295,6 +1300,7 @@ function bindEvents() {
     const next = getQuizById(els.variantSelect.value);
     if (!next) return;
     state.activeQuiz = next;
+    setQuizModeAttribute(next.id);
     await renderQuestions(next);
     setStatus(`Loaded quiz: ${next.name}.`, 'neutral');
   });
@@ -1331,6 +1337,7 @@ async function init() {
       }
     }
 
+    setQuizModeAttribute(state.activeQuiz.id);
     await setLocationFromCloudflare();
     await renderQuestions(state.activeQuiz);
     bindEvents();
