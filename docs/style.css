@@ -3514,3 +3514,219 @@ textarea:focus-visible {
   margin: 0;
   color: #333;
 }
+
+/* ---------------------------------------------------------------------------
+ * Compare store management bar
+ * --------------------------------------------------------------------------- */
+
+.compare-store-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0 0 var(--space-4) 0;
+  align-items: center;
+}
+
+.compare-store-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-base);
+}
+
+.compare-store-chip-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.compare-store-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 0.125rem;
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.compare-store-chip-remove:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.compare-store-add-btn {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-base);
+  color: var(--brand);
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 32px;
+}
+
+.compare-store-add-btn:hover {
+  border-color: var(--brand);
+  background: var(--bg-tint);
+}
+
+/* ---------------------------------------------------------------------------
+ * Compare multi-store picker overlay
+ * --------------------------------------------------------------------------- */
+
+.compare-picker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8vh;
+}
+
+.compare-picker-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.compare-picker-panel {
+  position: relative;
+  background: var(--bg-surface);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.compare-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-picker-header h3 {
+  font-size: 1rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.compare-picker-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compare-picker-close:hover {
+  color: var(--text);
+}
+
+.compare-picker-status {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.compare-picker-search {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 16px;
+  outline: none;
+  background: var(--bg-surface);
+}
+
+.compare-picker-search:focus {
+  box-shadow: inset 0 -2px 0 var(--brand);
+}
+
+.compare-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.compare-picker-item {
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.compare-picker-item:hover {
+  background: var(--bg-tint);
+}
+
+.compare-picker-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.compare-picker-checkbox:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.compare-picker-label {
+  flex: 1;
+}
+
+.compare-picker-footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.compare-picker-done {
+  padding: var(--space-2) var(--space-5);
+  font-size: var(--text-base);
+}
+
+.compare-picker-done:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

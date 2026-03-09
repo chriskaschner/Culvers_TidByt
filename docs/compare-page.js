@@ -5,6 +5,10 @@
  * rarity badges, and a rarity nudge banner. Accordion expand and
  * exclusion filters provide interactive filtering and detail views.
  *
+ * Includes a compare-specific multi-store picker that manages the
+ * activeRoute.stores array in custard:v1:preferences, allowing users
+ * to add/remove stores for side-by-side comparison.
+ *
  * Usage: <script src="compare-page.js"></script> (after planner-shared.js, shared-nav.js, cone-renderer.js)
  * Exposes: window.CustardCompare (var, no build step required)
  */
@@ -19,6 +23,13 @@ var CustardCompare = (function () {
   var escapeHtml = CustardPlanner.escapeHtml;
 
   // ---------------------------------------------------------------------------
+  // Constants
+  // ---------------------------------------------------------------------------
+
+  var MAX_COMPARE_STORES = 4;
+  var MIN_COMPARE_STORES = 2;
+
+  // ---------------------------------------------------------------------------
   // Private state
   // ---------------------------------------------------------------------------
 
@@ -27,6 +38,7 @@ var CustardCompare = (function () {
   var _storeManifest = {};   // slug -> store object from stores.json
   var _allStoresArr = [];    // full stores array from stores.json
   var _expandedRow = null;   // currently expanded DOM element
+  var _manifestLoaded = false; // whether store manifest has been fetched
 
   // ---------------------------------------------------------------------------
   // Exclusion filter constants and state
@@ -77,6 +89,7 @@ var CustardCompare = (function () {
   var compareNudgeContent = null;
   var compareGrid = null;
   var addStoresBtn = null;
+  var compareStoreBar = null;
 
   function cacheDomRefs() {
     compareEmpty = document.getElementById('compare-empty');
@@ -88,6 +101,7 @@ var CustardCompare = (function () {
     compareNudgeContent = document.getElementById('compare-nudge-content');
     compareGrid = document.getElementById('compare-grid');
     addStoresBtn = document.getElementById('compare-add-stores');
+    compareStoreBar = document.getElementById('compare-store-bar');
   }
 
   // ---------------------------------------------------------------------------
@@ -108,7 +122,7 @@ var CustardCompare = (function () {
   }
 
   // ---------------------------------------------------------------------------
-  // Store slug loading (raw localStorage, not getDrivePreferences)
+  // Store slug loading and saving
   // ---------------------------------------------------------------------------
 
   function getSavedStoreSlugs() {
@@ -117,11 +131,39 @@ var CustardCompare = (function () {
       if (raw) {
         var parsed = JSON.parse(raw);
         if (parsed && parsed.activeRoute && Array.isArray(parsed.activeRoute.stores)) {
-          return parsed.activeRoute.stores.slice(0, 4);
+          return parsed.activeRoute.stores.slice(0, MAX_COMPARE_STORES);
         }
       }
     } catch (e) {}
+
+    // Fallback: check legacy primary store key so first-time compare visitors
+    // who already picked a store on the Today page see it pre-selected
+    try {
+      var primary = CustardPlanner.getPrimaryStoreSlug();
+      if (primary) return [primary];
+    } catch (e) {}
+
     return [];
+  }
+
+  function saveStoreSlugs(slugs) {
+    var cleaned = slugs.slice(0, MAX_COMPARE_STORES);
+    try {
+      var raw = localStorage.getItem('custard:v1:preferences');
+      var prefs = raw ? JSON.parse(raw) : {};
+      if (!prefs.activeRoute) prefs.activeRoute = {};
+      prefs.activeRoute.stores = cleaned;
+      // Use saveDrivePreferences if available (writes to both keys)
+      if (typeof CustardPlanner.saveDrivePreferences === 'function') {
+        CustardPlanner.saveDrivePreferences(prefs);
+        // Flush immediately so reads pick it up
+        if (typeof CustardPlanner.flushDrivePreferences === 'function') {
+          CustardPlanner.flushDrivePreferences();
+        }
+      } else {
+        localStorage.setItem('custard:v1:preferences', JSON.stringify(prefs));
+      }
+    } catch (e) {}
   }
 
   // ---------------------------------------------------------------------------
@@ -138,6 +180,7 @@ var CustardCompare = (function () {
           var store = _allStoresArr[i];
           _storeManifest[store.slug] = store;
         }
+        _manifestLoaded = true;
       })
       .catch(function (err) { console.error('Failed to load stores:', err); });
   }
@@ -412,6 +455,262 @@ var CustardCompare = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // Compare store management bar
+  // ---------------------------------------------------------------------------
+
+  function renderStoreBar() {
+    if (!compareStoreBar) return;
+    compareStoreBar.innerHTML = '';
+
+    if (_stores.length === 0) {
+      compareStoreBar.hidden = true;
+      return;
+    }
+
+    compareStoreBar.hidden = false;
+
+    for (var i = 0; i < _stores.length; i++) {
+      var slug = _stores[i];
+      var store = _storeManifest[slug];
+      var name = store ? store.city : slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+
+      var chip = document.createElement('span');
+      chip.className = 'compare-store-chip';
+      chip.setAttribute('data-slug', slug);
+
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'compare-store-chip-name';
+      nameSpan.textContent = name;
+      chip.appendChild(nameSpan);
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'compare-store-chip-remove';
+      removeBtn.setAttribute('type', 'button');
+      removeBtn.setAttribute('aria-label', 'Remove ' + name);
+      removeBtn.innerHTML = '&times;';
+      removeBtn.addEventListener('click', (function (s) {
+        return function (e) {
+          e.stopPropagation();
+          removeCompareStore(s);
+        };
+      })(slug));
+      chip.appendChild(removeBtn);
+
+      compareStoreBar.appendChild(chip);
+    }
+
+    // Add store button (if under max)
+    if (_stores.length < MAX_COMPARE_STORES) {
+      var addBtn = document.createElement('button');
+      addBtn.className = 'compare-store-add-btn';
+      addBtn.setAttribute('type', 'button');
+      addBtn.textContent = '+ Add store';
+      addBtn.addEventListener('click', function () {
+        showCompareStorePicker();
+      });
+      compareStoreBar.appendChild(addBtn);
+    }
+  }
+
+  function removeCompareStore(slug) {
+    var newStores = [];
+    for (var i = 0; i < _stores.length; i++) {
+      if (_stores[i] !== slug) newStores.push(_stores[i]);
+    }
+    saveStoreSlugs(newStores);
+    loadAndRender();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Compare-specific multi-store picker
+  // ---------------------------------------------------------------------------
+
+  function showCompareStorePicker() {
+    // Remove existing picker if any
+    var existing = document.querySelector('.compare-picker');
+    if (existing) existing.remove();
+
+    // Build the picker
+    var overlay = document.createElement('div');
+    overlay.className = 'compare-picker';
+
+    var backdrop = document.createElement('div');
+    backdrop.className = 'compare-picker-backdrop';
+    overlay.appendChild(backdrop);
+
+    var panel = document.createElement('div');
+    panel.className = 'compare-picker-panel';
+
+    // Header
+    var header = document.createElement('div');
+    header.className = 'compare-picker-header';
+    header.innerHTML = '<h3>Select stores to compare</h3>';
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'compare-picker-close';
+    closeBtn.setAttribute('type', 'button');
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.innerHTML = '&times;';
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    // Status line showing count
+    var statusLine = document.createElement('div');
+    statusLine.className = 'compare-picker-status';
+    statusLine.textContent = _stores.length + ' of ' + MAX_COMPARE_STORES + ' stores selected (min ' + MIN_COMPARE_STORES + ')';
+    panel.appendChild(statusLine);
+
+    // Search input
+    var search = document.createElement('input');
+    search.className = 'compare-picker-search';
+    search.setAttribute('type', 'text');
+    search.setAttribute('placeholder', 'Search stores...');
+    panel.appendChild(search);
+
+    // Store list
+    var list = document.createElement('ul');
+    list.className = 'compare-picker-list';
+
+    var currentSlugs = _stores.slice();
+    var stores = _allStoresArr.length > 0 ? _allStoresArr : [];
+
+    for (var i = 0; i < stores.length; i++) {
+      var s = stores[i];
+      var li = document.createElement('li');
+      li.className = 'compare-picker-item';
+      li.setAttribute('data-slug', s.slug);
+      li.setAttribute('data-name', s.name || '');
+      li.setAttribute('data-city', s.city || '');
+      li.setAttribute('data-state', s.state || '');
+      li.setAttribute('data-address', s.address || '');
+
+      var isChecked = currentSlugs.indexOf(s.slug) !== -1;
+
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'compare-picker-checkbox';
+      checkbox.checked = isChecked;
+      checkbox.setAttribute('data-slug', s.slug);
+
+      var label = document.createElement('span');
+      label.className = 'compare-picker-label';
+      var labelText = escapeHtml(s.name);
+      if (s.city && s.state) {
+        labelText += ' <span class="store-picker-meta">' + escapeHtml(s.city) + ', ' + escapeHtml(s.state) + '</span>';
+      }
+      label.innerHTML = labelText;
+
+      li.appendChild(checkbox);
+      li.appendChild(label);
+      list.appendChild(li);
+    }
+
+    panel.appendChild(list);
+
+    // Done button
+    var footer = document.createElement('div');
+    footer.className = 'compare-picker-footer';
+    var doneBtn = document.createElement('button');
+    doneBtn.className = 'btn-primary compare-picker-done';
+    doneBtn.setAttribute('type', 'button');
+    doneBtn.textContent = 'Compare stores';
+    footer.appendChild(doneBtn);
+    panel.appendChild(footer);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    // Track selected slugs
+    var selected = currentSlugs.slice();
+
+    function updatePickerState() {
+      statusLine.textContent = selected.length + ' of ' + MAX_COMPARE_STORES + ' stores selected (min ' + MIN_COMPARE_STORES + ')';
+      doneBtn.disabled = selected.length < MIN_COMPARE_STORES;
+
+      // Disable unchecked checkboxes if at max
+      var boxes = list.querySelectorAll('.compare-picker-checkbox');
+      for (var bi = 0; bi < boxes.length; bi++) {
+        if (!boxes[bi].checked) {
+          boxes[bi].disabled = selected.length >= MAX_COMPARE_STORES;
+        }
+      }
+    }
+
+    // Wire checkbox changes via list delegation
+    list.addEventListener('click', function (e) {
+      var item = e.target.closest('.compare-picker-item');
+      if (!item) return;
+      var cb = item.querySelector('.compare-picker-checkbox');
+      if (!cb) return;
+
+      // If the click was directly on the checkbox, it already toggled
+      if (e.target !== cb) {
+        if (cb.disabled) return;
+        cb.checked = !cb.checked;
+      }
+
+      var slug = cb.getAttribute('data-slug');
+      if (cb.checked) {
+        if (selected.length < MAX_COMPARE_STORES && selected.indexOf(slug) === -1) {
+          selected.push(slug);
+        } else if (selected.length >= MAX_COMPARE_STORES) {
+          cb.checked = false;
+          return;
+        }
+      } else {
+        var idx = selected.indexOf(slug);
+        if (idx !== -1) selected.splice(idx, 1);
+      }
+      updatePickerState();
+    });
+
+    // Search filtering
+    search.addEventListener('input', function () {
+      var query = (search.value || '').toLowerCase();
+      var items = list.querySelectorAll('.compare-picker-item');
+      for (var si = 0; si < items.length; si++) {
+        var item = items[si];
+        if (!query) {
+          item.style.display = '';
+          continue;
+        }
+        var name = (item.getAttribute('data-name') || '').toLowerCase();
+        var city = (item.getAttribute('data-city') || '').toLowerCase();
+        var state = (item.getAttribute('data-state') || '').toLowerCase();
+        var address = (item.getAttribute('data-address') || '').toLowerCase();
+        var match = name.indexOf(query) !== -1
+          || city.indexOf(query) !== -1
+          || state.indexOf(query) !== -1
+          || address.indexOf(query) !== -1;
+        item.style.display = match ? '' : 'none';
+      }
+    });
+
+    // Done button
+    doneBtn.addEventListener('click', function () {
+      if (selected.length >= MIN_COMPARE_STORES) {
+        saveStoreSlugs(selected);
+        hideCompareStorePicker();
+        loadAndRender();
+      }
+    });
+
+    // Close button and backdrop
+    closeBtn.addEventListener('click', function () { hideCompareStorePicker(); });
+    backdrop.addEventListener('click', function () { hideCompareStorePicker(); });
+
+    // Focus search
+    search.focus();
+
+    // Initial state
+    updatePickerState();
+  }
+
+  function hideCompareStorePicker() {
+    var picker = document.querySelector('.compare-picker');
+    if (picker) picker.remove();
+  }
+
+  // ---------------------------------------------------------------------------
   // Grid rendering
   // ---------------------------------------------------------------------------
 
@@ -518,6 +817,8 @@ var CustardCompare = (function () {
     if (compareError) compareError.hidden = (stateName !== 'error');
     if (compareNudge && stateName !== 'grid') compareNudge.hidden = true;
     if (compareGrid && stateName !== 'grid') compareGrid.innerHTML = '';
+    // Show store bar only in grid state (hide when empty/loading/error)
+    if (compareStoreBar) compareStoreBar.hidden = (stateName !== 'grid');
   }
 
   // ---------------------------------------------------------------------------
@@ -529,6 +830,10 @@ var CustardCompare = (function () {
 
     if (_stores.length <= 1) {
       showState('empty');
+      // Remove stale store bar and filter bar
+      if (compareStoreBar) compareStoreBar.innerHTML = '';
+      var existingFilter = document.querySelector('.compare-filter-bar');
+      if (existingFilter) existingFilter.parentNode.removeChild(existingFilter);
       return;
     }
 
@@ -551,6 +856,7 @@ var CustardCompare = (function () {
       }
 
       showState('grid');
+      renderStoreBar();
       renderGrid();
       renderFilterChips();
       applyExclusions();
@@ -568,8 +874,13 @@ var CustardCompare = (function () {
   function bindEvents() {
     if (addStoresBtn) {
       addStoresBtn.addEventListener('click', function () {
-        if (typeof SharedNav !== 'undefined' && SharedNav.showStorePicker) {
-          SharedNav.showStorePicker();
+        // Load the manifest first if we haven't yet, then show picker
+        if (!_manifestLoaded) {
+          loadStores().then(function () {
+            showCompareStorePicker();
+          });
+        } else {
+          showCompareStorePicker();
         }
       });
     }
@@ -580,8 +891,22 @@ var CustardCompare = (function () {
       });
     }
 
-    // Re-render on store change
-    document.addEventListener('sharednav:storechange', function () {
+    // Listen for SharedNav store changes -- when user picks a store via the
+    // header "change" button, add it to comparison instead of replacing
+    document.addEventListener('sharednav:storechange', function (e) {
+      var detail = e && e.detail;
+      var newSlug = detail && detail.slug;
+      if (newSlug && _stores.indexOf(newSlug) === -1) {
+        // Add the newly selected store to the compare list
+        var updated = _stores.slice();
+        if (updated.length >= MAX_COMPARE_STORES) {
+          // Replace last store if at max
+          updated[updated.length - 1] = newSlug;
+        } else {
+          updated.push(newSlug);
+        }
+        saveStoreSlugs(updated);
+      }
       loadAndRender();
     });
   }
@@ -613,5 +938,5 @@ var CustardCompare = (function () {
   // Public API
   // ---------------------------------------------------------------------------
 
-  return { init: init };
+  return { init: init, showStorePicker: showCompareStorePicker };
 })();
