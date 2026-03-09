@@ -68,7 +68,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md -- Implement data-quiz-mode JS/CSS wiring, per-mode accent colors, fun.html card accents, static analysis test
+- [x] 08-01-PLAN.md -- Implement data-quiz-mode JS/CSS wiring, per-mode accent colors, fun.html card accents, static analysis test
 
 ## Progress
 
@@ -84,6 +84,6 @@ Phases execute in numeric order: 6 -> 7 -> 8
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
-| 8. Quiz Mode Visual Differentiation | v1.1 | 0/1 | Not Started | - |
+| 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`

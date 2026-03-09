@@ -21,7 +21,7 @@ Requirements for production launch and polish. Each maps to roadmap phases.
 
 ### Quiz Polish
 
-- [ ] **QUIZ-01**: Quiz modes are visually distinct from each other (unique styling per mode)
+- [x] **QUIZ-01**: Quiz modes are visually distinct from each other (unique styling per mode)
 
 ## Future Requirements
 
@@ -68,7 +68,7 @@ Deferred from v1.1. Tracked for future milestones.
 | TOKN-01 | Phase 6 | Complete (06-01) |
 | TOKN-02 | Phase 6 | Complete (06-01) |
 | TOKN-03 | Phase 6 | Complete |
-| QUIZ-01 | Phase 8 | Pending |
+| QUIZ-01 | Phase 8 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 7 total
