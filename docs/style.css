@@ -29,6 +29,25 @@
   /* Text color tokens */
   --text-primary: #1a1a1a;
   --text-subtle: #999;
+
+  /* Color gap tokens (Phase 6) */
+  --brand-hover: #004488;
+  --bg-surface: #fff;
+  --bg-muted: #f0f4f8;
+  --border-light: #eee;
+  --border-input: #ccc;
+  --text-secondary: #555;
+  --text-dim: #888;
+  --text-faint: #bbb;
+
+  /* Shadow tokens */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(0, 86, 150, 0.12);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Radius tokens */
+  --radius-lg: 0.75rem;
+  --radius-full: 999px;
 }
 
 * {
