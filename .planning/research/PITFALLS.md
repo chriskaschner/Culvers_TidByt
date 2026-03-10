@@ -1,267 +1,406 @@
-# Pitfalls Research
+# Domain Pitfalls
 
-**Domain:** Static site feature additions (vanilla JS, GitHub Pages, service workers)
-**Project:** Custard Calendar v1.2 Feature Completion & Cleanup
+**Domain:** Bulk flavor profile authoring + pixel art rendering algorithm modification in a live multi-renderer system
+**Project:** Custard Calendar v1.3 -- Asset Parity
 **Researched:** 2026-03-09
-**Confidence:** HIGH (all pitfalls verified against actual codebase files and official documentation)
+**Confidence:** HIGH (all pitfalls verified against actual codebase files, with specific line numbers and color values)
 
 ## Critical Pitfalls
 
-Mistakes that cause broken production, data loss, or cascading regressions across the existing 15-page site.
+Mistakes that cause visible rendering regressions for live users, require full re-renders of 176+ PNGs, or silently break rendering consistency across surfaces.
 
-### Pitfall 1: meta http-equiv Redirects Silently Drop Query Parameters
+### Pitfall 1: Four-File Color Sync Drift Is Already Happening
 
 **What goes wrong:**
-The old pages (scoop.html, radar.html, calendar.html, widget.html, siri.html, alerts.html) need to redirect to new destinations while preserving query parameters like `?store=mt-horeb` or `?primary=madison-todd-drive&secondary=appleton,beloit`. Using `<meta http-equiv="refresh" content="0; url=updates.html">` drops everything after the `?` because the meta tag takes a static URL string. Users who bookmarked `calendar.html?primary=mt-horeb` land on `updates.html` with no store pre-selected, breaking their workflow.
+CONE_PROFILE_SPEC.md requires four files to stay in sync for every color addition: `worker/src/flavor-colors.js` (canonical), `docs/cone-renderer.js` (browser fallback), `tidbyt/culvers_fotd.star` (Tidbyt renderer), and `docs/flavor-audit.html` (seed data). At 40 profiles, drift has already occurred. At 176+ profiles with new base/topping/ribbon colors, each addition multiplies the drift risk by 4x.
 
-Currently these old pages are full-content pages (e.g., scoop.html at 79 lines loads planner-shared.js, shared-nav.js, todays-drive.js and renders a complete page; calendar.html at 678 lines has full calendar subscription UI; alerts.html at 530 lines has full alert signup flow). The redirect requirement means replacing these with thin redirect stubs, but the common mistake is using meta refresh which cannot forward query strings.
+**Verified drift already present in the codebase:**
+
+| Color key | flavor-colors.js (canonical) | cone-renderer.js FALLBACK | culvers_fotd.star | Drift |
+|-----------|------------------------------|--------------------------|-------------------|-------|
+| chocolate (base) | `#6F4E37` | `#7B4A2E` | `#6F4E37` | cone-renderer.js wrong |
+| dark_chocolate (base) | `#3B1F0B` | `#4B2E2E` | `#3B1F0B` | cone-renderer.js wrong |
+| mint (base) | `#2ECC71` | `#8FD9A8` | `#2ECC71` | cone-renderer.js significantly different green |
+| strawberry (base) | `#FF6B9D` | `#E88AAE` | `#FF6B9D` | cone-renderer.js muted |
+| caramel (base) | `#C68E17` | `#C58A45` | `#C68E17` | cone-renderer.js slightly off |
+| peach (base) | `#FFE5B4` | `#F1B37C` | `#FFE5B4` | cone-renderer.js darker |
+| butter_pecan (base) | `#F2E7D1` | `#F2E7D1` | `#D4A574` | Starlark significantly different |
+| chocolate_custard (base) | `#5A3825` | (missing) | (missing) | ABSENT from 2 of 4 files |
+| lemon (base) | `#FFF176` | (missing) | `#FFF176` | ABSENT from cone-renderer.js |
+| blackberry (base) | `#6B3FA0` | (missing) | `#6B3FA0` | ABSENT from cone-renderer.js |
+| caramel (ribbon) | `#D38B2C` | `#D38B2C` | `#DAA520` | Starlark different gold |
+| fudge (ribbon) | `#3B1F0B` | `#4B2E2E` | `#3B1F0B` | cone-renderer.js wrong |
+| marshmallow (ribbon) | `#FFFFFF` | `#EDE3D1` | `#FFFFFF` | cone-renderer.js off-white instead of white |
+| peanut_butter (ribbon) | `#D4A017` | `#9B6A3A` | `#D4A017` | cone-renderer.js significantly darker |
+| andes (topping) | `#1FAE7A` | `#1FAE7A` | `#00897B` | Starlark different teal |
+| dove (topping) | `#2B1A12` | `#2B1A12` | `#3B1F0B` | Starlark lighter (matches fudge) |
+| pecan (topping) | `#8B5A2B` | `#8B5A2B` | `#8B6914` | Starlark yellower |
+| oreo (topping) | `#1A1A1A` | `#3A2E2A` | `#1A1A1A` | cone-renderer.js brownish instead of near-black |
 
 **Why it happens:**
-GitHub Pages has zero server-side redirect capability -- no .htaccess, no _redirects file, no rewrite rules. The obvious "just use meta refresh" approach works for path-only redirects but silently drops query strings. Developers test the redirect without parameters, see it work, and ship it. The bug only surfaces when real users with bookmarked URLs arrive.
+The cone-renderer.js FALLBACK palettes were authored independently as "close enough" approximations before flavor-colors.js became canonical. The Starlark renderer was ported from a different Tidbyt color system with intentionally tweaked colors for the LED display (which renders colors differently than LCD screens). Nobody runs an automated diff between the four files. Adding 136 new profiles means potentially adding new base/topping/ribbon colors, and each addition is another opportunity for the files to silently diverge further.
 
-**How to avoid:**
-Use JavaScript-based redirects that explicitly read `window.location.search` and append it to the target URL. The redirect page should be minimal HTML that immediately performs `window.location.replace(targetUrl + window.location.search + window.location.hash)`. Include a `<noscript>` fallback with a manual link. Do NOT use meta refresh even as a fallback because it can fire before the JS redirect on some browsers and win the race without query params. Do NOT load planner-shared.js or shared-nav.js on redirect pages -- they are unnecessary weight and expand the attack surface.
+**Consequences:**
+When the Worker API is unavailable (offline, slow, error), cone-renderer.js falls back to its FALLBACK_* palettes. The user sees visibly different cone colors than when the API is serving. With 176 flavors, some users will see consistent colors (API up) and some will see wrong colors (offline/fallback), creating a confusing "sometimes it looks right" experience. The Tidbyt display already shows different colors than the web for butter_pecan, caramel ribbon, and multiple toppings.
 
-**Warning signs:**
-- Redirect pages that contain `<meta http-equiv="refresh"` without a companion JS redirect
-- Tests that verify redirects only with bare URLs (no query parameters in test assertions)
-- Redirect target URLs constructed as string literals instead of using `window.location.search`
-- Redirect pages still loading the full JS stack (planner-shared.js, shared-nav.js, etc.)
+**Prevention:**
+1. Before adding any new profiles, fix the existing drift first. Update cone-renderer.js FALLBACK_* to match flavor-colors.js exactly. Add missing keys (chocolate_custard, lemon, blackberry).
+2. Create a CI validation script that programmatically compares color hex values across all four files and fails if any drift is detected.
+3. For Starlark, decide explicitly: should Tidbyt colors match canonical, or are Tidbyt colors intentionally different for LED display? If intentional, document the divergence in CONE_PROFILE_SPEC.md. If unintentional, fix them.
+4. When adding new colors for the 136 profiles, add to all four files in the same commit.
+
+**Detection:**
+- diff the hex values in BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS across all four files
+- flavor-audit.html shows "unknown topping color" when a key exists in flavor-colors.js but not in the audit page's seed data
+- Visually compare: load a page while online (API colors), then reload while offline (FALLBACK colors). Any visible change is a drift bug.
 
 **Phase to address:**
-Early -- redirect pages are standalone HTML files with no dependency on other v1.2 features. They unblock bookmark compatibility immediately.
+First phase -- fix existing drift BEFORE adding any new profiles. New profiles authored against drifted fallbacks will bake in the wrong colors.
 
 ---
 
-### Pitfall 2: Service Worker Serves Stale planner-shared.js After Refactor
+### Pitfall 2: Bulk Profile Authoring Without Automated Contrast Validation
 
 **What goes wrong:**
-The service worker (sw.js) uses stale-while-revalidate for all static assets including planner-shared.js. After the monolith refactor changes planner-shared.js's internal structure or export surface, users with an active service worker receive the OLD cached planner-shared.js on their next visit. If the refactored page scripts now depend on new exports or reorganized code that the old cached version does not provide, the site breaks with `TypeError: CustardPlanner.newFunction is not a function` or silently produces wrong behavior.
+At 136 new profiles, hand-authoring each profile's base/ribbon/topping/density combination introduces systematic errors that are invisible at authoring time but visible to users:
+- `dove` (#2B1A12) on `dark_chocolate` (#3B1F0B): contrast ratio 1.3:1 -- invisible at any scale. Already documented in CONE_PROFILE_SPEC.md but there is no automated check preventing it.
+- `cheesecake_bits` (#FFF8DC) on `cheesecake` (#FFF5E1): contrast ratio 1.02:1 -- CONE_PROFILE_SPEC.md notes "visible on cheesecake base only at HD" but this is already barely visible even at HD.
+- `brownie` (#2D1700) on `dark_chocolate` (#3B1F0B): contrast ratio 1.4:1 -- near-invisible.
+- `salt` (#FFFFFF) on `cheesecake` (#FFF5E1): contrast ratio 1.1:1 -- invisible.
 
-The current sw.js (line 1) uses `CACHE_VERSION = 'custard-v15'` and pre-caches a hardcoded list of 28 assets. The stale-while-revalidate strategy means the old cached planner-shared.js is served first while the new version fetches in the background -- the user sees the broken version and must refresh again to get the fix.
-
-Additionally, the SW is currently only registered on 4 surfaces (today-page.js line 648, compare-page.js line 926, calendar.html line 674, widget.html line 966). The v1.2 requirement to register on fun.html and updates.html means those pages will START caching assets for the first time, creating a coordination point: the first SW install on those pages will cache whatever version is currently deployed.
+At 40 profiles, the CONE_PROFILE_SPEC.md authoring steps ("Check contrast" at step 5) caught these cases manually. At 136 profiles, manual contrast checking will miss combinations because the author is fatigued and the possible base+topping combinations increase quadratically.
 
 **Why it happens:**
-stale-while-revalidate is designed to show cached content immediately and update in the background. This is excellent for performance but dangerous for coordinated multi-file deployments. The SW serves file A from cache (old version) while file B loads from network (new version). If B depends on changes in A, the page breaks on the first load after deployment.
+The authoring workflow has no automated guard rail. CONE_PROFILE_SPEC.md step 5 says "Check contrast" but provides no tool to do so. The flavor-audit.html page flags "sparse toppings" and "unknown topping color" but does NOT flag low-contrast topping-on-base combinations.
 
-**How to avoid:**
-1. Bump `CACHE_VERSION` (to 'custard-v16' or higher) in the same commit that lands the refactored files. This forces the activate handler to delete the old cache entirely and re-fetch all assets.
-2. Add stores.json to the `STATIC_ASSETS` array in sw.js (already a v1.2 requirement).
-3. If the refactor creates new JS files, add them to `STATIC_ASSETS` in the same commit.
-4. Test the deployment sequence: deploy, open in a browser that has the old SW, verify the new SW installs and the page works correctly after one refresh.
-5. For fun.html and updates.html SW registration, deploy the registration code in the same commit as the CACHE_VERSION bump so those pages cache the current (post-refactor) assets on first install.
+**Consequences:**
+Profiles that pass all existing tests (structural invariants, golden hashes) but look wrong to users. The topping pixels exist in the SVG but are invisible against the base color. This is the worst kind of bug: the tests pass, the data is correct, but the visual output is broken.
 
-**Warning signs:**
-- CACHE_VERSION not bumped in a commit that changes pre-cached files
-- New JS files referenced in HTML `<script>` tags but not in the SW STATIC_ASSETS array
-- Tests pass in CI (no SW) but fail in production (active SW serves old cache)
-- Users reporting "it worked after I cleared my cache"
-- fun.html or updates.html caching an old version of planner-shared.js as their first SW install
+**Prevention:**
+1. Build a contrast validation script that, for each profile in FLAVOR_PROFILES: resolves topping colors against the base color, computes the WCAG contrast ratio, and flags any pair below 3:1 (the minimum for "large text" per WCAG AA). This catches invisible toppings before they ship.
+2. Add the contrast check to the flavor-audit.html page as a new flag column. Flag low-contrast pairs with a warning badge.
+3. Establish a palette constraint: certain topping colors are PROHIBITED on certain bases. Document these in CONE_PROFILE_SPEC.md as an explicit blocklist (e.g., "never use dove on dark_chocolate or chocolate_custard").
+4. Author profiles in batches of 10-15, run the contrast validator after each batch, fix violations before proceeding.
+
+**Detection:**
+- Automated contrast ratio script (WCAG luminance formula)
+- flavor-audit.html visual inspection at Mini scale (1x) -- if a topping pixel is invisible at 1x, it is a contrast failure
+- PNG file size comparison: profiles with invisible toppings produce smaller PNGs (fewer unique colors) than similar profiles with visible toppings
 
 **Phase to address:**
-The planner-shared.js refactor and the SW changes (register on fun.html/updates.html, add stores.json to pre-cache) MUST ship in the same CACHE_VERSION bump. Do the refactor first, update sw.js asset list and bump CACHE_VERSION in the same PR, then deploy.
+Build the contrast validation tool BEFORE starting bulk profile authoring. Author profiles in batches with validation checkpoints.
 
 ---
 
-### Pitfall 3: planner-shared.js Refactor Breaks Cross-File Implicit Dependencies
+### Pitfall 3: Rendering Algorithm Changes Break Existing 40 Golden Hashes and 40 PNGs
 
 **What goes wrong:**
-planner-shared.js is 1,639 lines exposing ~40+ symbols on `window.CustardPlanner`. Six other JS files (shared-nav.js, compare-page.js, today-page.js, todays-drive.js, cone-renderer.js, fun-page.js) plus at least 6 HTML pages with inline scripts all reference `CustardPlanner.*` methods directly. The refactor reorganizes the monolith, but if any exported symbol's name, behavior, or initialization timing changes, consuming code breaks silently -- no build step catches the error, no TypeScript flags the missing export.
-
-Specific high-risk implicit dependencies found in the codebase:
-- `compare-page.js` lines 22-23: destructures `WORKER_BASE` and `escapeHtml` from CustardPlanner at module load time
-- `shared-nav.js` line 59: conditionally calls `CustardPlanner.escapeHtml` with an inline fallback
-- `calendar.html` line 127: uses `CustardPlanner.WORKER_BASE` in inline script
-- `alerts.html` lines 246-248: destructures WORKER_BASE, getPrimaryStoreSlug, setPrimaryStoreSlug from CustardPlanner
-- `todays-drive.js`: references getDrivePreferences, saveDrivePreferences, flushDrivePreferences, parseDriveUrlState, pickDefaultDriveStores, and more
-- `cone-renderer.js`: uses a global `WORKER_BASE` variable that's NOT from CustardPlanner but set independently
+The test suite has golden pixel hashes for 5 reference flavors x 4 tiers = 20 golden hashes (flavor-colors.test.js lines 679-700). Any change to the rendering algorithm -- scoop geometry, topping slot positions, ribbon path, highlight/shadow parameters, cone checkerboard -- invalidates ALL golden hashes and ALL 40 existing PNGs simultaneously. The user reports that "even the best SVGs currently look terrible," implying rendering algorithm changes are needed. But changing the algorithm means:
+1. All 20 golden hashes need regeneration (run UPDATE_GOLDENS=1 npm test)
+2. All 40 existing PNGs need regeneration (run generate-hero-cones.mjs)
+3. Every existing cone looks different than before -- users who have seen the current cones will notice the change
+4. The service worker has cached the old PNGs; users see old PNGs until the SW cache updates
 
 **Why it happens:**
-Without a module bundler or TypeScript, there is no static analysis to detect broken references. The IIFE pattern means all internal helpers were available by closure within planner-shared.js, but consuming files accessed them only through the return object (lines 1409-1470). The danger is that the refactor changes the return object's shape, renames an internal function that was indirectly depended on, or changes initialization order.
+The golden hash system is designed to detect unintentional rendering changes -- any pixel change anywhere in the output changes the hash. This is the correct behavior for detecting regressions, but it means intentional quality improvements also trigger every test. The temptation is to update goldens and regenerate PNGs in one large commit, making it impossible to distinguish intentional changes from accidental regressions in code review.
 
-**How to avoid:**
-1. The return object at lines 1409-1470 of planner-shared.js is the public API contract. Document every symbol in that return block BEFORE starting the refactor. Every symbol must continue to exist on `window.CustardPlanner` after the refactor, with the same behavior.
-2. Grep every HTML and JS file in docs/ for `CustardPlanner\.` to build a complete dependency map before splitting anything.
-3. Keep the IIFE pattern and single-file output. The refactor should reorganize the interior of the file (section ordering, extracting internal helper functions, reducing nesting) but NOT change the loading model. Adding new `<script>` tags to 15 HTML pages is a larger risk surface than reorganizing one file.
-4. Run the full Playwright test suite (31 spec files) after every refactor step. The browser tests exercise the real page loading order and will catch missing symbols.
-5. If splitting into multiple files is unavoidable, create a planner-shared.js that loads the parts and re-exports the same `window.CustardPlanner` object. This preserves the existing `<script src="planner-shared.js">` contract across all HTML pages.
+**Consequences:**
+If rendering changes and new profile additions are mixed in the same commit:
+- Cannot tell if a golden hash change is from the algorithm improvement or from a profile bug
+- Cannot tell if a PNG looks different because of the algorithm or because the profile was authored wrong
+- Reverting a profile bug also reverts the algorithm improvement
+- Code review of "136 new profiles + algorithm change" is effectively unreviewable
 
-**Warning signs:**
-- The return object's property list changes (properties removed or renamed)
-- New `<script>` tags added to HTML files (increases the coordination surface)
-- Tests pass when run against a local dev server but fail on the actual deployed site (script loading order differences)
-- "Works in Chrome but not Safari" reports (Safari is stricter about script execution order)
+**Prevention:**
+1. Ship rendering algorithm improvements in their own commits, BEFORE adding new profiles. Each algorithm commit should: change the renderer, run UPDATE_GOLDENS=1 to update hashes, regenerate all 40 existing PNGs, and pass all tests. The commit diff clearly shows "algorithm changed, all outputs updated."
+2. After the algorithm stabilizes (tests pass, existing 40 PNGs look good in flavor-audit.html), THEN start adding new profiles in batches. Each batch commit changes only FLAVOR_PROFILES entries, regenerates only the new PNGs, and the golden hashes for the 5 reference flavors remain stable.
+3. Add more golden reference flavors. The current 5 flavors (vanilla, mint explosion, chocolate caramel twist, dark chocolate decadence, caramel chocolate pecan) cover 5 of the 13 base colors. Add at least one golden per base color to catch base-specific rendering bugs.
+4. Bump CACHE_VERSION in sw.js when deploying new PNGs so the service worker picks up the regenerated assets.
+
+**Detection:**
+- Golden hash failures in CI
+- Git diff showing binary PNG changes to existing flavors
+- flavor-audit.html showing different rendering than cached browser version
 
 **Phase to address:**
-The monolith refactor should be its own focused phase with a dedicated test-and-verify cycle. Do NOT bundle it with other feature work. Ship the refactor, verify all 32+ Playwright tests pass, then proceed to features that depend on the refactored code.
+Algorithm improvement phase FIRST, profile authoring phase SECOND. Never mix them.
 
 ---
 
-### Pitfall 4: Compare Page Multi-Store State Conflicts With Existing Preference System
+### Pitfall 4: cone-renderer.js and flavor-colors.js Have Duplicated Rendering Logic That MUST Stay in Sync
 
 **What goes wrong:**
-The compare page currently manages store state through `custard:v1:preferences` in localStorage (compare-page.js line 131), writing to `parsed.activeRoute.stores`. The Today page and Today's Drive use the same preference object through `CustardPlanner.getDrivePreferences()` and `CustardPlanner.saveDrivePreferences()`. Adding multi-store side-by-side comparison means the compare page needs to manage 2-4 store selections simultaneously, but this writes to the same localStorage key that Today's Drive reads.
+`worker/src/flavor-colors.js` contains the canonical renderers (`renderConeSVG`, `renderConeHDSVG`, `renderConePremiumSVG`, `renderConeHeroSVG`) used by the Worker API and PNG generation pipeline. `docs/cone-renderer.js` contains independently written browser-side renderers (`renderMiniConeSVG`, `renderMiniConeHDSVG`) used as SVG fallback when PNGs are unavailable. These two files implement the same rendering logic in different JavaScript dialects (ES modules with `const`/`let`/arrow functions vs. vanilla JS with `var` and string concatenation) and have DIFFERENT:
 
-The existing code at compare-page.js lines 149-167 already has this coupling -- `saveStoreSlugs()` writes directly to `custard:v1:preferences.activeRoute.stores` and even calls `CustardPlanner.saveDrivePreferences()`. If the compare page saves 4 stores to `activeRoute.stores`, Today's Drive picks up all 4 and treats them as "drive route" stores, showing drive rankings for stores the user only wanted to compare side-by-side. This becomes more pronounced when expanding from the current store-switching behavior to true side-by-side comparison.
+- **Scoop geometry**: flavor-colors.js Mini uses scoopRows `[[3,5],[2,6],[1,7],[1,7],[1,7]]` (5 rows). cone-renderer.js uses `[[3,5],[2,6],[1,7],[1,7],[1,7]]` (same). BUT the HD cone in flavor-colors.js has 11 scoop rows including `[4,13]` at the top and `[3,14]` at the bottom, while cone-renderer.js HD has `[[4,13],[2,15],...]` with `[2,15]` at row 1 instead of `[3,14]`. This is a subtle geometry difference that produces different scoop shapes at HD scale.
+- **Color resolution**: flavor-colors.js resolves colors from exported constants directly. cone-renderer.js resolves from `flavorColorData` (API response) first, falling back to FALLBACK_* constants. The FALLBACK_* constants are already drifted (see Pitfall 1).
+- **No Premium or Hero tier in cone-renderer.js**: The browser fallback only has Mini and HD renderers. If the rendering algorithm changes add a new tier or modify the HD tier, the browser fallback must be updated in lockstep.
+- **Profile data flow**: flavor-colors.js reads from the in-memory `FLAVOR_PROFILES` object. cone-renderer.js reads from the API response (`flavorColorData.profiles`), which is a JSON serialization of the same object. If the profile schema changes (e.g., adding `l2_toppings`), the API response shape changes, and cone-renderer.js must handle the new fields.
 
 **Why it happens:**
-The preference system was designed when "stores" meant the same thing on every page -- the user's saved stores for their daily drive route. The multi-store compare feature redefines "stores" to mean "stores I want to see side-by-side" which is a different intent. Using the same storage key for different intents causes silent data corruption across pages.
+cone-renderer.js was extracted from duplicated inline code across HTML pages (per its own header comment). It was made independent of the Worker code because the docs/ directory serves from GitHub Pages with no build step -- it cannot import ES modules from worker/src/. This architectural constraint means any rendering logic change must be manually ported between the two files.
 
-**How to avoid:**
-1. Create a separate localStorage key for compare-specific store selections (e.g., `custard:v1:compare-stores`) that does NOT write to the drive preferences.
-2. On compare page load, seed from the drive preferences as a default (current behavior at lines 140-144) but save compare state independently going forward.
-3. Use the existing CustomEvent bridge (`sharednav:storechange`) to communicate primary store changes to other components, but do NOT propagate compare-only store additions through the drive preferences.
-4. Add a Playwright test that explicitly verifies: select 4 stores on compare page, navigate to Today page, verify Today's Drive only shows the expected number of stores (not all 4 from compare).
+**Consequences:**
+After modifying the rendering algorithm in flavor-colors.js:
+- PNGs regenerated from the new algorithm look correct
+- SVG fallbacks rendered by cone-renderer.js still use the OLD algorithm
+- When a user's PNG fails to load (404, slow network, new flavor without a PNG), the fallback SVG looks visibly different from the PNG -- different scoop shape, different topping placement, different colors
+- This is most visible on new flavors that have profiles but no PNGs yet (the user sees only the fallback SVG, which uses the old algorithm)
 
-**Warning signs:**
-- The compare page's `saveStoreSlugs()` still calls `CustardPlanner.saveDrivePreferences()`
-- Today's Drive suddenly shows more stores than the user selected on the Today page
-- Existing Playwright tests for `drive-preferences.spec.mjs` start failing after compare changes
-- Users report "my stores keep changing" across page navigations
+**Prevention:**
+1. After any rendering algorithm change in flavor-colors.js, port the same change to cone-renderer.js in the same commit. The two files use different JS syntax but identical grid geometry and slot positions.
+2. Add a test that renders the same flavor through both flavor-colors.js renderConeSVG and a simulated cone-renderer.js renderMiniConeSVG (using the canonical color data, not fallbacks) and asserts pixel-identical output. This catches sync drift as a test failure.
+3. Consider generating cone-renderer.js from flavor-colors.js as a build step (even a simple Node script that transpiles ES module syntax to var/function syntax). This eliminates manual porting entirely.
+4. If algorithm changes introduce new features (new scoop geometry, new topping placement logic, new l2_toppings override handling), verify that cone-renderer.js already handles them. The l2_toppings feature was correctly ported (cone-renderer.js lines 215-231), proving the pattern works when followed.
+
+**Detection:**
+- Render a flavor via both files at the same scale, compare the SVG output byte-for-byte
+- Visual comparison in flavor-audit.html: does the SVG column match the PNG column?
+- Grep for hardcoded slot positions (topping slots, ribbon slots, scoop rows) in both files and diff them
 
 **Phase to address:**
-Address the state separation BEFORE building the multi-store comparison UI. The data model change should be a small, testable PR that updates how compare reads/writes stores, with a Playwright test verifying cross-page isolation.
+Every rendering algorithm change commit must include the cone-renderer.js port. Do not defer porting to a later phase.
 
 ---
 
-### Pitfall 5: Hero Cone PNG Pipeline Produces Inconsistent Output at 176 Flavors
+### Pitfall 5: Sharp Rasterization Produces Blurry PNGs at 120px Width
 
 **What goes wrong:**
-The current pipeline produces 40 PNGs in `docs/assets/cones/` (verified). Scaling to ~176 flavors (40 existing + ~136 new) means authoring 136 new cone profiles in `worker/src/flavor-colors.js`, then rendering each through the SVG-to-PNG pipeline. At this scale, subtle inconsistencies compound: color drift between rendering batches (if the rendering environment changes between runs), missing topping contrast checks (dove #2B1A12 on dark_chocolate #3B1F0B is nearly invisible per CONE_PROFILE_SPEC.md), inconsistent density choices, and PNG file sizes that vary wildly.
+The generate-hero-cones.mjs pipeline renders Hero SVGs at scale 4 (= 144x168px) then resizes to 120px width via `sharp(svgBuffer).resize({ width: 120, kernel: 'nearest' })`. The `kernel: 'nearest'` preserves pixel art crispness (no anti-aliasing), but 120px is not an even multiple of the 36px Hero grid width: 120 / 36 = 3.33x. Nearest-neighbor resampling at a non-integer scale factor means some pixel columns are 3px wide and others are 4px wide, producing an uneven grid that looks subtly wrong -- waffle cone checkerboard lines are inconsistent widths, topping pixels are different sizes.
 
-The existing 40 PNGs have been hand-verified via flavor-audit.html. At 136 new flavors, manual verification becomes impractical and batch quality issues will slip through. Additionally, per CONE_PROFILE_SPEC.md, four files must stay in sync for every color addition: `worker/src/flavor-colors.js`, `docs/cone-renderer.js`, `tidbyt/culvers_fotd.star`, and `docs/flavor-audit.html`. At 136 new profiles, the likelihood of these files drifting apart increases significantly.
+The user reports that "even the best SVGs currently look terrible." If the issue is this non-integer scaling, improving the SVG rendering algorithm will not fix the PNG output because the quality loss happens during rasterization.
 
 **Why it happens:**
-SVG-to-PNG rendering is not deterministic across environments -- different rendering engines (Chromium Skia vs. Firefox Cairo vs. Node canvas) produce slightly different anti-aliasing and color output. Cone profiles are authored by hand using CONE_PROFILE_SPEC.md, but at 136 profiles the likelihood of authoring errors (wrong base color, invisible toppings, density mismatch) increases linearly. There is no automated quality gate beyond what flavor-audit.html shows visually.
+The scale factor (4x = 144px source, resized to 120px = 0.833x downsample) was chosen to produce a "nice round" output width (120px) without considering that pixel art requires integer scale factors to look correct. Nearest-neighbor at non-integer factors produces visible artifacts that anti-aliased resampling would smooth out -- but anti-aliasing destroys the pixel art aesthetic.
 
-**How to avoid:**
-1. Render ALL 176 PNGs in a single batch run using the same tool version and environment. Never mix PNGs from different rendering runs -- git will show diffs on existing PNGs if the environment changed.
-2. Build an automated quality check script that validates each profile against CONE_PROFILE_SPEC.md rules: contrast ratio between toppings and base color, density slot count matches topping array length, ribbon-T4 conflict acknowledged.
-3. Set a file size budget per PNG based on the existing 40 PNGs' median and max. Flag any new PNG exceeding 2x the median.
-4. Batch-author profiles in groups of 10-15, review via flavor-audit.html, then proceed. Do NOT author all 136 at once.
-5. The SW runtime-caches cone PNGs via stale-while-revalidate (sw.js lines 64-78). At 176 PNGs, the runtime cache could grow to several MB. The current approach (runtime cache, not pre-cache) is correct -- do not add cone PNGs to the pre-cache list.
+**Consequences:**
+Every PNG has subtly uneven pixel sizes. The waffle cone checkerboard (the most regular pattern in the image) makes the unevenness most visible -- some checkerboard squares are 3px and others are 4px. This is likely a significant contributor to the "looks terrible" assessment.
 
-**Warning signs:**
-- PNG files with wildly different sizes for similar profiles (e.g., 2KB vs 50KB)
-- flavor-audit.html shows "unknown topping color" or "sparse toppings" flags on new profiles
-- Git diff shows binary PNG changes to EXISTING flavors (rendering environment changed)
-- The four sync files (flavor-colors.js, cone-renderer.js, culvers_fotd.star, flavor-audit.html) have different color palette entries
+**Prevention:**
+1. Choose output dimensions that are exact integer multiples of the grid size. For the 36x42 Hero grid: scale 3 = 108x126px, scale 4 = 144x168px, scale 5 = 180x210px. Skip the resize step entirely and output at the native scale.
+2. If 144px is too large for the hero image container, adjust the CSS to display the image at the desired visual size using `width`/`height` CSS properties on the `<img>` element, keeping the underlying PNG at a clean integer multiple.
+3. If a specific output width is required (e.g., 120px), render the SVG at a scale that produces exactly that width. For 120px: 120 / 36 = 3.33x (bad). Instead, render at scale 3 (108px) and let the browser upscale via CSS, or render at scale 4 (144px) and let the browser downscale via CSS with `image-rendering: pixelated`.
+4. Add `image-rendering: pixelated` (or `-ms-interpolation-mode: nearest-neighbor` for Edge) to the `.hero-cone-img` CSS class to ensure the browser preserves pixel art crispness during display scaling.
+
+**Detection:**
+- Zoom in on any generated PNG at 400% and check if all checkerboard squares are the same size
+- Compare PNG output at 120px vs. 144px (native scale 4) -- the 144px version should look noticeably crisper
+- Count unique pixel widths in a horizontal slice of the checkerboard -- should be exactly 1 width for clean scaling
 
 **Phase to address:**
-The cone PNG pipeline should be a dedicated batch phase after the planner-shared.js refactor. Profile authoring should happen in batches of 10-15 with flavor-audit.html review checkpoints, not as one massive commit of 136 profiles.
+Address during the rendering algorithm improvement phase, BEFORE regenerating PNGs for all 176 flavors. Regenerating 176 PNGs at the wrong scale factor and then fixing it later means regenerating all 176 again.
 
 ---
 
-## Technical Debt Patterns
+## Moderate Pitfalls
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Keeping all 6 old pages as full HTML instead of converting to thin JS redirect stubs | Old pages still "work" with full content | Maintaining 6 duplicate pages with shared-nav, analytics, full JS stack | Never -- they should be minimal redirect stubs to reduce maintenance surface |
-| Skipping CACHE_VERSION bump for "small" changes | Faster deploy cycle | Users stuck on stale cached assets until browser's ~24h SW update check | Never -- every change to pre-cached files must bump the version |
-| Using the same localStorage key for compare and drive store lists | No migration needed, fewer code changes | Silent cross-page state leaks that produce confusing UX bugs | Never -- the intents are different enough to warrant separate keys |
-| Inlining compare multi-store CSS in compare.html instead of style.css | Faster iteration on compare feature | CSS diverges from the 37-token design system; inconsistencies across pages | Only during prototyping; must migrate to style.css before shipping |
-| Authoring cone profiles without automated contrast validation | Ship faster, skip quality tooling | Invisible toppings at small sizes, inconsistent visual quality | Only for first 10-15 profiles to validate pipeline; must add validation before scaling to 136 |
-| Adding `<script>` tags to HTML pages for split planner modules | Clean module separation | Every HTML page (15+) needs updating; script loading order becomes a coordination problem | Never for the refactor -- keep the single-file IIFE pattern |
+### Pitfall 6: Keyword Fallback Ordering Bug Creates Wrong Profiles
 
-## Integration Gotchas
+**What goes wrong:**
+`getFlavorProfile()` in flavor-colors.js (lines 126-149) uses sequential `if (key.includes(...))` checks as a keyword fallback for unknown flavors. The ordering matters: `'double butter pecan'` is checked before `'butter pecan'` (line 137 before line 145), which is correct. But `'chocolate'` (line 140) is checked before `'vanilla'` (line 146), which means a flavor like "Chocolate Vanilla Twist" matches `chocolate` first and gets a chocolate base even if the flavor is primarily vanilla.
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| Service worker + new/changed JS files | Adding new `<script>` references or changing planner-shared.js without updating STATIC_ASSETS in sw.js | Always update sw.js STATIC_ASSETS and bump CACHE_VERSION in the same commit |
-| Service worker + redirect pages | SW caches old redirect pages with full content; the JS redirect never fires because the cached full-page version loads | Exclude redirect pages from SW cache entirely, OR ensure the cached version contains only the redirect logic (thin stub) |
-| localStorage + CustomEvent bridge | Writing to localStorage without dispatching `sharednav:storechange` | Always dispatch the event after writing so other components react; use CustardPlanner.saveDrivePreferences() which handles both |
-| GitHub Pages + CNAME + redirect URLs | Redirect target URLs using absolute paths that break if accessed via the github.io domain instead of the CNAME | Use relative URLs in redirects (e.g., `./updates.html` not `https://custard.chriskaschner.com/updates.html`) |
-| Playwright tests + service worker | Tests run against local dev server without SW; production has active SW that changes behavior | Run at least one Playwright test scenario with SW active to catch cache-related regressions |
-| cone-renderer.js + flavor-colors.js | Worker-side flavor-colors.js adds new colors but docs/cone-renderer.js FALLBACK_* constants are not updated | Per CONE_PROFILE_SPEC.md, four files must stay in sync: flavor-colors.js, cone-renderer.js, culvers_fotd.star, flavor-audit.html |
-| Map exclusion filter + localStorage | Filter state lost on page reload; user must re-apply exclusions every session | Persist exclusion state to localStorage using the same pattern as compare-page.js lines 59-77 |
-| CI repo structure check + .planning/ directory | .planning/ not listed in REPO_CONTRACT.md allowed directories; CI check fails and blocks all PRs | Update REPO_CONTRACT.md or the check script to allow .planning/ BEFORE any other work lands |
+At 136 new profiles, many of the new flavors will NOT have exact-match profiles during development (profiles are added incrementally). During the gap between "flavor appears in upstream data" and "profile added to FLAVOR_PROFILES," the keyword fallback determines what the user sees. Wrong fallback ordering means wrong base colors for days or weeks.
 
-## Performance Traps
+**Prevention:**
+1. Order keyword checks from most specific to least specific. Check compound keywords first (`'double butter pecan'`, `'dark choc'`, `'butter pecan'`) before single-word keywords (`'chocolate'`, `'vanilla'`, `'mint'`).
+2. Add a "fallback coverage" test that runs every known upstream flavor name through `getFlavorProfile()` and asserts the fallback base color is reasonable. This catches "chocolate vanilla twist gets chocolate instead of vanilla" before it reaches users.
+3. Consider adding a `lemon` keyword check (currently missing -- lemon flavors fall back to vanilla).
+4. Consider adding a `blackberry` keyword check (currently missing).
 
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| SW runtime cache grows with 176 cone PNGs | Mobile users accumulate large cache; potential storage pressure | Current approach is correct (runtime cache, not pre-cache); monitor total cache size after deploying all 176 | At 176 PNGs at ~5-50KB each: 1-9MB total, within mobile limits but worth monitoring |
-| Compare page fetches flavor data for 4 stores simultaneously | 4 parallel API calls on page load; slow on mobile networks; potential rate limiting | Stagger fetches or load the primary store first, then fetch comparison stores; show progressive loading UI | At 4 stores with 7-day data each; manageable but test on throttled 3G |
-| stores.json in SW pre-cache becomes stale between deployments | stores.json cached at SW install time; new stores added after deploy are invisible | Use the existing date-based cache-bust pattern (`?v=` + ISO date) that several pages already use (compare-page.js line 174, alerts.html line 280) | When new stores are added between SW version bumps |
-| 136 new cone PNGs added to git history | Repository size increases; clone times grow | At ~136 PNGs averaging 10KB each = ~1.4MB; manageable but sets precedent for future additions | Not a practical concern at this scale, but consider git LFS if pattern continues |
+**Detection:**
+- New flavors appearing with obviously wrong base colors (e.g., a lemon flavor showing as vanilla because there is no keyword fallback for lemon)
+- Test that exercises every keyword path with a flavor name that should match
 
-## Security Mistakes
+**Phase to address:**
+Add missing keyword checks and reorder existing ones at the start of the profile authoring phase, before any new profiles are added.
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Redirect pages inject query params into HTML without escaping | XSS via crafted URLs like `?store=<script>alert(1)</script>` | Use `encodeURIComponent()` when appending query params; never inject query values into innerHTML |
-| Old redirect pages still load the full JS stack | Unnecessary attack surface on 6 pages that should be minimal | Redirect pages should contain ONLY the redirect script -- no planner-shared.js, no shared-nav.js, no analytics |
-| CSP headers inconsistent between redirect stubs and main pages | Security policy gaps on redirect pages | Either use the same CSP meta tag across all pages, or omit it from redirect stubs (they execute no meaningful user content) |
+---
 
-## UX Pitfalls
+### Pitfall 7: Service Worker Caches Old PNGs After Regeneration
 
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| Redirect flashes old page content before navigating | User sees "The Scoop" header or full calendar UI then jumps to a different page -- feels broken | Redirect pages should have a blank/minimal body ("Redirecting..."), not the old page content |
-| Compare multi-store picker silently changes Today's Drive stores | User picks stores for comparison, later finds their daily drive route has extra stores they did not add | Separate localStorage keys; compare selections must not affect drive preferences |
-| SW serves stale page after deployment with no user signal | User sees old version of a page; wonders if update shipped | Include a visible "New version available" toast when SW detects an update during stale-while-revalidate background fetch |
-| Map flavor family exclusion filter not persisted | User sets "no mint" filter, leaves page, returns to find filter reset | Use localStorage for filter state (same pattern as compare-page.js exclusion persistence) |
-| Quiz image answers not loading on slow mobile connections | User sees broken image placeholders instead of flavor choices | Use the existing SVG fallback (cone-renderer.js renderMiniConeSVG) as default; load PNG as progressive enhancement |
-| Mad Libs chips have class names but no CSS definitions | Chips render as unstyled text; looks broken rather than intentionally plain | Define the CSS classes in style.css using design tokens BEFORE shipping the feature to production |
+**What goes wrong:**
+The service worker (sw.js) uses stale-while-revalidate for runtime-fetched assets including cone PNGs. When PNGs are regenerated (either from algorithm changes or new profiles), users with an active service worker continue seeing the OLD cached PNGs until the SW's background revalidation completes. For algorithm changes that alter every existing cone, this means every returning user sees the old rendering on their first visit after deployment.
+
+At 176 PNGs, the SW runtime cache holds potentially 176 x ~10KB = ~1.8MB of PNG data. The stale-while-revalidate strategy serves all of these from cache immediately and fetches updates in the background. The user sees stale cones until their next page load.
+
+**Prevention:**
+1. Bump CACHE_VERSION in sw.js whenever PNGs are regenerated. This triggers the activate handler to delete the old cache entirely.
+2. For algorithm changes that affect all existing PNGs, the CACHE_VERSION bump is mandatory.
+3. For new-profile-only additions (new PNGs, no changes to existing PNGs), a CACHE_VERSION bump is optional but recommended for consistency.
+4. Do NOT add cone PNGs to the SW pre-cache list (STATIC_ASSETS). They belong in the runtime cache. Pre-caching 176 PNGs would add ~1.8MB to the initial SW install payload.
+
+**Detection:**
+- Users reporting "cones look different after I refresh" (stale-while-revalidate serving old version first)
+- CACHE_VERSION not bumped in a commit that regenerates PNGs
+
+**Phase to address:**
+Every deployment that includes PNG regeneration must bump CACHE_VERSION.
+
+---
+
+### Pitfall 8: Flavor Name Normalization Inconsistencies Across Renderers
+
+**What goes wrong:**
+The canonical renderer (flavor-colors.js) normalizes flavor names via `getFlavorProfile()` which lowercases and normalizes unicode curly quotes. The browser-side renderer (cone-renderer.js) normalizes via `normalizeFlavorKey()` which additionally strips TM/R symbols and normalizes whitespace. The Starlark renderer uses its own normalization (Python `.lower()`). If upstream flavor data contains characters that one normalizer handles and another doesn't, the renderers produce different profile lookups for the same flavor name.
+
+At 136 new profiles, the chance of encountering flavor names with non-ASCII characters, trademark symbols, or unusual whitespace increases. Culver's flavor names are known to use unicode curly quotes (e.g., "Reese's" with `\u2019`).
+
+**Prevention:**
+1. Ensure all three normalizers handle the same character set: lowercase, strip TM/R, normalize curly quotes, collapse whitespace.
+2. Add test cases with TM/R symbols, curly quotes, and multiple spaces to the flavor-colors.test.js suite.
+3. When adding new profiles, use the exact lowercase name as it appears in upstream data as the profile key, and verify it matches what each normalizer produces.
+
+**Detection:**
+- A flavor name matches a profile in flavor-colors.js but not in cone-renderer.js (or vice versa)
+- A flavor shows correct colors on the Worker-rendered social card but wrong colors on the browser-rendered SVG fallback
+
+**Phase to address:**
+Harmonize normalizers before starting profile authoring. Test with known problematic names from upstream data.
+
+---
+
+### Pitfall 9: HD Scoop Geometry Inconsistency Between Canonical and Browser Renderers
+
+**What goes wrong:**
+The HD cone scoop geometry differs subtly between the two renderers. In flavor-colors.js `renderConeHDSVG()`, the scoopRows start with `[4, 13]` at row 0, then `[3, 14]` at row 1, then `[2, 15]` for rows 2-9, then `[2, 15]` at row 10 (which is labeled as "12px, full-width bottom"). In cone-renderer.js `renderMiniConeHDSVG()`, the scoopRows are `[[4,13],[2,15],[2,15],...,[2,15]]` -- 11 rows but row 1 jumps directly from `[4,13]` to `[2,15]`, skipping the intermediate `[3,14]` taper.
+
+This means the canonical HD cone has a 3-step taper (row 0: 10px, row 1: 12px, row 2+: 14px) while the browser fallback HD cone has a 2-step taper (row 0: 10px, row 1+: 14px). The browser fallback produces a slightly different scoop shape -- wider at the top.
+
+**Consequences:**
+When a PNG fails to load and the browser falls back to `renderMiniConeHDSVG()`, the resulting SVG has a different scoop shape than the PNG it replaces. This is visible when both PNGs and SVGs appear on the same page (e.g., some flavors have PNGs and others fall back to SVG).
+
+**Prevention:**
+1. Copy the exact scoopRows from flavor-colors.js `renderConeHDSVG()` to cone-renderer.js `renderMiniConeHDSVG()`.
+2. Add a cross-renderer pixel comparison test.
+
+**Detection:**
+- Render the same flavor through both HD renderers at scale 1 and compare the pixel maps
+
+**Phase to address:**
+Fix during the rendering sync phase (same as Pitfall 1 fix).
+
+---
+
+### Pitfall 10: Batch PNG Generation Without Idempotency Produces Inconsistent Git History
+
+**What goes wrong:**
+Running `generate-hero-cones.mjs` multiple times should produce identical PNGs. But sharp's SVG rasterization is not guaranteed to be bit-identical across different versions of sharp, libvips, or even between macOS and Linux. If one developer generates PNGs on macOS with sharp 0.33 and another generates on Linux with sharp 0.34, the resulting PNGs are visually identical but byte-different, producing noisy git diffs where every PNG shows as "modified" even though nothing changed visually.
+
+At 176 PNGs, a full regeneration that produces byte-different (but visually identical) output creates a commit with 176 binary file changes, making it impossible to identify which PNGs actually changed visually.
+
+**Prevention:**
+1. Pin the sharp version in package.json (not a range).
+2. Document the required OS/architecture for generation (or use a container).
+3. Only regenerate PNGs that have changed profiles. Add a script that diffs FLAVOR_PROFILES against the last generation run and only regenerates changed/new profiles.
+4. Consider storing a generation metadata file (e.g., `docs/assets/cones/manifest.json`) that records the profile hash for each PNG. Only regenerate when the profile hash changes.
+
+**Detection:**
+- Git diff shows binary changes to PNGs whose profiles did not change
+- CI shows hundreds of PNG file changes in a commit that only added 10 new profiles
+
+**Phase to address:**
+Implement selective regeneration before scaling to 176 flavors. At 40 flavors, full regeneration is quick. At 176, it is wasteful and produces noisy diffs.
+
+---
+
+## Minor Pitfalls
+
+### Pitfall 11: Missing chocolate_custard in Keyword Fallback Chain
+
+**What goes wrong:**
+`getFlavorProfile()` has no keyword fallback for `chocolate_custard`. Flavors with "custard" in the name (e.g., "Chocolate Custard Surprise") would match `chocolate` (line 140) and get the lighter `#6F4E37` base instead of the deeper `#5A3825` custard base. This is visually wrong -- chocolate custard flavors should use the richer, deeper brown.
+
+**Prevention:**
+Add a keyword check for `'custard'` before the `'chocolate'` check, returning `chocolate_custard` base.
+
+**Phase to address:**
+Fix during keyword fallback cleanup (Pitfall 6).
+
+---
+
+### Pitfall 12: l2_toppings Override Only Exists for One Flavor
+
+**What goes wrong:**
+The `l2_toppings` per-pixel override feature (precise topping placement for specific flavors) was added for `blackberry cobbler` and is handled correctly in both flavor-colors.js and cone-renderer.js. But if multiple new flavors need precise placement (e.g., flavors where the fixed slot positions produce poor results), the l2_toppings format must be documented and tested for edge cases: positions outside scoop bounds, duplicate positions, positions that collide with ribbon slots.
+
+**Prevention:**
+1. Add test cases for l2_toppings edge cases: position at scoop boundary, position outside scoop, empty array.
+2. Document the l2_toppings format in CONE_PROFILE_SPEC.md (currently undocumented -- it only exists in the code).
+3. Validate l2_toppings positions against the scoop mask in the contrast validation script.
+
+**Phase to address:**
+Address when authoring profiles that need l2_toppings overrides.
+
+---
+
+### Pitfall 13: Topping Color Key Mismatches Between Profile and Palette
+
+**What goes wrong:**
+A profile can reference a topping key (e.g., `'pretzel'`) that does not exist in `TOPPING_COLORS`. The renderer silently skips the topping (`if (!color) continue;`). The profile appears valid, the tests pass (structural invariants only check that pixels are within bounds, not that all toppings rendered), but the cone is missing a topping.
+
+At 136 new profiles, the risk of typos in topping keys increases. A profile with `toppings: ['peanut_butter_cup']` would silently produce no topping because the key is `reeses` not `peanut_butter_cup`.
+
+**Prevention:**
+1. Add a test that iterates all profiles and asserts every topping key exists in TOPPING_COLORS.
+2. Add a test that iterates all profiles and asserts every base key exists in BASE_COLORS and every ribbon key exists in RIBBON_COLORS.
+3. Run this test as part of CI so typos are caught before merge.
+
+**Detection:**
+- flavor-audit.html flags "unknown topping color"
+- Cone renders with fewer toppings than expected (topping pixel count < density slot count)
+
+**Phase to address:**
+Add the validation test before starting profile authoring.
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| Fix existing color drift | Updating FALLBACK colors in cone-renderer.js but missing Starlark | Diff all four files as a validation step before committing |
+| Rendering algorithm improvement | All 20 golden hashes break, all 40 PNGs regenerated | Ship algorithm changes in their own commit, separate from profile additions |
+| PNG scale factor fix | Choosing a new output size breaks CSS layout | Test the new PNG dimensions in all display contexts (hero, index, quiz, social card) |
+| Keyword fallback cleanup | Adding new keywords that shadow existing ones | Test with ALL known upstream flavor names, not just the new ones |
+| Batch profile authoring (first 15) | Low-contrast toppings pass tests but look invisible | Run contrast validator, review in flavor-audit.html at Mini scale |
+| Batch profile authoring (16-136) | Fatigue-driven errors -- wrong base, wrong density, typo in topping key | Use the automated validation suite (contrast, key existence, structural invariants) on every batch |
+| PNG generation for new profiles | Sharp version difference produces byte-different PNGs for existing unchanged profiles | Pin sharp version, only regenerate changed profiles |
+| Service worker update | Users see old PNGs until next page load | Bump CACHE_VERSION in the same commit as PNG deployment |
+| cone-renderer.js port | Porting rendering changes misses a subtle geometry difference | Add cross-renderer pixel comparison test |
+| New base/topping/ribbon colors | Adding to flavor-colors.js but forgetting cone-renderer.js FALLBACK or Starlark | CI script that diffs color keys across all four files |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Redirect pages:** Often missing query parameter forwarding -- verify with `calendar.html?primary=mt-horeb` and confirm destination URL contains the query params
-- [ ] **Redirect pages:** Often missing hash fragment forwarding -- verify `widget.html#section` forwards the hash
-- [ ] **SW registration on fun.html/updates.html:** Often missing the CACHE_VERSION bump -- verify the SW version matches the latest deployment
-- [ ] **SW stores.json pre-cache:** Often added to STATIC_ASSETS with wrong relative path -- verify the path matches what the browser actually requests (e.g., `./stores.json` vs `stores.json`)
-- [ ] **planner-shared.js refactor:** Often passes unit tests but breaks script loading order -- verify by opening EVERY HTML page in a browser and checking console for errors
-- [ ] **planner-shared.js refactor:** Often changes internal function names without updating the return object -- verify the return object (line 1409) still exports every symbol the consuming files depend on
-- [ ] **Compare multi-store:** Often works for 2 stores but breaks at the MAX_COMPARE_STORES boundary (line 29: currently 4) -- verify with exactly 4 stores selected
-- [ ] **Compare multi-store:** Often the state isolation works on Compare but the drive preferences spec in `drive-preferences.spec.mjs` regresses -- run that specific test
-- [ ] **Cone PNGs:** Often render correctly in the pipeline tool but show wrong colors in the browser -- verify via flavor-audit.html with both API-served and fallback color palettes
-- [ ] **Cone PNGs:** Often the 4 sync files drift apart -- diff the color key lists across flavor-colors.js, cone-renderer.js, culvers_fotd.star, and flavor-audit.html
-- [ ] **Mad Libs chip CSS:** Often the CSS class is defined but never applied to the correct element -- verify the HTML class attribute values match the CSS selectors exactly
-- [ ] **CI repo structure check:** Often fails because new directories are not in REPO_CONTRACT.md -- verify the allowlist in `scripts/check_repo_structure.py` matches the actual repo
-- [ ] **Push unpushed commits:** Often succeeds locally but CI fails on the pushed branch -- verify ALL CI gates pass before considering the task done
+- [ ] **All four sync files updated:** Check that flavor-colors.js, cone-renderer.js, culvers_fotd.star, and flavor-audit.html all have the same color palette keys and hex values
+- [ ] **Contrast validation passes:** Every topping/base combination in all 176 profiles has >= 3:1 contrast ratio
+- [ ] **No silent topping drops:** Every topping key in every profile exists in TOPPING_COLORS
+- [ ] **PNG scale factor is integer:** Output PNG dimensions are exact integer multiples of the grid dimensions (36x42 for Hero)
+- [ ] **Golden hashes stable after profile additions:** Adding new profiles should NOT change golden hashes for existing reference flavors. If they change, the algorithm changed too (unintentional regression)
+- [ ] **cone-renderer.js HD geometry matches:** Scoop rows in renderMiniConeHDSVG match renderConeHDSVG exactly
+- [ ] **Keyword fallback coverage:** All 13 base color keys have a keyword fallback path (currently missing: lemon, blackberry, chocolate_custard)
+- [ ] **CACHE_VERSION bumped:** sw.js CACHE_VERSION updated in the same commit as any PNG regeneration
+- [ ] **flavor-audit.html shows zero warnings:** All profiles render correctly, no "unknown topping color" or "sparse toppings" flags
+- [ ] **Offline fallback matches online rendering:** Load page with API available, note cone colors. Reload offline. Colors should be identical.
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| SW serves stale/broken assets | LOW | Bump CACHE_VERSION, deploy, wait for browser's ~24h SW check. Can add emergency "Update available" UI that calls `registration.update()` |
-| Redirect drops query params | LOW | Fix the redirect JS, deploy. No permanent data loss -- users just re-follow their bookmarked URLs |
-| planner-shared.js refactor breaks a page | MEDIUM | Revert the refactor commit, deploy the pre-refactor version. The monolith is the known-good state. Risk: other features may have been committed on top, requiring careful cherry-pick |
-| Compare state leaks to drive preferences | MEDIUM | Deploy fix to separate storage keys. Existing corrupted preferences need a migration function that reads old combined state and splits it. Add migration to the next page init cycle |
-| Cone PNG quality issues at scale | HIGH | Must re-author affected profiles, re-render PNGs, and re-deploy. If the rendering environment changed, ALL 176 may need re-rendering for consistency |
-| CI repo structure check blocks merges | LOW | Update REPO_CONTRACT.md to add .planning/ to allowed directories. Quick fix, but blocks ALL PRs until resolved -- fix this first |
-| Mad Libs chips unstyled in production | LOW | Add the CSS definitions, deploy. No data loss, just visual regression. Low urgency but visible to users |
-
-## Pitfall-to-Phase Mapping
-
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| CI repo structure check failure | Infrastructure (first task) | CI green after updating REPO_CONTRACT.md |
-| Redirect query param dropping | Redirects (early, independent) | Playwright test: navigate to old URL with query params, assert destination URL contains them |
-| SW stale content after refactor | SW + Refactor (must be coordinated) | Deploy to production, open in browser with old SW, verify content updates after one refresh |
-| planner-shared.js breaking changes | Refactor (isolated, before features) | All 32+ Playwright tests pass; manual check of console errors on every HTML page |
-| Compare state conflicts | Compare (data model first, UI second) | Playwright test: set stores on compare, navigate to Today, verify drive stores unchanged |
-| Cone PNG quality at scale | Asset pipeline (after refactor, in batches) | flavor-audit.html review per batch; automated contrast/density validation script |
-| SW registered on fun/updates | SW phase (with CACHE_VERSION bump) | Playwright test: load fun.html, verify SW registration succeeds |
-| stores.json pre-cache | SW phase (with CACHE_VERSION bump) | Offline test: load page with SW, go offline, verify stores.json still loads |
-| Map exclusion filter persistence | Map feature phase | Test: set filter, reload page, verify filter state persists |
-| Mad Libs chip CSS | CSS phase (small, independent) | Visual regression test or screenshot comparison |
-| Push unpushed commits | Deployment (early) | All 3 CI gates pass (Worker tests, Python tests, repo structure check) |
+| Color drift in fallback palettes | LOW | Update FALLBACK_* in cone-renderer.js to match flavor-colors.js; deploy |
+| Invisible toppings (low contrast) | MEDIUM | Re-author affected profiles with different base or topping colors; regenerate PNGs; deploy |
+| Rendering algorithm regression after goldens updated | HIGH | Cannot distinguish intentional from accidental changes. Must manually inspect each reference flavor's rendering. Prevention (separate commits) is far cheaper than recovery. |
+| Wrong PNG scale factor baked into 176 PNGs | HIGH | Must regenerate ALL 176 PNGs at the correct scale. If the old PNGs are already deployed, bump CACHE_VERSION to flush them from SW cache. |
+| cone-renderer.js out of sync after algorithm change | MEDIUM | Port the algorithm change; deploy. Risk: users saw inconsistent rendering between PNG and SVG fallback during the gap. |
+| Topping key typo in 30+ profiles | MEDIUM | Find and fix all typos; regenerate affected PNGs. Automated key validation test prevents this entirely. |
+| Service worker serving stale PNGs | LOW | Bump CACHE_VERSION; deploy. Users get new PNGs on next page load after SW updates. |
 
 ## Sources
 
-- Codebase inspection: `docs/sw.js` (95 lines, CACHE_VERSION v15, 28 pre-cached assets), `docs/planner-shared.js` (1,639 lines, 40+ exported symbols), `docs/compare-page.js` (942 lines, state coupling at lines 131-167), `docs/shared-nav.js` (597 lines), `docs/scoop.html` (79 lines, full page with Today's Drive), `docs/calendar.html` (678 lines, full calendar subscription UI), `docs/alerts.html` (530 lines, full alert signup flow), `docs/cone-renderer.js` (366 lines, fallback color palettes), `CONE_PROFILE_SPEC.md` (4-file sync requirement), `REPO_CONTRACT.md` (CI gates, allowed directories), `.github/workflows/ci.yml` (3 CI jobs), `docs/assets/cones/` (40 existing PNGs, 0 SVGs)
-- [Rich Harris: Stuff I wish I'd known sooner about service workers](https://gist.github.com/Rich-Harris/fd6c3c73e6e707e312d7c5d7d0f3b2f9) -- service worker lifecycle, update pitfalls, skipWaiting/claim behavior
-- [Infinity Interactive: When "Just Refresh" Doesn't Work](https://iinteractive.com/resources/blog/taming-pwa-cache-behavior) -- stale-while-revalidate causing stale content, Safari vs Chrome caching differences
-- [Philip Walton: Cascading Cache Invalidation](https://philipwalton.com/articles/cascading-cache-invalidation/) -- multi-file cache coordination pitfalls
-- [GitHub Pages redirect approaches](https://pasdam.github.io/blog/posts/github_pages_redirect/) -- meta refresh limitations on static hosting, no query param forwarding
-- [GitHub community discussion #64096](https://github.com/orgs/community/discussions/64096) -- GitHub Pages has no server-side redirect capability
-- [Qodo: Refactoring Frontend Code](https://www.qodo.ai/blog/refactoring-frontend-code-turning-spaghetti-javascript-into-modular-maintainable-components/) -- monolith refactoring regression risks, importance of test coverage before refactor
-- [Lexo: How to Fix SVG Rendering Issues](https://www.lexo.ch/blog/2025/01/how-to-fix-svg-rendering-issues-why-your-svgs-might-have-0x0-size-and-how-to-solve-it/) -- SVG rendering inconsistencies across engines
-- [Go Make Things: Persisting state across views](https://gomakethings.com/persisting-state-across-views-in-a-multi-page-app-with-vanilla-js/) -- localStorage state management patterns for multi-page apps
-- [SVG AI: SVG to PNG Conversion Guide](https://www.svgai.org/blog/guides/svg-to-png-guide) -- batch rendering consistency, color space issues
+- Codebase inspection: `worker/src/flavor-colors.js` (826 lines, 4 renderer tiers, 40 profiles), `docs/cone-renderer.js` (367 lines, 2 renderer tiers, FALLBACK color palettes), `tidbyt/culvers_fotd.star` (120+ lines inspected, independent color palettes), `worker/test/flavor-colors.test.js` (729 lines, 20 golden hashes, structural invariants for all tiers x all flavors), `scripts/generate-hero-cones.mjs` (128 lines, sharp pipeline with nearest-neighbor resampling at non-integer scale), `CONE_PROFILE_SPEC.md` (268 lines, authoring workflow, 4-file sync requirement), `docs/flavor-audit.html` (audit page with quality flags), `docs/assets/cones/` (40 existing PNGs)
+- WCAG 2.1 contrast ratio requirements: minimum 3:1 for large text/UI components
+- sharp documentation: nearest-neighbor resampling behavior at non-integer scale factors
+- Existing v1.2 PITFALLS.md: service worker caching patterns, CACHE_VERSION bump requirements
 
 ---
-*Pitfalls research for: Custard Calendar v1.2 feature additions*
+*Pitfalls research for: Custard Calendar v1.3 Asset Parity -- bulk flavor profiles + rendering quality*
 *Researched: 2026-03-09*

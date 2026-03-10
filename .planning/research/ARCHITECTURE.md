@@ -1,619 +1,430 @@
-# Architecture Patterns: v1.2 Feature Integration
+# Architecture Patterns
 
-**Domain:** Static site feature integration (GitHub Pages + Cloudflare Worker)
+**Domain:** Flavor profile scaling and cone rendering quality for Custard Calendar v1.3
 **Researched:** 2026-03-09
-**Confidence:** HIGH (based on direct codebase analysis, no external APIs changing)
+**Confidence:** HIGH (all findings from direct source code analysis)
 
 ---
 
-## Overview
+## Current Architecture (As-Is)
 
-All v1.2 features are presentation-layer changes. No Worker/API modifications are needed. The integration challenge is fitting 11 features into the existing static-site architecture without introducing a build step, breaking the IIFE global pattern, or creating service worker cache incoherence.
+### Component Map
 
-This document maps each feature to concrete integration points, identifies new vs. modified components, and recommends a build order that respects dependency chains.
+```
+                     FLAVOR_PROFILES (38 entries)
+                     worker/src/flavor-colors.js (825 lines)
+                            |
+         +------------------+------------------+
+         |                  |                  |
+    Worker API         Build Script       Tidbyt Star
+  /api/v1/flavor-colors    |            (separate repo,
+         |           generate-hero-cones.mjs   reads via API)
+         |                  |
+         v                  v
+  cone-renderer.js     docs/assets/cones/
+  (browser, 367 lines)   (40 PNGs)
+         |
+         v
+  today-page.js, compare-page.js,
+  map.html, radar.html, quiz engine
+```
+
+### Component Responsibilities
+
+| Component | File | Responsibility | Lines |
+|-----------|------|---------------|-------|
+| **Flavor Profile Store** | `worker/src/flavor-colors.js` | FLAVOR_PROFILES object, color palettes (BASE, RIBBON, TOPPING, CONE), profile lookup with fuzzy matching, density resolvers | 825 total |
+| **Server Renderers** | `worker/src/flavor-colors.js` | renderConeSVG (9x11), renderConeHDSVG (18x21), renderConeHeroSVG (36x42), renderConePremiumSVG (24x28) | (same file) |
+| **Browser Renderer** | `docs/cone-renderer.js` | Duplicates Mini (9x11) + HD (18x21) rendering, heroConeSrc PNG lookup + HD SVG fallback | 367 |
+| **Hero PNG Generator** | `scripts/generate-hero-cones.mjs` | Imports renderConeHeroSVG from Worker source, rasterizes via sharp to 120px-wide PNGs | 128 |
+| **Flavor Colors API** | `worker/src/index.js` handleFlavorColors() | Serves FLAVOR_PROFILES + all color palettes as JSON at /api/v1/flavor-colors | ~15 |
+| **Social Card Generator** | `worker/src/social-card.js` | Renders 1200x630 OG SVGs with embedded HD cones | ~200 |
+| **Flavor Catalog** | `worker/src/flavor-catalog.js` | SEED_CATALOG (38 entries) + KV accumulation of new flavors | ~140 |
+| **Flavor Audit Tool** | `docs/flavor-audit.html` | Dev-facing page showing all 4 tiers side-by-side with quality flags | ~600 |
+
+### 4-Tier Rendering System
+
+```
+Tier         Grid     Topping Slots  Ribbon Slots  Used By
+---------    ------   -------------  ------------  --------------------
+Mini (L1)    9x11     4 fixed        3 diagonal    Tidbyt, map markers, widget
+HD   (L2)    18x21    8 fixed        6 S-curve     Radar cards, social cards, hero fallback
+Hero (L3)    36x42    8 fixed 2x2    9 S-curve     Hero PNGs (rasterized), OG cards
+Premium(L4)  24x28    scatter PRNG   band 7-point  Audit page (experimental)
+```
+
+**Rendering layer order (all tiers):**
+1. Base scoop fill (colored rects filling scoop geometry)
+2. Depth shading -- highlight + shadow pixels (HD+ tiers only)
+3. Toppings -- fixed-slot (L1/L2/L3) or seeded scatter (L4)
+4. Ribbon -- rendered last, wins at pixel overlap with toppings
+5. Cone checkerboard + tip
+
+### Data Flow: Profile to Rendered Pixel
+
+```
+1. FLAVOR_PROFILES['dark chocolate pb crunch']
+   -> { base: 'dark_chocolate', ribbon: 'peanut_butter',
+        toppings: ['butterfinger'], density: 'standard' }
+
+2. getFlavorProfile('Dark Chocolate PB Crunch')
+   -> lowercases, unicode normalizes, exact lookup
+   -> Falls back to keyword matching (includes('mint') -> mint generic)
+   -> Falls back to DEFAULT_PROFILE (vanilla, no toppings, standard)
+
+3. resolveToppingSlots(profile) or resolveHDToppingSlots(profile)
+   -> density determines how toppings array maps to slot count
+   -> 'standard' = as-is, 'double' = primary x2,
+      'explosion' = fill all, 'overload' = single x6
+
+4. BASE_COLORS[profile.base] -> hex for scoop fill
+   TOPPING_COLORS[key] -> hex for each topping pixel
+   RIBBON_COLORS[profile.ribbon] -> hex for ribbon pixels
+
+5. renderCone*SVG(flavorName, scale) -> SVG string
+   -> Each pixel = one <rect> at (col*scale, row*scale)
+```
+
+### PNG Pipeline
+
+```
+generate-hero-cones.mjs
+  1. import { FLAVOR_PROFILES, renderConeHeroSVG } from flavor-colors.js
+  2. For each flavor in Object.keys(FLAVOR_PROFILES):
+     a. renderConeHeroSVG(flavorName, 4) -> SVG string (144x168px)
+     b. sharp(svgBuffer).resize({width: 120, kernel: 'nearest'}).png()
+     c. Write to docs/assets/cones/{slug}.png
+  3. Fallback: macOS sips if sharp unavailable
+
+Browser hero cone loading (cone-renderer.js renderHeroCone()):
+  1. heroConeSrc(flavorName) -> 'assets/cones/{slug}.png'
+  2. new Image().src = path
+  3. img.onerror -> renderMiniConeHDSVG(flavorName, 6)  // HD SVG fallback
+```
+
+### Dual-File Rendering Duplication
+
+`flavor-colors.js` (Worker, ES modules, const/let, template literals) and `cone-renderer.js` (browser, var, string concatenation, no imports) duplicate Mini and HD rendering logic. The browser file also contains:
+
+- FALLBACK_*_COLORS objects (hardcoded palette copies for offline use)
+- loadFlavorColors() fetch to /api/v1/flavor-colors
+- heroConeSrc() + renderHeroCone() PNG-first-then-SVG logic
+
+**Sync points that must stay aligned:**
+1. Color palette values (BASE_COLORS, TOPPING_COLORS, RIBBON_COLORS, CONE_COLORS)
+2. Scoop geometry row definitions
+3. Topping slot positions
+4. Ribbon slot positions
+5. Density resolver logic
+6. l2_toppings override handling
 
 ---
 
-## Feature Integration Maps
+## Problem Analysis: Scaling to 176+ Profiles
 
-### 1. Old Page Redirects (scoop, radar, calendar, widget, siri, alerts)
+### Current State
 
-**Problem:** GitHub Pages has no server-side redirects. The six old pages (scoop.html, radar.html, calendar.html, widget.html, siri.html, alerts.html) need to redirect to new locations while preserving query parameters.
+- **38 profiles** in FLAVOR_PROFILES (flavor-colors.js)
+- **38 entries** in SEED_CATALOG (flavor-catalog.js)
+- **40 PNG files** in docs/assets/cones/ (2 extra from historical/renamed)
+- **~176 total flavors** observed across the platform (seed + KV accumulated)
+- **Gap: ~136 flavors** render via keyword fallback or DEFAULT_PROFILE (vanilla, no toppings)
 
-**Integration Pattern: Client-Side Meta Refresh + JS Redirect**
+### Why Keyword Fallback is Inadequate
 
-GitHub Pages supports exactly three redirect mechanisms:
-1. **`<meta http-equiv="refresh">`** -- works without JS, no query param forwarding
-2. **Inline JS redirect** -- preserves `window.location.search`
-3. **Jekyll `redirect_from` plugin** -- not available on GitHub Pages without build step
+`getFlavorProfile()` falls back to keyword matching when no exact profile exists:
 
-Use a combined approach: a `<meta>` tag for no-JS fallback, and an inline `<script>` that forwards query params.
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `scoop.html` | Replace full page with redirect stub to `index.html` | MODIFY (rewrite) |
-| `radar.html` | Replace full page with redirect stub to `index.html` or remove | MODIFY (rewrite) |
-| `calendar.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
-| `widget.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
-| `siri.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
-| `alerts.html` | Redirect stub to `updates.html` | MODIFY (rewrite) |
-
-**Redirect Template:**
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=updates.html">
-  <title>Redirecting...</title>
-  <script>
-    (function() {
-      var target = 'updates.html';
-      var qs = window.location.search;
-      window.location.replace(target + qs);
-    })();
-  </script>
-</head>
-<body>
-  <p>Redirecting to <a href="updates.html">updates</a>...</p>
-</body>
-</html>
+```javascript
+if (key.includes('mint')) return { base: 'mint', ribbon: null, toppings: [], density: 'standard' };
+if (key.includes('caramel')) return { base: 'caramel', ribbon: 'caramel', toppings: [], density: 'standard' };
 ```
 
-**Redirect Mapping:**
+"Caramel Apple Crumble" matches `includes('caramel')` and gets a generic caramel cone with no toppings -- visually wrong. "S'mores" matches nothing and gets vanilla DEFAULT_PROFILE. At 38 profiles this affects most displayed flavors. At 176 profiles the keyword path becomes a true edge case for genuinely new flavors from KV accumulation.
 
-| Old Page | Destination | Rationale |
-|----------|-------------|-----------|
-| `scoop.html` | `index.html` | Scoop was the old "Today's Drive" home |
-| `radar.html` | `index.html` | Radar was 7-day outlook, now on index |
-| `calendar.html` | `updates.html` | Calendar subscription moved to Get Updates |
-| `widget.html` | `updates.html` | Widget setup moved to Get Updates |
-| `siri.html` | `updates.html` | Siri setup moved to Get Updates |
-| `alerts.html` | `updates.html` | Alert signup moved to Get Updates |
+### File Size Projection
 
-**Query Param Preservation:** The JS redirect appends `window.location.search` directly. The destination pages already read `URLSearchParams` -- for example, `updates.html` can accept `?slug=mt-horeb` to pre-select a store. The `scoop.html` currently accepts no meaningful params, but preserving them is zero-cost insurance.
-
-**Service Worker Interaction:** The old page URLs are already in the SW pre-cache list (calendar.html, widget.html are listed). After the redirect rewrite, these entries still work -- the SW caches the redirect stubs. Users who have old cached versions will get the full old page until the SW updates. The `skipWaiting()` + `clients.claim()` pattern ensures the update happens on next visit. Remove old pages from `STATIC_ASSETS` in `sw.js` after redirect stubs are deployed and stable.
-
-**Risk:** Search engines have indexed old URLs. The JS redirect is not ideal for SEO -- Google processes `<meta http-equiv="refresh" content="0">` as a 301, which is acceptable. The `content="0"` (zero delay) is treated as a permanent redirect by Google.
+FLAVOR_PROFILES at 38 entries occupies ~52 lines. At 176 entries: ~230 lines. Combined with rendering code (~700 lines) and palettes (~55 lines), flavor-colors.js grows from 825 to ~1000 lines. Large but manageable for a single-file architecture.
 
 ---
 
-### 2. Map Flavor Family Exclusion Filter with Persistent State
+## Recommended Architecture: What Changes for v1.3
 
-**Problem:** The map page has flavor family filter chips (mint, chocolate, caramel, etc.) but they: (a) currently work as inclusion-only (highlight matching stores), (b) reset on every `refreshResults()` call, and (c) have no persistent state across page loads.
+### Decision: Keep Profiles Inline (Do Not Extract to Separate File)
 
-**Current Architecture:**
-- `activeFamily` variable in map.html inline script (line 189)
-- `applyFamilyFilter()` adjusts marker opacity (0.15 for non-matching, 1 for matching)
-- `storeMatchesFamily()` uses `CustardPlanner.FLAVOR_FAMILY_MEMBERS` reverse lookup
-- Filter resets to 'all' on every `refreshResults()` call (line 331-333)
+**Recommendation: Add all 176 profiles directly to FLAVOR_PROFILES in flavor-colors.js.**
 
-**Integration Pattern: Exclusion Toggle + localStorage Persistence**
+Reasons:
+1. Worker code structural changes are out of scope for v1.3 (PROJECT.md: "Worker/API layer changes" excluded)
+2. 1000 lines is large but not problematic -- the file is well-sectioned with clear headers
+3. flavor-colors.js is already documented as the single source of truth (CONE_PROFILE_SPEC.md)
+4. No import path changes means generate-hero-cones.mjs, social-card.js, cone-renderer.js all work unchanged
+5. Future milestone can extract profiles to a JSON or separate JS file with zero functional change
 
-Change the chip semantics from "show only this family" to "exclude these families" (multi-select). This matches the Compare page's exclusion chip pattern (`custard-exclusions` in localStorage).
+### New Components: None Required
 
-**Component Changes:**
+v1.3 is purely additive data + quality fixes within the existing architecture. No new files, no new modules, no new API endpoints.
 
-| File | Change | Type |
-|------|--------|------|
-| `map.html` | Refactor `activeFamily` to `excludedFamilies: Set`, update chip click handlers, add localStorage read/write | MODIFY |
-| `style.css` | Add `.flavor-chip.excluded` state (strikethrough + muted) to differentiate from `.flavor-chip.active` | MODIFY |
+### Modified Components
 
-**Data Flow:**
-```
-User taps "Mint" chip
-  -> toggles "mint" in excludedFamilies Set
-  -> saves Set to localStorage('custard-map-excluded-families')
-  -> calls applyFamilyFilter()
-  -> markers with mint family get opacity 0.15
-  -> results list filters out excluded family cards
-```
-
-**Persistence Key:** Use `custard-map-excluded-families` (JSON array in localStorage). Separate from `custard-exclusions` used by Compare page because the Compare exclusions are ingredient-based ("No Nuts") while Map exclusions are family-based ("Chocolate").
-
-**State Restoration Flow:**
-```
-Page load
-  -> read localStorage('custard-map-excluded-families')
-  -> parse JSON array into excludedFamilies Set
-  -> apply .excluded class to matching chip buttons
-  -> applyFamilyFilter() runs after first refreshResults()
-```
-
-**Key Change:** Remove the filter reset on lines 331-333 of map.html. The family filter should persist across search refreshes -- users set exclusions once and expect them to stick as they browse the map.
+| Component | What Changes | Risk | Sync Required |
+|-----------|-------------|------|---------------|
+| `worker/src/flavor-colors.js` | FLAVOR_PROFILES grows 38->176. Possibly new palette entries. Possible rendering function quality fixes. | LOW -- additive data, rendering fixes in-place | Yes -- palette additions must sync |
+| `docs/cone-renderer.js` | Must mirror any new palette entries in FALLBACK_*_COLORS. Must mirror any Mini/HD rendering fixes. | MEDIUM -- manual sync risk | Bidirectional with flavor-colors.js |
+| `docs/flavor-audit.html` | Must mirror new palette entries in embedded SEED_* constants | LOW -- dev tool only | Unidirectional from flavor-colors.js |
+| `worker/src/flavor-catalog.js` | SEED_CATALOG should include descriptions for all 176 flavors | LOW -- additive | Independent |
+| `scripts/generate-hero-cones.mjs` | No code changes. Re-run produces all PNGs. | NONE | n/a |
+| `docs/assets/cones/` | Grows from 40 to 176+ PNG files | NONE -- static assets | Generated from flavor-colors.js |
 
 ---
 
-### 3. Quiz Image-Based Answer Options on Mobile
+## Integration Points
 
-**Problem:** Quiz answer options are currently text-only labels. On mobile, image-based options (e.g., showing cone images for "which looks most appealing?") improve engagement and reduce reading fatigue.
+### How Profile Changes Propagate
 
-**Current Architecture:**
-- Quiz engine `renderQuestions()` (engine.js line 330) creates `<label class="quiz-option">` elements
-- Already supports `option.icon` via `window.QuizSprites.resolve(option.icon, 4)` which renders SVG sprites
-- The `has-icon` class is added to labels with icons (line 502)
-- Question type `multiple_choice` is the default path
-
-**Integration Pattern: Extend Existing Icon System with Cone Renderer**
-
-The quiz engine already has an icon slot. The gap is that `window.QuizSprites` is either undefined or only handles sprite-sheet icons. For image-based answers, connect `cone-renderer.js` (already loaded on quiz page? No -- it is NOT currently loaded on quiz.html).
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `quiz.html` | Add `<script src="cone-renderer.js"></script>` before engine.js | MODIFY |
-| `quizzes/engine.js` | In multiple_choice renderer, check for `option.image_type === 'cone'` and render via `renderMiniConeSVG()` instead of QuizSprites | MODIFY |
-| `quizzes/quiz-*.json` | Add `image_type: "cone"` and `image_flavor: "Mint Explosion"` fields to options that should show cone images | MODIFY |
-| `style.css` or `quiz.html <style>` | Add `.quiz-option-cone` class for sizing the inline SVG at mobile-friendly dimensions | MODIFY |
-
-**Rendering Path:**
 ```
-For option with image_type === 'cone':
-  1. Call renderMiniConeSVG(option.image_flavor, 6) for a ~48px cone
-  2. Wrap in <span class="quiz-option-cone">
-  3. Place before the text label inside .quiz-option-copy
-
-For option with option.icon (existing):
-  4. Existing QuizSprites path, no change
-
-For text-only option:
-  5. No change
+1. Add profile to FLAVOR_PROFILES in flavor-colors.js
+   |
+   +-> Worker API /api/v1/flavor-colors automatically includes it
+   |     (handleFlavorColors() returns entire FLAVOR_PROFILES object)
+   |
+   +-> cone-renderer.js picks it up at runtime via loadFlavorColors() fetch
+   |     (no code change needed in browser -- profiles come from API)
+   |
+   +-> generate-hero-cones.mjs picks it up on next run
+   |     (iterates Object.keys(FLAVOR_PROFILES))
+   |
+   +-> social-card.js picks it up immediately
+         (imports getFlavorProfile() which reads FLAVOR_PROFILES)
 ```
 
-**Mobile Layout:** The `.quiz-options-grid` already uses CSS grid. For image options, switch to a 2-column grid at 375px (currently text options stack vertically). Add a media query or a `.quiz-options-grid.has-images` modifier that sets `grid-template-columns: repeat(2, 1fr)`.
+**Key insight:** Adding profiles to FLAVOR_PROFILES is a zero-code-change operation for all consumers. The only manual steps are:
+1. Add the profile entry (data)
+2. Re-run PNG generation (build step)
+3. Deploy Worker (includes updated FLAVOR_PROFILES)
 
-**Dependency:** cone-renderer.js depends on planner-shared.js (already loaded) and the `loadFlavorColors()` async init. The quiz page must call `loadFlavorColors()` before rendering questions with cone images.
+### How New Color Palette Entries Propagate
+
+```
+Add new BASE_COLORS entry (e.g., 'pumpkin': '#E67E22') in flavor-colors.js
+   |
+   +-> MUST also add to cone-renderer.js FALLBACK_BASE_COLORS
+   |     (browser uses fallback when API unavailable)
+   |
+   +-> MUST also add to flavor-audit.html SEED_BASE_COLORS
+   |     (audit page uses seed when running offline)
+   |
+   +-> SHOULD also add to custard-tidbyt Starlark renderer
+         (Tidbyt pixel art uses its own color constants)
+```
+
+**This is the primary sync risk.** Missing a color in cone-renderer.js means offline users see wrong colors. Missing in flavor-audit.html means the dev tool shows wrong previews. The existing CONE_PROFILE_SPEC.md documents this 4-file sync requirement.
+
+### How Rendering Quality Fixes Propagate
+
+```
+Fix in renderConeHeroSVG() (36x42 grid):
+  -> Re-run generate-hero-cones.mjs to update all PNGs
+  -> social-card.js sees fix immediately (same import)
+  -> NO browser-side mirroring needed (Hero only exists server-side)
+
+Fix in renderConeHDSVG() (18x21 grid):
+  -> MUST mirror in cone-renderer.js renderMiniConeHDSVG()
+  -> social-card.js sees fix immediately
+  -> Affects: Radar cards (client), hero fallback (client), OG cards (server)
+
+Fix in renderConeSVG() (9x11 grid):
+  -> MUST mirror in cone-renderer.js renderMiniConeSVG()
+  -> Affects: map markers (client), widget previews (client), Tidbyt (separate)
+```
 
 ---
 
-### 4. Hero Cone PNGs for Remaining ~136 Flavors
+## Build Order (Dependency-Aware)
 
-**Problem:** The flavor catalog has ~176 flavors, but only 40 have FLAVOR_PROFILES entries in `worker/src/flavor-colors.js`. The remaining ~136 need profile entries before `generate-hero-cones.mjs` can produce their PNGs.
+### Phase 1: Profile Authoring
 
-**Current Architecture:**
-- `FLAVOR_PROFILES` object in `worker/src/flavor-colors.js` -- 40 entries
-- `generate-hero-cones.mjs` in `scripts/` -- iterates FLAVOR_PROFILES, calls `renderConeHeroSVG()` at scale 4, rasterizes via `sharp` (or macOS `sips` fallback)
-- Output: `docs/assets/cones/{slug}.png` at 120px width
-- `cone-renderer.js` in browser falls back to SVG if no PNG exists
-- SW has runtime caching for `/assets/cones/*.png` (stale-while-revalidate)
+Add ~136 missing flavor profiles to FLAVOR_PROFILES in flavor-colors.js.
 
-**Integration Pattern: Batch Profile Creation + Pipeline Run**
+**Dependencies:** None. Can start immediately.
+**Validates with:** flavor-audit.html (each new profile appears in audit grid with quality flags).
+**Output:** 176+ entries in FLAVOR_PROFILES.
 
-This is primarily a data entry task, not an architecture change. Each new flavor needs a `FLAVOR_PROFILES` entry with: `base`, `ribbon`, `toppings[]`, `density`.
+**Strategy for bulk authoring:**
+- Use Culver's flavor descriptions from SEED_CATALOG and culvers.com to determine base, ribbon, toppings, density
+- Follow CONE_PROFILE_SPEC.md authoring guide strictly
+- Batch by flavor family (all mint variants, all chocolate, all caramel, etc.) for visual consistency
+- Validate each batch in flavor-audit.html before continuing
+- Check contrast: would toppings disappear on chosen base? (e.g., dove on dark_chocolate = invisible)
 
-**Component Changes:**
+### Phase 2: Color Palette Expansion (parallel with Phase 1)
 
-| File | Change | Type |
-|------|--------|------|
-| `worker/src/flavor-colors.js` | Add ~136 new FLAVOR_PROFILES entries | MODIFY |
-| `docs/assets/cones/*.png` | ~136 new PNG files generated by pipeline | NEW |
-| `scripts/generate-hero-cones.mjs` | No changes needed -- already iterates all profiles | NO CHANGE |
+New profiles may need colors not in current palettes. Examples: pumpkin, banana, maple, coffee, coconut, s'mores, cookie butter, red velvet.
 
-**Pipeline Execution:**
+**Dependencies:** Discovered during Phase 1 authoring.
+**Must sync across 4 files (in this order):**
+1. `worker/src/flavor-colors.js` -- canonical source
+2. `docs/cone-renderer.js` -- browser fallback palettes
+3. `docs/flavor-audit.html` -- embedded seed constants
+4. `custard-tidbyt/.../culvers_fotd.star` -- Starlark renderer
+
+**Critical rule:** Add colors BEFORE adding profiles that reference them. The rendering code silently skips missing color keys -- no error, just invisible toppings/ribbons.
+
+### Phase 3: Rendering Quality Fixes (needs Phase 1 test data)
+
+Fix SVG rendering quality. PROJECT.md notes "best current SVGs still look terrible."
+
+**Dependencies:** Phase 1 should be partially complete so fixes can be validated against diverse profiles, not just the original 38.
+
+**Quality fix propagation:**
+
+| Fix Location | Mirror Required | Rerun PNGs? |
+|-------------|----------------|-------------|
+| renderConeHeroSVG() | No -- Hero is server-only | YES |
+| renderConePremiumSVG() | No -- Premium is server-only | No |
+| renderConeHDSVG() | YES -- cone-renderer.js renderMiniConeHDSVG() | No (SVG is live) |
+| renderConeSVG() | YES -- cone-renderer.js renderMiniConeSVG() | No (SVG is live) |
+| Topping slot positions | YES -- both files | YES if Hero slots change |
+| Scoop geometry | YES -- both files | YES if Hero geometry changes |
+
+### Phase 4: PNG Regeneration (depends on Phases 1, 2, 3)
+
+Re-run `node scripts/generate-hero-cones.mjs` to produce PNGs for all 176+ profiles.
+
+**Dependencies:** All profile data and rendering fixes must be final.
+**Output:** 176+ PNG files in docs/assets/cones/
+**Verification:** Every flavor on every page shows Hero PNG, never HD SVG fallback.
+
 ```bash
 cd custard-calendar
 node scripts/generate-hero-cones.mjs
-# Output: docs/assets/cones/ will have ~176 PNGs
+# Expected output: "Generating hero cone PNGs for 176 flavors..."
+# Verify: ls docs/assets/cones/ | wc -l  -> 176+
 ```
 
-**Scaling Concern:** The pipeline processes flavors sequentially. At ~40 flavors it takes seconds; at ~176 flavors it should still complete in under a minute since each SVG render + PNG rasterization is fast (in-memory, no network). No parallelization needed.
+### Phase 5: SEED_CATALOG Sync (parallel with Phases 1-3)
 
-**Storage Impact:** Current 40 PNGs total ~250KB. At ~176 PNGs, expect ~1.1MB total in `docs/assets/cones/`. This is within GitHub Pages limits (1GB soft, 100MB per file hard). The SW caches these at runtime (not pre-cached), so initial page loads are not affected.
+Update SEED_CATALOG in flavor-catalog.js to include descriptions for all 176 flavors.
 
-**Data Entry Strategy:** Profile entries can be templated. Most Culver's flavors follow patterns:
-- Chocolate base + toppings: `base: 'chocolate'`
-- Vanilla base + flavored ribbon: `base: 'vanilla', ribbon: '[flavor]'`
-- Fruit base: `base: '[fruit]'`
+**Dependencies:** Phase 1 (need the full flavor list).
+**Impact:** flavor-audit.html and subscription UI show all flavors even when KV is empty.
 
-Use the existing flavor catalog endpoint (`/api/flavors/catalog`) to get the full list, then categorize. A helper script could generate skeleton entries from flavor names.
+### Dependency Graph
+
+```
+Phase 1 (Profiles) ----+
+                        |
+Phase 2 (Colors) -------+--> Phase 3 (Quality) --> Phase 4 (PNGs)
+                        |
+Phase 5 (Catalog) ------+
+
+Phases 1, 2, 5: can proceed in parallel
+Phase 3: needs representative set from Phase 1
+Phase 4: final step after everything else is stable
+```
 
 ---
 
-### 5. Service Worker Registration on fun.html and updates.html
+## Patterns to Follow
 
-**Problem:** SW is only registered on 4 pages (index.html via today-page.js, compare.html via compare-page.js, calendar.html, widget.html). fun.html and updates.html are missing SW registration.
+### Pattern 1: Additive Data Growth
+**What:** Add entries to FLAVOR_PROFILES without changing data shape.
+**When:** Scaling from 38 to 176 profiles.
+**Why:** All consumers handle the shape already. Zero code changes in consumers.
 
-**Current Registration Points:**
-| Page | Registration Location |
-|------|----------------------|
-| index.html | today-page.js line 647 |
-| compare.html | compare-page.js line 925 |
-| calendar.html | inline script line 673 |
-| widget.html | inline script line 965 |
-| fun.html | **MISSING** |
-| updates.html | **MISSING** |
-
-**Integration Pattern: Add Registration to Page JS Modules**
-
-Each page has a dedicated JS module. Add SW registration to the init functions.
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `fun-page.js` | Add SW registration in `init()` | MODIFY |
-| `updates-page.js` | Add SW registration in `init()` | MODIFY |
-
-**Registration Code (same pattern as existing):**
 ```javascript
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function () {});
-}
+// Existing shape -- every new entry uses exactly this shape
+'new flavor name': {
+  base: 'chocolate',       // key into BASE_COLORS
+  ribbon: 'caramel',       // key into RIBBON_COLORS or null
+  toppings: ['pecan'],     // keys into TOPPING_COLORS, ordered by visual priority
+  density: 'standard'      // pure|standard|double|explosion|overload
+},
 ```
 
-**Why Not a Shared Registration Module?** The SW registration is a one-liner. Creating a shared module adds a script tag and a network request for minimal code reuse. The existing pattern (one-liner in each page JS) is the right trade-off for a no-build-step static site.
-
-**Lifecycle Consideration:** SW scope is path-based. Since `sw.js` is at `docs/` root, registering from any page in `docs/` gives the same scope (`/`). Multiple registrations from different pages are idempotent -- the browser only registers once per scope.
-
----
-
-### 6. planner-shared.js Refactored from 1,624-Line Monolith
-
-**Problem:** `planner-shared.js` is a single 1,639-line IIFE containing: scoring helpers, brand constants, similarity groups, flavor families, certainty vocabulary, timeline building, reliability fetching, historical context, action CTAs, interaction events, signal cards, and share button. This makes maintenance difficult and change risk high.
-
-**Current Architecture:**
-- Single `var CustardPlanner = (function() { ... })();` IIFE
-- Exposes ~50 public methods/properties on `window.CustardPlanner`
-- Loaded via `<script src="planner-shared.js">` on every page
-- No module system -- all consumers access `window.CustardPlanner.X`
-
-**Integration Pattern: Extract to Separate IIFEs, Extend Shared Object**
-
-The constraint is no build step. ES modules (`import`/`export`) are supported via `<script type="module">`, but the codebase uses `var` declarations and IIFEs. A full migration would touch every HTML page and every consuming JS file -- too large a change surface.
-
-**Recommended Approach: Two-file extraction**
-
-Split planner-shared.js into a core file (keeps the return object) plus 2 extension files that attach methods to the existing `window.CustardPlanner` object. This minimizes HTML changes (only pages that use the extracted features need new script tags).
-
-**Proposed Split:**
-
-| File | Contents | Approx Lines |
-|------|----------|--------------|
-| `planner-shared.js` | Core: constants, normalize, localStorage helpers, haversine, brand/flavor data, rarity/certainty helpers, drive preferences | ~900 |
-| `planner-ui.js` | Timeline building, reliability fetch/banner, historical context fetch/HTML, action CTAs (directions/calendar/alert URLs + CTA HTML), share button | ~500 |
-| `planner-signals.js` | Signal card HTML, fetchSignals, trackSignalViews, IntersectionObserver setup, interaction events, page view tracking | ~250 |
-
-**Extension Pattern:**
-```javascript
-// planner-ui.js
-(function() {
-  'use strict';
-  var CP = window.CustardPlanner;
-
-  function buildTimeline(/* ... */) { /* ... */ }
-  function fetchReliability(/* ... */) { /* ... */ }
-  // ...
-
-  CP.buildTimeline = buildTimeline;
-  CP.fetchReliability = fetchReliability;
-  CP.actionCTAsHTML = actionCTAsHTML;
-  CP.initShareButton = initShareButton;
-  // etc.
-})();
-```
-
-**Script Loading in HTML:**
-```html
-<!-- Every page (no change for most pages) -->
-<script src="planner-shared.js"></script>
-<script src="shared-nav.js"></script>
-
-<!-- Pages with card UIs: index.html, compare.html -->
-<script src="planner-ui.js"></script>
-
-<!-- Pages with signals: index.html -->
-<script src="planner-signals.js"></script>
-```
-
-**HTML Pages Requiring Script Tag Additions:**
-
-| Page | Needs planner-ui.js | Needs planner-signals.js |
-|------|--------------------|-----------------------|
-| index.html | YES | YES |
-| compare.html | YES | NO |
-| map.html | NO (CTAs built inline) | NO |
-| fun.html | NO | NO |
-| updates.html | NO | NO |
-| quiz.html | NO | NO |
-| Redirect stubs | NO | NO |
-
-**Critical Constraint:** `window.CustardPlanner` must remain the single access point. The core IIFE creates the object; extension IIFEs attach to it. No new globals introduced.
-
-**Testing Strategy:** The public API surface does not change. All existing Playwright and Python tests should pass without modification. Add a lightweight test that verifies every method in the original return object is still accessible after the split.
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `planner-shared.js` | Remove UI and signal code (~740 lines removed) | MODIFY |
-| `planner-ui.js` | Timeline, reliability, historical context, CTAs, share | NEW |
-| `planner-signals.js` | Signal cards, fetch, tracking, events | NEW |
-| `index.html` | Add 2 script tags | MODIFY |
-| `compare.html` | Add 1 script tag | MODIFY |
-| `sw.js` | Add planner-ui.js and planner-signals.js to STATIC_ASSETS | MODIFY |
-
----
-
-### 7. Compare Page Multi-Store Side-by-Side Comparison
-
-**Problem:** The Compare page currently "switches stores" according to the project brief. The requirement is side-by-side comparison of 2-4 stores.
-
-**Current Architecture Assessment:**
-
-After code review, the multi-store comparison **already appears to be implemented**:
-- `MAX_COMPARE_STORES = 4`, `MIN_COMPARE_STORES = 2`
-- `getSavedStoreSlugs()` returns array of up to 4 slugs
-- `loadCompareData(slugs)` fetches all stores in parallel
-- `renderGrid()` renders all store rows inside each day card
-- Store picker modal with search, add, and remove is implemented
-- `renderStoreBar()` shows selected stores with management controls
-
-**What may need attention:**
-
-| Concern | Status | Action Needed |
-|---------|--------|---------------|
-| Day-first card stack layout | Implemented | Verify works at 375px with 4 stores |
-| Store-as-columns for desktop | Not implemented | Optional: CSS grid with store columns at 768px+ |
-| Empty state (0-1 stores) | Shows "Add stores" CTA | Working |
-| Store add/remove UX | Picker modal with search | Working |
-
-**If desktop column layout is desired:**
-
-```css
-@media (min-width: 768px) {
-  .compare-grid-desktop {
-    display: grid;
-    grid-template-columns: auto repeat(var(--compare-store-count), 1fr);
-    gap: var(--space-2);
-  }
-}
-```
-
-This would be a new render path for desktop only. Mobile keeps the current day-first card stack.
-
-**Recommendation:** Test the existing implementation with 2-4 stores. If the day-first layout is acceptable (the PROJECT.md says "Day-first card stack for Compare" was a deliberate decision), this feature may already be complete. File as "verify and close" rather than "implement."
-
----
-
-### 8. Push Unpushed Commits and Verify Deployment
-
-Not an architecture concern. Git operation + GitHub Pages auto-deploy verification.
-
-**Verification:** `git log --oneline origin/main..HEAD`, `git push origin main`, then smoke test all 5 primary pages via curl.
-
----
-
-### 9. Fix CI Repo Structure Check
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `scripts/check_repo_structure.py` | Add `'.planning'` to `ALLOWED_DIRS` set | MODIFY |
-| `REPO_CONTRACT.md` | Add `.planning/` row to Allowed Top-Level Directories table | MODIFY |
-
-One-line fix in two files. No architecture implications.
-
----
-
-### 10. Mad Libs Chip CSS Definitions
-
-**Problem:** `.madlib-chip` and `.madlib-chip-group` classes are applied in engine.js but styled entirely via inline `style.cssText` assignments. Selected/deselected states use direct style manipulation rather than class toggling. This violates the project's CSS token pattern.
-
-**Current State (engine.js lines 434-476):**
-- Container: `chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;...'`
-- Chip: `chip.style.cssText = 'padding:0.375rem 0.875rem;border:1.5px solid #ccc;...'`
-- Selected: `chip.style.background = '#005696'; chip.style.color = 'white';`
-- Deselected: `chip.style.background = 'white'; chip.style.color = '#444';`
-
-**Integration Pattern: Move to CSS Classes Using Design Tokens**
-
-Follow the existing `.brand-chip` / `.flavor-chip` patterns (style.css lines 635-700).
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `style.css` | Add `.madlib-chip-group`, `.madlib-chip`, `.madlib-chip:hover`, `.madlib-chip.selected` rules | MODIFY |
-| `quizzes/engine.js` | Remove all `style.cssText` assignments; replace inline style toggling with `classList.add/remove('selected')` | MODIFY |
-
-**CSS Definitions:**
-```css
-.madlib-chip-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.madlib-chip {
-  padding: 0.375rem 0.875rem;
-  border: 1.5px solid var(--border-input);
-  border-radius: var(--radius-full);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.madlib-chip:hover {
-  border-color: var(--text-subtle);
-}
-
-.madlib-chip.selected {
-  background: var(--brand);
-  color: var(--bg-surface);
-  border-color: var(--brand);
-}
-```
-
----
-
-### 11. stores.json in SW Pre-Cache
-
-**Problem:** `stores.json` (213KB) is fetched by multiple pages but not in the SW pre-cache list.
-
-**Component Changes:**
-
-| File | Change | Type |
-|------|--------|------|
-| `sw.js` | Add `'./stores.json'` to STATIC_ASSETS array | MODIFY |
-| `sw.js` | Bump CACHE_VERSION from `custard-v15` to `custard-v16` | MODIFY |
-
-**Cache-Bust Interaction:** Pages fetch `stores.json?v=2026-03-09` but the pre-cached URL is `./stores.json`. The SW's `caches.match()` does not match URLs with different query strings by default.
-
-**Resolution:** Remove the `?v=` cache-bust param from all `stores.json` fetches. The SW handles freshness via stale-while-revalidate, making the manual cache-bust redundant.
-
-**Files to Update (remove `?v=` from stores.json fetch):**
-
-| File | Function |
-|------|----------|
-| `map.html` | `loadBrandStores()` |
-| `compare-page.js` | `loadStores()` |
-| `scoop.html` | `initScoop()` (if not already a redirect stub) |
-| `shared-nav.js` | `loadStoreManifest()` |
-
----
-
-## Component Boundary Diagram
-
-```
-HTML Pages (15)
-  |
-  |-- <script src="planner-shared.js">     (every page)
-  |     -> window.CustardPlanner { core, flavor, rarity, certainty, prefs }
-  |
-  |-- <script src="planner-ui.js">         (index, compare)
-  |     -> extends CustardPlanner { timeline, reliability, CTAs, share }
-  |
-  |-- <script src="planner-signals.js">    (index)
-  |     -> extends CustardPlanner { signalCards, fetchSignals, events }
-  |
-  |-- <script src="shared-nav.js">         (every page)
-  |     -> window.SharedNav { render, storeChange events }
-  |
-  |-- <script src="cone-renderer.js">      (index, compare, map, quiz)
-  |     -> window functions { renderMiniConeSVG, loadFlavorColors }
-  |
-  |-- Page-specific modules:
-  |     today-page.js, compare-page.js, fun-page.js,
-  |     updates-page.js, quizzes/engine.js
-  |
-  |-- sw.js (registered from page JS modules)
-  |     -> pre-caches STATIC_ASSETS incl. stores.json
-  |     -> runtime-caches /assets/cones/*.png
-  |
-  |-- stores.json (213KB, pre-cached by SW)
-  |-- assets/cones/*.png (~176 files, runtime-cached by SW)
-```
-
----
-
-## New vs. Modified Files Summary
-
-### New Files
-
-| File | Purpose | Created By Feature |
-|------|---------|-------------------|
-| `docs/planner-ui.js` | UI helpers extracted from monolith | #6 Refactoring |
-| `docs/planner-signals.js` | Signal helpers extracted from monolith | #6 Refactoring |
-| `docs/assets/cones/*.png` (~136 new) | Hero cone images | #4 PNG pipeline |
-
-### Modified Files
-
-| File | Features Touching It |
-|------|---------------------|
-| `docs/sw.js` | #3 (stores.json), #6 (new static assets), #11 (stores.json pre-cache) |
-| `docs/planner-shared.js` | #6 (refactoring -- code removal) |
-| `docs/style.css` | #2 (excluded chip state), #3 (quiz cone options), #10 (madlib chips) |
-| `docs/map.html` | #2 (exclusion filter), #11 (remove ?v= from stores.json) |
-| `docs/quizzes/engine.js` | #3 (cone image options), #10 (madlib chip CSS) |
-| `docs/quiz.html` | #3 (add cone-renderer.js script tag) |
-| `docs/fun-page.js` | #5 (SW registration) |
-| `docs/updates-page.js` | #5 (SW registration) |
-| `docs/index.html` | #6 (add planner-ui.js, planner-signals.js script tags) |
-| `docs/compare.html` | #6 (add planner-ui.js script tag) |
-| `docs/compare-page.js` | #11 (remove ?v= from stores.json) |
-| `docs/shared-nav.js` | #11 (remove ?v= from stores.json) |
-| `docs/scoop.html` | #1 (redirect stub) |
-| `docs/radar.html` | #1 (redirect stub) |
-| `docs/calendar.html` | #1 (redirect stub) |
-| `docs/widget.html` | #1 (redirect stub) |
-| `docs/siri.html` | #1 (redirect stub) |
-| `docs/alerts.html` | #1 (redirect stub) |
-| `scripts/check_repo_structure.py` | #9 (add .planning) |
-| `REPO_CONTRACT.md` | #9 (add .planning) |
-| `worker/src/flavor-colors.js` | #4 (add ~136 FLAVOR_PROFILES) |
-
----
-
-## Recommended Build Order
-
-Dependencies flow downward. Features higher in the list are prerequisites or risk-reducers for features below.
-
-### Phase A: Foundation (no user-visible changes, reduces risk)
-
-1. **Fix CI repo structure check** (#9) -- Unblocks CI. 2 files, 2 lines. Zero risk.
-2. **Push unpushed commits** (#8) -- Establishes clean baseline. Verify deployment.
-3. **stores.json in SW pre-cache** (#11) -- Touch sw.js once here, avoid multiple cache version bumps later. Also remove `?v=` cache-bust params from 4 files.
-
-### Phase B: Cleanup (low-risk, high-value)
-
-4. **Old page redirects** (#1) -- 6 files replaced with stubs. Low risk since old pages become trivial.
-5. **Mad Libs chip CSS** (#10) -- Inline styles to style.css. Low risk, code quality improvement.
-6. **SW registration on fun.html and updates.html** (#5) -- Two one-liner additions. Zero risk.
-
-### Phase C: Core Refactoring (moderate risk)
-
-7. **planner-shared.js refactoring** (#6) -- Extract planner-ui.js and planner-signals.js. Largest change. Must be done before adding new shared functionality. Run full Playwright suite after.
-
-### Phase D: Feature Development (independent features, can parallelize)
-
-8. **Map exclusion filter** (#2) -- Modify map.html inline JS. Independent of other features.
-9. **Compare page multi-store verification** (#7) -- May already work. Test with 2-4 stores.
-10. **Quiz image-based answers** (#3) -- Add cone-renderer.js to quiz page, modify engine.js.
-
-### Phase E: Asset Pipeline (independent, can run in parallel)
-
-11. **Hero cone PNGs** (#4) -- Bulk data entry in FLAVOR_PROFILES then run pipeline. Independent of all other features. Fallback (SVG rendering) works fine in the interim.
-
-**Ordering Rationale:**
-- CI fix and push first because nothing else can deploy without them
-- SW changes batched early (Phase A) to minimize cache version bumps
-- Redirects early because they simplify the site (fewer pages to maintain)
-- Monolith refactoring before new feature work because new features add code
-- Asset pipeline last because it is independent and the fallback works
+### Pattern 2: Color-Before-Profile
+**What:** Add palette entries before profiles that reference them.
+**When:** A new flavor needs a color key that doesn't exist.
+**Why:** Missing keys produce invisible elements silently. The rendering code does `if (!color) continue;` -- no error, just wrong output that's hard to debug.
+
+### Pattern 3: Worker-First Rendering Fixes
+**What:** Fix rendering in flavor-colors.js, then mirror to cone-renderer.js.
+**When:** Any change to scoop geometry, topping slots, ribbon paths, or color logic.
+**Why:** Worker uses ES modules, const/let, template literals. Browser uses var and string concatenation. Porting Worker->browser is straightforward; browser->Worker requires additional refactoring.
+
+### Pattern 4: Single Final PNG Commit
+**What:** Generate and commit PNGs exactly once after all profiles and quality fixes are finalized.
+**When:** Phase 4, the final step.
+**Why:** PNG files are binary -- every regeneration creates a full diff in git. Avoid churning binary objects with intermediate commits.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Multiple SW Version Bumps
-Bumping CACHE_VERSION in separate commits for each feature forces users to re-download all cached assets each time. Batch all SW changes (stores.json, new static assets, version bump) into a single deployment.
+### Anti-Pattern 1: Profile Data in cone-renderer.js
+**What:** Putting flavor profile definitions in the browser renderer.
+**Why bad:** cone-renderer.js gets profiles from the API at runtime. It does NOT contain FLAVOR_PROFILES. Adding profiles there creates a second source of truth that diverges when the API is available.
+**Instead:** All profiles in flavor-colors.js only. Browser gets them via /api/v1/flavor-colors.
 
-### Breaking the Public API During Refactoring
-Splitting planner-shared.js and changing how methods are accessed would break every consuming page. Keep `window.CustardPlanner.methodName` as the sole access pattern. Extension files attach to the existing object.
+### Anti-Pattern 2: l2_toppings Overrides for Most New Profiles
+**What:** Using per-pixel `l2_toppings` arrays for new profiles.
+**Why bad:** l2_toppings requires exact [col, row, colorKey] coordinates, must be maintained in BOTH flavor-colors.js and cone-renderer.js, and is only needed for edge cases where default topping slots produce bad results (Blackberry Cobbler is the only current user).
+**Instead:** Use standard profile shape. Only add l2_toppings if flavor-audit.html shows a problem at Mini tier that density/topping reordering cannot fix.
 
-### Adding Build Steps
-Introducing concatenation, bundling, or transpilation violates the core constraint (static files on GitHub Pages, no build step). Use multiple `<script>` tags with deterministic load order.
+### Anti-Pattern 3: Incremental PNG Regeneration During Authoring
+**What:** Re-running generate-hero-cones.mjs and committing PNGs after each batch of 10-20 new profiles.
+**Why bad:** Binary diffs bloat git history. If a rendering fix later changes every PNG, early commits are wasted.
+**Instead:** Author all profiles, finalize quality fixes, generate PNGs once, commit once.
 
-### Redirect Loops
-After creating redirect stubs, search all HTML for links to old page URLs (calendar.html, widget.html, siri.html, alerts.html) and update them to point to the new destinations. Navigation and footer links are the most likely sources.
+### Anti-Pattern 4: Fixing Only Hero Tier and Ignoring Mini/HD
+**What:** Improving renderConeHeroSVG quality but leaving Mini and HD unchanged.
+**Why bad:** Users see HD SVG fallback when a PNG hasn't loaded yet (slow connection, first visit). If HD looks bad while Hero PNG looks good, the loading transition is jarring. Radar cards always use HD -- they never get Hero PNGs.
+**Instead:** Quality improvements should flow to all tiers that display the same flavor on the same page.
 
-### Stale Cache-Bust Params After SW Pre-Cache
-If stores.json is pre-cached but fetched with `?v=date`, the SW cache miss means two copies in cache. Remove the `?v=` param from all fetch calls when adding stores.json to STATIC_ASSETS.
+---
+
+## Data Flow Changes at Scale
+
+### Response Size Impact
+
+| Metric | At 38 profiles | At 176 profiles | Concern? |
+|--------|---------------|-----------------|----------|
+| /api/v1/flavor-colors JSON | ~5KB | ~15-20KB | No -- gzipped ~3-4KB |
+| Worker bundle size | 825 lines | ~1000 lines | No -- trivial cold start impact |
+| Client memory | 38 objects | 176 objects | No -- negligible |
+| PNG disk (docs/assets/cones/) | 40 files, ~120KB | 176 files, ~600KB | No -- well within GitHub Pages limits |
+| Git repo (binary PNGs) | ~120KB | ~600KB one-time | Manageable -- commit once |
+
+### Keyword Fallback Elimination
+
+At 38 profiles, ~136 flavors hit the keyword fallback path producing generic cones. At 176 profiles, nearly all flavors get exact matches. This is the **primary quality improvement** -- flavors that showed a generic vanilla cone with no toppings will now show their actual color/topping profile.
+
+The keyword fallback code in getFlavorProfile() should remain for truly unknown flavors (new Culver's creations accumulated via KV that haven't been manually profiled yet). It becomes a safety net rather than the common path.
+
+---
+
+## Scalability Considerations
+
+| Concern | At 38 (now) | At 176 (v1.3) | At 500+ (future) |
+|---------|------------|---------------|-------------------|
+| Profile data | 52 lines inline | ~230 lines inline | Extract to JSON, import |
+| API response | ~5KB | ~20KB | Gzip handles; paginate if >100KB |
+| PNG disk | 40 files, 120KB | 176 files, 600KB | Consider CDN or on-demand raster |
+| Rendering perf | Instant | Instant | Instant (O(1) lookup, fixed rect count) |
+| Dual-file sync | Manageable | Palette sync is main risk | Eliminate duplication via build step |
+| Profile authoring | Ad-hoc | Needs spec + audit tool | Needs generator from descriptions |
+| Quality validation | Manual audit page | Manual audit page | Automated screenshot comparison |
 
 ---
 
 ## Sources
 
-- All findings based on direct codebase analysis of custard-calendar repository (HIGH confidence)
-- GitHub Pages redirect behavior: `<meta http-equiv="refresh" content="0">` treated as permanent redirect by search engines (MEDIUM confidence -- based on documented Google crawler behavior)
-- Service worker lifecycle and `caches.match()` query string behavior: Web platform specifications (HIGH confidence)
-- CSS custom properties and design token patterns: observed in style.css :root block (HIGH confidence)
+- `worker/src/flavor-colors.js` -- 825 lines, 38 profiles, 4 rendering functions (read directly)
+- `docs/cone-renderer.js` -- 367 lines, Mini + HD browser duplicates (read directly)
+- `scripts/generate-hero-cones.mjs` -- 128 lines, PNG pipeline (read directly)
+- `worker/src/flavor-catalog.js` -- 38-entry SEED_CATALOG + KV accumulation (read directly)
+- `worker/src/social-card.js` -- imports renderConeHDSVG for OG cards (read directly)
+- `worker/src/index.js` -- handleFlavorColors() API endpoint (read directly)
+- `CONE_PROFILE_SPEC.md` -- authoring guide with grid geometry and color rules (read directly)
+- `ASSET_SPEC.md` -- asset catalog with tier assignments and surfaces (read directly)
+- `ARCHITECTURE.md` (project) -- 3-layer model and data flow (read directly)
+- `PROJECT.md` -- v1.3 scope, constraints, out-of-scope items (read directly)
