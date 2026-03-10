@@ -20,6 +20,17 @@ export const BASE_COLORS = {
   peach: '#FFE5B4',
   lemon: '#FFF176',
   blackberry: '#6B3FA0',
+  // Phase 15 additions
+  espresso: '#2C1503',         // dark coffee brown (distinct from chocolate/dark_chocolate)
+  cherry: '#C41E3A',           // bright cherry red (distinct from strawberry pink)
+  pumpkin: '#D2691E',          // warm orange-brown (distinct from caramel gold / peach pale)
+  banana: '#F0E68C',           // pale yellow-green (distinct from lemon bright / vanilla wheat)
+  coconut: '#FFFAF0',          // floral white / cream (distinct from cheesecake / vanilla)
+  root_beer: '#5C3317',        // deep amber-brown (distinct from caramel / chocolate)
+  pistachio: '#93C572',        // muted sage green (distinct from mint / mint_andes)
+  orange: '#FF8C00',           // bright dark-orange (distinct from peach / pumpkin)
+  blue_moon: '#5B9BD5',        // bright periwinkle blue (real Midwest custard flavor)
+  maple: '#C9882C',            // warm amber (distinct from caramel gold / butter_pecan cream)
 };
 
 export const RIBBON_COLORS = {
@@ -52,6 +63,19 @@ export const TOPPING_COLORS = {
   blueberry: '#3B1F6B',
   pie_crust: '#C99E76',           // contrast-adjusted: 3:1 on blackberry (was #C4966A)
   blackberry_drupe: '#AEA1BB',  // contrast-adjusted: 3:1 on blackberry (was #3D1F5C)
+  // Phase 15 additions -- demand-driven from unprofiled flavor audit
+  chocolate_chip: '#3B2314',     // dark chocolate morsel (pairs with vanilla/banana/coconut)
+  sprinkles: '#D63384',           // vivid magenta-pink (contrast-adjusted: 3:1 on vanilla; exempt on chocolate/blue_moon)
+  graham_cracker: '#8B6914',     // dark golden crumb (contrast-adjusted: 3:1 on cheesecake/banana; exempt on pumpkin)
+  coconut_flakes: '#F5F5DC',     // off-white shreds (pairs with chocolate; structural exempt on coconut/pistachio)
+  cherry_bits: '#8B0000',        // dark cherry red (pairs with vanilla; structural exempt on cherry/chocolate)
+  caramel_chips: '#9E6B23',      // deep amber chip (pairs with vanilla/espresso; structural exempt on chocolate)
+  pretzel: '#B07D3B',            // golden pretzel brown (pairs with root_beer; structural exempt on chocolate/caramel)
+  pumpkin_spice: '#6B3410',      // dark cinnamon-sienna (contrast-adjusted: 3:1 on vanilla/maple; exempt on pumpkin)
+  marshmallow_bits: '#FFFAED',   // warm white pieces (pairs with chocolate/espresso/root_beer)
+  candy_cane: '#B91C35',          // deep peppermint red (contrast-adjusted: 3:1 on vanilla/mint)
+  cookie_crumbs: '#7B5B32',      // dark sandy cookie crumb (contrast-adjusted: 3:1 on vanilla/banana)
+  fudge_bits: '#1C0B00',         // near-black fudge chunk (pairs with vanilla/cheesecake/lemon)
 };
 
 export const CONE_COLORS = {
