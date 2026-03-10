@@ -16,8 +16,8 @@ Requirements for asset parity release. Each maps to roadmap phases.
 
 ### Validation Tooling
 
-- [ ] **VALD-01**: CI test catches palette drift between flavor-colors.js and cone-renderer.js
-- [ ] **VALD-02**: Contrast checker flags topping/base combinations below 3:1 ratio
+- [x] **VALD-01**: CI test catches palette drift between flavor-colors.js and cone-renderer.js
+- [x] **VALD-02**: Contrast checker flags topping/base combinations below 3:1 ratio
 - [ ] **VALD-03**: Pixelmatch golden baselines exist for all 4 tiers across reference flavors
 
 ### Palette & Profiles
@@ -55,8 +55,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RNDQ-02 | Phase 13 | Complete |
 | RNDQ-03 | Phase 13 | Complete |
 | RNDQ-04 | Phase 13 | Complete |
-| VALD-01 | Phase 14 | Pending |
-| VALD-02 | Phase 14 | Pending |
+| VALD-01 | Phase 14 | Complete |
+| VALD-02 | Phase 14 | Complete |
 | VALD-03 | Phase 14 | Pending |
 | PROF-01 | Phase 15 | Pending |
 | PROF-02 | Phase 15 | Pending |
