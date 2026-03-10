@@ -103,11 +103,12 @@ Plans:
   1. All ~107 previously unprofiled flavors have FLAVOR_PROFILES entries with base, ribbon, toppings, and density fields
   2. Every new profile passes the contrast checker (no topping/base pair below 3:1)
   3. flavor-audit.html shows zero "unprofiled" or "keyword fallback" entries for any known flavor
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md -- Discover unprofiled flavors + chocolate-family profiles
+- [ ] 16-02-PLAN.md -- Vanilla-family + caramel-family profiles
+- [ ] 16-03-PLAN.md -- Fruit + specialty families + final visual review
 
 ### Phase 17: PNG Generation & Deployment
 **Goal**: Every profiled flavor has a Hero cone PNG and users see consistent quality across the site
@@ -143,8 +144,8 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 12. Feature Development | v1.2 | 3/3 | Complete | 2026-03-09 |
 | 13. Rendering Quality Fixes | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 14. Validation Tooling | v1.3 | 2/2 | Complete | 2026-03-10 |
-| 15. Palette Expansion & Aliases | 2/2 | Complete    | 2026-03-10 | - |
-| 16. Bulk Profile Authoring | v1.3 | 0/0 | Not started | - |
+| 15. Palette Expansion & Aliases | v1.3 | 2/2 | Complete | 2026-03-10 |
+| 16. Bulk Profile Authoring | v1.3 | 0/3 | Not started | - |
 | 17. PNG Generation & Deployment | v1.3 | 0/0 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
