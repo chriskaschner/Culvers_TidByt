@@ -288,7 +288,7 @@ function renderMiniConeHDSVG(flavorName, scale) {
   var rects = [];
 
   // Scoop (rows 0-10; full-width bottom overhangs cone by 1px each side)
-  var scoopRows = [[4,13],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15]];
+  var scoopRows = [[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14]];
   for (var row = 0; row < scoopRows.length; row++) {
     var sc = scoopRows[row][0], ec = scoopRows[row][1];
     for (var col = sc; col <= ec; col++) {
