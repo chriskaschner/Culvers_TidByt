@@ -3,7 +3,7 @@
  * Generate hero cone PNG assets for all flavors in FLAVOR_PROFILES.
  *
  * Uses the Worker's renderConeHeroSVG (36x42 grid) at scale 4 (= 144x168px),
- * then rasterizes each SVG to a 120px-wide PNG via sharp.
+ * then rasterizes each SVG to PNG at native 144x168px resolution via sharp at 300 DPI.
  *
  * Output: docs/assets/cones/{slug}.png for each flavor.
  *
@@ -11,7 +11,7 @@
  */
 
 import { createRequire } from 'module';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -31,20 +31,19 @@ const {
   CONE_TIP_COLOR,
 } = await import(join(ROOT, 'worker', 'src', 'flavor-colors.js'));
 
-// Dynamically import sharp
+// Import sharp -- required dependency, fail fast if unavailable.
+// Resolve from worker/node_modules since sharp is installed there.
 let sharp;
 try {
   const sharpMod = await import('sharp');
   sharp = sharpMod.default || sharpMod;
 } catch {
-  // Try require approach
   try {
-    const require = createRequire(import.meta.url);
+    const require = createRequire(join(ROOT, 'worker', 'package.json'));
     sharp = require('sharp');
   } catch {
-    console.error('sharp not available. Install with: npm install sharp');
-    console.log('Falling back to SVG-only generation + sips conversion...');
-    sharp = null;
+    console.error('sharp is required. Install with: cd worker && npm install');
+    process.exit(1);
   }
 }
 
@@ -60,36 +59,25 @@ function flavorSlug(name) {
 
 /**
  * Generate SVG string for a flavor using the hero renderer.
- * Scale 4 = 144x168px SVG, which will be resized to 120px width.
+ * Scale 4 = 144x168px SVG, rasterized 1:1 at 300 DPI.
  */
 function generateSVG(flavorName) {
   return renderConeHeroSVG(flavorName, 4);
 }
 
 /**
- * Convert SVG string to PNG buffer via sharp.
+ * Convert SVG string to PNG buffer via sharp at 300 DPI.
+ * Rasterizes at 300 DPI for crisp sub-pixel edges, then resizes to native
+ * 144x168 with nearest-neighbor to preserve pixel-art grid alignment.
+ * Embeds 300 DPI metadata in the output PNG.
  */
-async function svgToPng(svgString, width) {
+async function svgToPng(svgString) {
   const svgBuffer = Buffer.from(svgString);
-  return sharp(svgBuffer)
-    .resize({ width, kernel: 'nearest' })
+  return sharp(svgBuffer, { density: 300 })
+    .resize({ width: 144, height: 168, kernel: 'nearest' })
     .png()
+    .withMetadata({ density: 300 })
     .toBuffer();
-}
-
-/**
- * Convert SVG file to PNG using macOS sips (fallback when sharp unavailable).
- */
-async function svgToPngViaSips(svgString, outputPath, width) {
-  const { execSync } = await import('child_process');
-  const tmpSvg = outputPath.replace('.png', '.tmp.svg');
-  writeFileSync(tmpSvg, svgString);
-  try {
-    // sips can convert SVG to PNG on macOS
-    execSync(`sips -s format png "${tmpSvg}" --out "${outputPath}" --resampleWidth ${width} 2>/dev/null`);
-  } finally {
-    try { const { unlinkSync } = await import('fs'); unlinkSync(tmpSvg); } catch {}
-  }
 }
 
 // Get all flavor names from FLAVOR_PROFILES
@@ -105,17 +93,23 @@ for (const flavorName of flavorNames) {
   const svg = generateSVG(flavorName);
 
   try {
-    if (sharp) {
-      const pngBuffer = await svgToPng(svg, 120);
-      writeFileSync(outputPath, pngBuffer);
-    } else {
-      await svgToPngViaSips(svg, outputPath, 120);
-    }
+    const pngBuffer = await svgToPng(svg);
+    writeFileSync(outputPath, pngBuffer);
     generated++;
     process.stdout.write(`  [${generated}/${flavorNames.length}] ${slug}.png\n`);
   } catch (err) {
     errors++;
     console.error(`  FAILED: ${slug}.png -- ${err.message}`);
+  }
+}
+
+// Verify output dimensions and DPI on first generated PNG
+if (generated > 0) {
+  const firstPng = join(CONES_DIR, flavorSlug(flavorNames[0]) + '.png');
+  const meta = await sharp(firstPng).metadata();
+  console.log('Verification: ' + meta.width + 'x' + meta.height + 'px, ' + meta.density + ' DPI');
+  if (meta.width !== 144 || meta.height !== 168) {
+    console.error('WARNING: unexpected dimensions ' + meta.width + 'x' + meta.height + ', expected 144x168');
   }
 }
 
