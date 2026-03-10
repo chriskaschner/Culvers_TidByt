@@ -89,11 +89,11 @@ Plans:
   2. ~10 new topping colors resolve correctly in all 4 sync files
   3. ~20 duplicate/alias flavor names resolve to their canonical profile (no duplicate FLAVOR_PROFILES entries needed)
   4. CI palette sync test passes with the expanded color set
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
+- [ ] 15-01-PLAN.md -- Expand BASE_COLORS (~10 new) and TOPPING_COLORS (~10+ new) across all 4 sync files
+- [ ] 15-02-PLAN.md -- FLAVOR_ALIASES dict + getFlavorProfile alias resolution + CI validation test
 
 ### Phase 16: Bulk Profile Authoring
 **Goal**: Every flavor in the catalog has a proper FLAVOR_PROFILES entry with base/ribbon/toppings/density
@@ -142,8 +142,8 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 11. Monolith Refactoring | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 12. Feature Development | v1.2 | 3/3 | Complete | 2026-03-09 |
 | 13. Rendering Quality Fixes | v1.3 | 2/2 | Complete | 2026-03-10 |
-| 14. Validation Tooling | 2/2 | Complete    | 2026-03-10 | - |
-| 15. Palette Expansion & Aliases | v1.3 | 0/0 | Not started | - |
+| 14. Validation Tooling | v1.3 | 2/2 | Complete | 2026-03-10 |
+| 15. Palette Expansion & Aliases | v1.3 | 0/2 | Not started | - |
 | 16. Bulk Profile Authoring | v1.3 | 0/0 | Not started | - |
 | 17. PNG Generation & Deployment | v1.3 | 0/0 | Not started | - |
 
