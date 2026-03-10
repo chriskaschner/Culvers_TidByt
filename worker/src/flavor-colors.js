@@ -180,6 +180,22 @@ export const FLAVOR_PROFILES = {
   // Phase 16-02: Caramel-family batch (caramel, maple bases)
   'maple pecan': { base: 'maple', ribbon: null, toppings: ['pecan'], density: 'standard' },
   'nutty caramel apple': { base: 'caramel', ribbon: null, toppings: ['pecan', 'caramel_chips'], density: 'standard' },
+  // Phase 16-03: Fruit-family batch (cherry, banana, lemon, orange bases)
+  'banana cream pie': { base: 'banana', ribbon: null, toppings: ['graham_cracker', 'cookie_crumbs'], density: 'standard' },
+  'burgundy cherry': { base: 'cherry', ribbon: null, toppings: ['cherry_bits'], density: 'standard' },
+  'cheri amour amaretto': { base: 'cherry', ribbon: null, toppings: ['cherry_bits'], density: 'standard' },
+  'cherry pecan': { base: 'cherry', ribbon: null, toppings: ['cherry_bits', 'pecan'], density: 'standard' },
+  'creamy lemon crumble': { base: 'lemon', ribbon: null, toppings: ['cookie_crumbs'], density: 'standard' },
+  'key lime custard pie': { base: 'lemon', ribbon: null, toppings: ['graham_cracker'], density: 'standard' },
+  'orange creamsicle': { base: 'orange', ribbon: null, toppings: [], density: 'pure' },
+  // Phase 16-03: Specialty-family batch (blue_moon, coconut, mint, pistachio, pumpkin, root_beer bases)
+  'blue moon': { base: 'blue_moon', ribbon: null, toppings: [], density: 'pure' },
+  'coconut cream pie': { base: 'coconut', ribbon: null, toppings: ['coconut_flakes', 'graham_cracker'], density: 'standard' },
+  'grasshopper fudge': { base: 'mint', ribbon: 'fudge', toppings: ['oreo'], density: 'standard' },
+  'pistachio': { base: 'pistachio', ribbon: null, toppings: [], density: 'pure' },
+  'pumpkin pecan': { base: 'pumpkin', ribbon: null, toppings: ['pecan', 'pumpkin_spice'], density: 'standard' },
+  'pumpkin pie': { base: 'pumpkin', ribbon: null, toppings: ['graham_cracker', 'pumpkin_spice'], density: 'standard' },
+  'root beer float': { base: 'root_beer', ribbon: null, toppings: ['marshmallow_bits'], density: 'standard' },
 };
 
 export const CONE_TIP_COLOR = '#8B5A2B';
@@ -268,6 +284,13 @@ export const FLAVOR_ALIASES = {
   'rice krispy treat': 'rice krispie treat',
   'rice krispie': 'rice krispie treat',
   "baileys irish cream": "bailey's irish cream",
+  // Phase 16-03: Fruit/specialty-family variant aliases
+  'grasshopper': 'grasshopper fudge',
+  'root beer': 'root beer float',
+  'key lime pie': 'key lime custard pie',
+  'key lime': 'key lime custard pie',
+  'coconut pie': 'coconut cream pie',
+  'banana pie': 'banana cream pie',
 };
 
 const DEFAULT_PROFILE = { base: 'vanilla', ribbon: null, toppings: [], density: 'standard' };

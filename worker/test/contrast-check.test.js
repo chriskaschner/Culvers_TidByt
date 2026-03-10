@@ -170,6 +170,25 @@ const CONTRAST_EXEMPTIONS = new Set([
   // caramel_chips (#9E6B23) on caramel (#C68E17) -- deep amber on gold, very close.
   // Caramel chips pass on vanilla/espresso bases.
   'caramel_chips:caramel',
+  // Phase 16-03: Fruit/specialty-family structural exemptions
+  // cherry_bits (#8B0000) on cherry (#C41E3A) -- dark red on bright red, both red-family.
+  // Cherry bits would pass on vanilla/cheesecake bases.
+  'cherry_bits:cherry',
+  // pecan (#8B5A2B) on cherry (#C41E3A) -- medium brown on red, close luminance.
+  // Pecan passes on vanilla/cheesecake/lemon bases.
+  'pecan:cherry',
+  // coconut_flakes (#F5F5DC) on coconut (#FFFAF0) -- near-white on near-white.
+  // Coconut flakes would pass on any dark base (chocolate, espresso, etc.).
+  'coconut_flakes:coconut',
+  // pecan (#8B5A2B) on pumpkin (#D2691E) -- medium brown on orange-brown, close.
+  // Pecan passes on vanilla/cheesecake/lemon bases.
+  'pecan:pumpkin',
+  // pumpkin_spice (#6B3410) on pumpkin (#D2691E) -- dark brown on orange-brown.
+  // Pumpkin spice would pass on vanilla/lemon/banana bases.
+  'pumpkin_spice:pumpkin',
+  // graham_cracker (#8B6914) on pumpkin (#D2691E) -- golden-brown on orange-brown.
+  // Graham cracker passes on cheesecake/banana/lemon bases.
+  'graham_cracker:pumpkin',
 ]);
 
 describe('topping/base contrast >= 3:1', () => {

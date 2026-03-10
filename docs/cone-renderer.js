@@ -124,7 +124,14 @@ var FALLBACK_FLAVOR_ALIASES = {
   'kit kat': 'kit kat bar',
   'rice krispy treat': 'rice krispie treat',
   'rice krispie': 'rice krispie treat',
-  "baileys irish cream": "bailey's irish cream"
+  "baileys irish cream": "bailey's irish cream",
+  // Phase 16-03: Fruit/specialty-family variant aliases
+  'grasshopper': 'grasshopper fudge',
+  'root beer': 'root beer float',
+  'key lime pie': 'key lime custard pie',
+  'key lime': 'key lime custard pie',
+  'coconut pie': 'coconut cream pie',
+  'banana pie': 'banana cream pie'
 };
 
 // ---------------------------------------------------------------------------
