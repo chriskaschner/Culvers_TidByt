@@ -141,11 +141,80 @@ export const FLAVOR_PROFILES = {
 
 export const CONE_TIP_COLOR = '#8B5A2B';
 
+/**
+ * Normalize a flavor name for alias/profile lookup.
+ * Strips TM/R symbols, normalizes curly quotes, lowercases, collapses whitespace.
+ * Matches the normalizeFlavorKey() in docs/cone-renderer.js exactly.
+ */
+function normalizeFlavorKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[\u00ae\u2122]/g, '')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Flavor aliases: maps variant/duplicate/historical flavor names to their
+ * canonical FLAVOR_PROFILES key. All keys are pre-normalized (normalizeFlavorKey
+ * output). All values are existing FLAVOR_PROFILES keys.
+ *
+ * Only includes names that do NOT already have their own FLAVOR_PROFILES entry.
+ * If a name already exists in FLAVOR_PROFILES, it gets exact-match precedence
+ * and an alias would be unreachable.
+ *
+ * Phase 16 will add aliases for newly-profiled flavors in the same commits.
+ */
+export const FLAVOR_ALIASES = {
+  // Peanut butter cup family -- "Reeses Peanut Butter Cup" variant appears in
+  // SIMILARITY_GROUPS but has no profile; canonical is "Really Reese's"
+  "reeses peanut butter cup": "really reese's",
+  "reese's peanut butter cup": "really reese's",
+  "pb cup": "really reese's",
+
+  // Georgia Peach variants -- KNOWN_FLAVORS_FALLBACK has "Georgia Peach Pecan"
+  'georgia peach pecan': 'georgia peach',
+
+  // OREO family -- "OREO Cookies and Cream" in KNOWN_FLAVORS_FALLBACK, no profile
+  'oreo cookies and cream': 'oreo cookie cheesecake',
+
+  // Cookie Dough reversal -- common customer variant naming
+  'cookie dough craze': 'crazy for cookie dough',
+
+  // Shortened/colloquial names for profiled flavors
+  'chocolate decadence': 'dark chocolate decadence',
+  'dark chocolate peanut butter crunch': 'dark chocolate pb crunch',
+  'snickers': 'snickers swirl',
+  'salted caramel pecan': 'salted double caramel pecan',
+
+  // "Custard" suffix variants -- upstream data sometimes appends "custard"
+  'vanilla custard': 'vanilla',
+  'butter pecan custard': 'butter pecan',
+
+  // Turtle family variants
+  'turtle sundae': 'turtle',
+  'caramel turtle sundae': 'caramel turtle',
+
+  // Double variants
+  'double strawberry custard': 'double strawberry',
+
+  // Brownie/thunder variants
+  'brownie batter': 'brownie thunder',
+
+  // Historical / marketing renames
+  'mint oreo': 'mint cookie',
+  'oreo mint': 'mint cookie',
+
+  // Cheesecake shorthand
+  'oreo cheesecake cookie': 'oreo cookie cheesecake',
+};
+
 const DEFAULT_PROFILE = { base: 'vanilla', ribbon: null, toppings: [], density: 'standard' };
 
 /**
  * Look up flavor profile by name with fuzzy matching.
- * Tries: exact match -> unicode normalized -> keyword fallback -> default.
+ * Tries: exact match -> unicode normalized -> alias resolution -> keyword fallback -> default.
  */
 export function getFlavorProfile(name) {
   if (!name) return DEFAULT_PROFILE;
@@ -156,6 +225,13 @@ export function getFlavorProfile(name) {
   // Normalize unicode curly quotes
   const normalized = key.replace(/\u2019/g, "'").replace(/\u2018/g, "'");
   if (FLAVOR_PROFILES[normalized]) return FLAVOR_PROFILES[normalized];
+
+  // Alias resolution (after normalize, before keyword fallback)
+  const nfk = normalizeFlavorKey(key);
+  const canonical = FLAVOR_ALIASES[nfk];
+  if (canonical && FLAVOR_PROFILES[canonical]) {
+    return FLAVOR_PROFILES[canonical];
+  }
 
   // Keyword fallback
   if (key.includes('double butter pecan')) return { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' };
