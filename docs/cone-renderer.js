@@ -21,41 +21,52 @@
 
 var FALLBACK_BASE_COLORS = {
   vanilla: '#F5DEB3',
-  chocolate: '#7B4A2E',
+  chocolate: '#6F4E37',
   chocolate_custard: '#5A3825',
-  dark_chocolate: '#4B2E2E',
-  mint: '#8FD9A8',
-  strawberry: '#E88AAE',
-  caramel: '#C58A45',
-  cheesecake: '#F3E7CB',
+  dark_chocolate: '#3B1F0B',
+  mint: '#2ECC71',
+  mint_andes: '#1A8A4A',
+  strawberry: '#FF6B9D',
+  cheesecake: '#FFF5E1',
+  caramel: '#C68E17',
   butter_pecan: '#F2E7D1',
-  peach: '#F1B37C'
+  peach: '#FFE5B4',
+  lemon: '#FFF176',
+  blackberry: '#6B3FA0'
 };
 
 var FALLBACK_CONE_COLORS = { waffle: '#D2691E', waffle_dark: '#B8860B' };
 
 var FALLBACK_TOPPING_COLORS = {
-  oreo: '#3A2E2A',
+  oreo: '#1A1A1A',
   andes: '#1FAE7A',
-  cookie_dough: '#C48A5A',
-  brownie: '#4B2E2E',
   dove: '#2B1A12',
-  peanut_butter_cup: '#7B4A2E',
   pecan: '#8B5A2B',
-  caramel_bits: '#C58A45',
-  heath: '#C58A45',
-  raspberry: '#B24A64',
-  reeses: '#A56A43'
+  cashew: '#D4C4A8',
+  heath: '#DAA520',
+  butterfinger: '#E6A817',
+  cookie_dough: '#C4A882',
+  strawberry_bits: '#FF1744',
+  raspberry: '#E91E63',
+  peach_bits: '#FF9800',
+  salt: '#FFFFFF',
+  snickers: '#C4A060',
+  cake: '#4A2800',
+  cheesecake_bits: '#FFF8DC',
+  m_and_m: '#FF4444',
+  reeses: '#D4A017',
+  brownie: '#2D1700',
+  blueberry: '#3B1F6B',
+  pie_crust: '#C4966A',
+  blackberry_drupe: '#3D1F5C'
 };
 
 var FALLBACK_RIBBON_COLORS = {
   caramel: '#D38B2C',
-  fudge: '#4B2E2E',
-  peanut_butter: '#9B6A3A',
-  marshmallow: '#EDE3D1',
-  strawberry: '#B24A64',
-  lemon: '#F2D14C',
-  blackberry: '#5A3D6E'
+  peanut_butter: '#D4A017',
+  marshmallow: '#FFFFFF',
+  chocolate_syrup: '#1A0A00',
+  fudge: '#3B1F0B'
 };
 
 // ---------------------------------------------------------------------------

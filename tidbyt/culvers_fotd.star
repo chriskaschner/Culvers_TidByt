@@ -29,7 +29,8 @@ BASE_COLORS = {
     "strawberry": "#FF6B9D",
     "cheesecake": "#FFF5E1",
     "caramel": "#C68E17",
-    "butter_pecan": "#D4A574",
+    "chocolate_custard": "#5A3825",
+    "butter_pecan": "#F2E7D1",
     "peach": "#FFE5B4",
     "lemon": "#FFF176",
     "blackberry": "#6B3FA0",
@@ -37,7 +38,7 @@ BASE_COLORS = {
 
 # Ribbon colors (diagonal swirl through scoop)
 RIBBON_COLORS = {
-    "caramel": "#DAA520",
+    "caramel": "#D38B2C",
     "peanut_butter": "#D4A017",
     "marshmallow": "#FFFFFF",
     "chocolate_syrup": "#1A0A00",
@@ -47,9 +48,9 @@ RIBBON_COLORS = {
 # Topping colors (1px accents in fixed slots)
 TOPPING_COLORS = {
     "oreo": "#1A1A1A",
-    "andes": "#00897B",
-    "dove": "#3B1F0B",
-    "pecan": "#8B6914",
+    "andes": "#1FAE7A",
+    "dove": "#2B1A12",
+    "pecan": "#8B5A2B",
     "cashew": "#D4C4A8",
     "heath": "#DAA520",
     "butterfinger": "#E6A817",
@@ -66,6 +67,8 @@ TOPPING_COLORS = {
     "brownie": "#2D1700",
     "blueberry": "#3B1F6B",
     "pie_crust": "#C4966A",
+    "cheesecake_bits": "#FFF8DC",
+    "blackberry_drupe": "#3D1F5C",
 }
 
 # Flavor profiles: lowercase name -> {base, ribbon, toppings, density}
