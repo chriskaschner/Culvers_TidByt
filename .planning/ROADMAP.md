@@ -74,11 +74,11 @@ Plans:
   1. CI test fails if any color hex value drifts between flavor-colors.js and cone-renderer.js
   2. Contrast checker flags any topping/base combination below 3:1 ratio before profiles are committed
   3. Pixelmatch golden baselines exist for all 4 rendering tiers across reference flavors, detecting unintended visual changes
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
+- [ ] 14-01-PLAN.md -- Palette sync test (VALD-01) + contrast checker (VALD-02) + shared utilities + Starlark drift fix
+- [ ] 14-02-PLAN.md -- Pixelmatch golden baselines for all flavors x 4 tiers (VALD-03)
 
 ### Phase 15: Palette Expansion & Aliases
 **Goal**: All color keys and alias mappings exist so new profiles can reference them without silent failures
@@ -141,8 +141,8 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 10. Redirects & CSS Cleanup | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 11. Monolith Refactoring | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 12. Feature Development | v1.2 | 3/3 | Complete | 2026-03-09 |
-| 13. Rendering Quality Fixes | 2/2 | Complete    | 2026-03-10 | - |
-| 14. Validation Tooling | v1.3 | 0/0 | Not started | - |
+| 13. Rendering Quality Fixes | v1.3 | 2/2 | Complete | 2026-03-10 |
+| 14. Validation Tooling | v1.3 | 0/2 | Not started | - |
 | 15. Palette Expansion & Aliases | v1.3 | 0/0 | Not started | - |
 | 16. Bulk Profile Authoring | v1.3 | 0/0 | Not started | - |
 | 17. PNG Generation & Deployment | v1.3 | 0/0 | Not started | - |
