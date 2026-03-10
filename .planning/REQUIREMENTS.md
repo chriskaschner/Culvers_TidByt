@@ -22,8 +22,8 @@ Requirements for asset parity release. Each maps to roadmap phases.
 
 ### Palette & Profiles
 
-- [ ] **PROF-01**: ~10 new base colors added to all sync files (espresso, cherry, pumpkin, banana, coconut, root_beer, pistachio, orange, blue_moon, maple)
-- [ ] **PROF-02**: ~10 new topping colors added to all sync files
+- [x] **PROF-01**: ~10 new base colors added to all sync files (espresso, cherry, pumpkin, banana, coconut, root_beer, pistachio, orange, blue_moon, maple)
+- [x] **PROF-02**: ~10 new topping colors added to all sync files
 - [ ] **PROF-03**: All ~107 unprofiled flavors have FLAVOR_PROFILES entries with base/ribbon/toppings/density
 - [ ] **PROF-04**: ~20 duplicate/alias flavor names map to canonical profiles
 
@@ -58,8 +58,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VALD-01 | Phase 14 | Complete |
 | VALD-02 | Phase 14 | Complete |
 | VALD-03 | Phase 14 | Complete |
-| PROF-01 | Phase 15 | Pending |
-| PROF-02 | Phase 15 | Pending |
+| PROF-01 | Phase 15 | Complete |
+| PROF-02 | Phase 15 | Complete |
 | PROF-03 | Phase 16 | Pending |
 | PROF-04 | Phase 15 | Pending |
 | PNGS-01 | Phase 17 | Pending |
