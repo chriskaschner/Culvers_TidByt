@@ -1,0 +1,75 @@
+# Requirements: Custard Calendar v1.3 Asset Parity
+
+**Defined:** 2026-03-09
+**Core Value:** A family can instantly see what flavors are at their nearby stores and decide where to go
+
+## v1.3 Requirements
+
+Requirements for asset parity release. Each maps to roadmap phases.
+
+### Rendering Quality
+
+- [ ] **RNDQ-01**: PNG pipeline uses clean integer downscale ratio (scale 10 -> 120px = 3:1)
+- [ ] **RNDQ-02**: Sharp rasterization uses 300 DPI density for crisper pixel edges
+- [ ] **RNDQ-03**: Color hex values match across all 4 sync files (flavor-colors.js, cone-renderer.js, culvers_fotd.star, flavor-audit.html)
+- [ ] **RNDQ-04**: HD scoop geometry in cone-renderer.js matches server renderer (row-1 taper step)
+
+### Validation Tooling
+
+- [ ] **VALD-01**: CI test catches palette drift between flavor-colors.js and cone-renderer.js
+- [ ] **VALD-02**: Contrast checker flags topping/base combinations below 3:1 ratio
+- [ ] **VALD-03**: Pixelmatch golden baselines exist for all 4 tiers across reference flavors
+
+### Palette & Profiles
+
+- [ ] **PROF-01**: ~10 new base colors added to all sync files (espresso, cherry, pumpkin, banana, coconut, root_beer, pistachio, orange, blue_moon, maple)
+- [ ] **PROF-02**: ~10 new topping colors added to all sync files
+- [ ] **PROF-03**: All ~107 unprofiled flavors have FLAVOR_PROFILES entries with base/ribbon/toppings/density
+- [ ] **PROF-04**: ~20 duplicate/alias flavor names map to canonical profiles
+
+### PNG Generation
+
+- [ ] **PNGS-01**: Hero cone PNGs regenerated for all 176+ profiled flavors
+- [ ] **PNGS-02**: Service worker CACHE_VERSION bumped after PNG deployment
+
+## Future Requirements
+
+None deferred -- full scope committed for v1.3.
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Premium tier production adoption | UX decision deferred -- rendering exists but no production surface uses it yet |
+| Starlark LED color optimization | Product decision needed on whether Tidbyt colors should intentionally differ for LED legibility |
+| New rendering tiers | Existing 4 tiers (Mini/HD/Hero/Premium) are sufficient |
+| Worker/API changes | Asset parity is presentation-layer only |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| RNDQ-01 | — | Pending |
+| RNDQ-02 | — | Pending |
+| RNDQ-03 | — | Pending |
+| RNDQ-04 | — | Pending |
+| VALD-01 | — | Pending |
+| VALD-02 | — | Pending |
+| VALD-03 | — | Pending |
+| PROF-01 | — | Pending |
+| PROF-02 | — | Pending |
+| PROF-03 | — | Pending |
+| PROF-04 | — | Pending |
+| PNGS-01 | — | Pending |
+| PNGS-02 | — | Pending |
+
+**Coverage:**
+- v1.3 requirements: 13 total
+- Mapped to phases: 0
+- Unmapped: 13
+
+---
+*Requirements defined: 2026-03-09*
+*Last updated: 2026-03-09 after initial definition*
