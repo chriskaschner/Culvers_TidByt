@@ -423,9 +423,10 @@ function renderMiniConeHDSVG(flavorName, scale) {
  */
 function heroConeSrc(flavorName) {
   if (!flavorName) return null;
-  var slug = String(flavorName).toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  var key = normalizeFlavorKey(flavorName);
+  var canonical = FALLBACK_FLAVOR_ALIASES[key];
+  var nameForSlug = canonical || key;
+  var slug = nameForSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   if (!slug) return null;
   return 'assets/cones/' + slug + '.png';
 }
