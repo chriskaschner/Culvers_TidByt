@@ -121,7 +121,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md -- Alias resolution in heroConeSrc() + CI count test + regenerate all 94 PNGs
+- [x] 17-01-PLAN.md -- Alias resolution in heroConeSrc() + CI count test + regenerate all 94 PNGs (completed 2026-03-10)
 - [ ] 17-02-PLAN.md -- Bump CACHE_VERSION to custard-v19 + visual verification checkpoint
 
 ## Progress
@@ -147,7 +147,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 14. Validation Tooling | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 15. Palette Expansion & Aliases | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 16. Bulk Profile Authoring | v1.3 | Complete    | 2026-03-10 | 2026-03-10 |
-| 17. PNG Generation & Deployment | v1.3 | 0/2 | Not started | - |
+| 17. PNG Generation & Deployment | v1.3 | 1/2 | In Progress | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
 Full v1.1 phase details archived: `.planning/milestones/v1.1-ROADMAP.md`

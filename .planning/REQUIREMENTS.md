@@ -29,7 +29,7 @@ Requirements for asset parity release. Each maps to roadmap phases.
 
 ### PNG Generation
 
-- [ ] **PNGS-01**: Hero cone PNGs regenerated for all 176+ profiled flavors
+- [x] **PNGS-01**: Hero cone PNGs regenerated for all 94 profiled flavors
 - [ ] **PNGS-02**: Service worker CACHE_VERSION bumped after PNG deployment
 
 ## Future Requirements
@@ -62,7 +62,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROF-02 | Phase 15 | Complete |
 | PROF-03 | Phase 16 | Complete |
 | PROF-04 | Phase 15 | Complete |
-| PNGS-01 | Phase 17 | Pending |
+| PNGS-01 | Phase 17 | Complete |
 | PNGS-02 | Phase 17 | Pending |
 
 **Coverage:**
@@ -72,4 +72,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after roadmap creation*
+*Last updated: 2026-03-10 after 17-01 PNG generation*

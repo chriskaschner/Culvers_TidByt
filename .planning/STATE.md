@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Asset Parity
-status: completed
-stopped_at: Phase 17 context gathered
-last_updated: "2026-03-11T00:27:19.863Z"
-last_activity: 2026-03-10 -- Completed 16-03 fruit/specialty-family profiles (14 new + 56 goldens, Phase 16 complete)
+status: in-progress
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-11T00:46:08Z"
+last_activity: 2026-03-10 -- Completed 17-01 PNG generation (94 PNGs + heroConeSrc alias resolution + CI count test)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
-  percent: 90
+  total_plans: 11
+  completed_plans: 10
+  percent: 95
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.3 Asset Parity -- Phase 16 complete, Phase 17 (PNG Generation & Deployment) next
+**Current focus:** v1.3 Asset Parity -- Phase 17 Plan 01 complete, Plan 02 (cache bump + deployment) next
 
 ## Current Position
 
-Phase: 16 of 17 (Bulk Profile Authoring) -- COMPLETE (fourth of 5 v1.3 phases)
-Plan: 3 of 3 complete
-Status: Phase Complete
-Last activity: 2026-03-10 -- Completed 16-03 fruit/specialty-family profiles (14 new + 56 goldens, Phase 16 complete)
+Phase: 17 of 17 (PNG Generation & Deployment) -- IN PROGRESS (fifth of 5 v1.3 phases)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-03-10 -- Completed 17-01 PNG generation (94 PNGs + heroConeSrc alias resolution + CI count test)
 
-Progress: [##################..] 90% v1.3 (4 phases complete, Phase 16 done)
+Progress: [###################.] 95% v1.3 (4 phases + 1 plan complete)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [##################..] 90% v1.3 (4 phases complete, Phase 16 done)
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
 - v1.2: 9 plans in ~1 day (~11 min avg)
-- v1.3 so far: 9 plans in ~78 min (~9 min/plan)
-- Total: 37 plans across 4 milestones
+- v1.3 so far: 10 plans in ~80 min (~8 min/plan)
+- Total: 38 plans across 4 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -52,6 +52,7 @@ Progress: [##################..] 90% v1.3 (4 phases complete, Phase 16 done)
 | 16-01 | bulk-profile-authoring | 9min | 2 | 5+68 |
 | 16-02 | bulk-profile-authoring | 6min | 2 | 4+92 |
 | 16-03 | bulk-profile-authoring | 12min | 2 | 4+56 |
+| 17-01 | png-generation-deployment | 2min | 2 | 2+68 |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Phase 16-03: 14 fruit/specialty-family profiles (7 fruit + 7 specialty) with 6 aliases completing full catalog coverage
 - Phase 16-03: 6 structural contrast exemptions for fruit/specialty pairs (cherry_bits:cherry, pecan:cherry, coconut_flakes:coconut, pecan/pumpkin_spice/graham_cracker:pumpkin)
 - Phase 16-03: Final totals: 94 FLAVOR_PROFILES + 37 FLAVOR_ALIASES = zero unprofiled flavors; user visually approved all
+- Phase 17-01: heroConeSrc uses normalizeFlavorKey + FALLBACK_FLAVOR_ALIASES for alias resolution before slugifying
+- Phase 17-01: Clean-slate PNG regeneration -- deleted all 40 existing PNGs, regenerated all 94 to reflect Phase 13-16 improvements
+- Phase 17-01: CACHE_VERSION test (v19) intentionally fails -- deferred to Plan 02 as designed
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-11T00:27:19.853Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-png-generation-deployment/17-CONTEXT.md
+Last session: 2026-03-11T00:46:08Z
+Stopped at: Completed 17-01-PLAN.md
+Resume file: .planning/phases/17-png-generation-deployment/17-01-SUMMARY.md
