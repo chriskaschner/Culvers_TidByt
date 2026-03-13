@@ -155,6 +155,39 @@
     let markers = L.layerGroup().addTo(map);
     let brandStores = []; // loaded from stores.json
     let skipMoveHandler = false; // flag to skip moveend during programmatic fitBounds
+    let userPositionMarker = null; // Leaflet marker for "you are here" dot
+    let userLat = null;            // Current GPS latitude
+    let userLon = null;            // Current GPS longitude
+    let watchId = null;            // watchPosition ID for cleanup
+
+    function updatePositionDot(lat, lon) {
+      userLat = lat;
+      userLon = lon;
+      const icon = L.divIcon({
+        className: 'user-position-dot-wrap',
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+        html: '<div class="user-position-dot"></div>',
+      });
+      if (userPositionMarker) {
+        userPositionMarker.setLatLng([lat, lon]);
+      } else {
+        userPositionMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000, interactive: false }).addTo(map);
+      }
+    }
+
+    function startWatchPosition() {
+      if (watchId !== null || !navigator.geolocation) return;
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          // Update dot position but do NOT re-center map
+          updatePositionDot(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => { /* watch error is non-fatal */ },
+        { enableHighAccuracy: false, maximumAge: 30000 }
+      );
+    }
+
     const flavorColorsReady = loadFlavorColors().then(function() { flavorIconCache.clear(); });
     const flavorIntelCache = new Map(); // normalized flavor -> rendered intel HTML
     const storeIntelCache = new Map(); // slug -> rendered specialty HTML
@@ -646,37 +679,60 @@
     }
 
     // Geolocation
-    geolocateBtn.addEventListener('click', () => {
+    geolocateBtn.addEventListener('click', async () => {
       if (!navigator.geolocation) {
         alert('Geolocation is not supported by your browser.');
         return;
       }
+      // If we already have a live GPS position, just re-center
+      if (userLat !== null && userLon !== null) {
+        skipMoveHandler = true;
+        map.setView([userLat, userLon], 11);
+        const placeName = await reverseGeocode(userLat, userLon);
+        locationInput.value = placeName;
+        doSearch();
+        return;
+      }
+      // Otherwise request fresh position
       geolocateBtn.disabled = true;
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          locationInput.value = `${pos.coords.latitude.toFixed(4)},${pos.coords.longitude.toFixed(4)}`;
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          skipMoveHandler = true;
+          map.setView([lat, lon], 11);
+          updatePositionDot(lat, lon);
+          const placeName = await reverseGeocode(lat, lon);
+          locationInput.value = placeName;
           geolocateBtn.disabled = false;
+          startWatchPosition();
           doSearch();
         },
         (err) => {
           geolocateBtn.disabled = false;
-          // Fall back to IP-based geolocation
-          autoGeolocate();
+          ipGeolocateFallback();
         },
-        { timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 8000 }
       );
     });
 
-    async function autoGeolocate() {
+    async function ipGeolocateFallback() {
       try {
         const resp = await fetch(`${WORKER_BASE}/api/v1/geolocate`);
         const geo = await resp.json();
-        if (geo.city && geo.state) {
+        if (geo.city && geo.state && !locationInput.value) {
           locationInput.value = `${geo.city}, ${geo.state}`;
           doSearch();
+          return;
         }
       } catch (err) {
-        console.debug('Geolocation unavailable:', err);
+        console.debug('IP geolocation unavailable:', err);
+      }
+      // Last resort: center on Sauk City (first Culver's)
+      // No position dot shown -- absence of dot signals GPS isn't active
+      if (!locationInput.value) {
+        skipMoveHandler = true;
+        map.setView([43.2697, -89.7218], 9);
       }
     }
 
@@ -958,18 +1014,59 @@
       return brandStores;
     }
 
-    // Auto-detect location on load via Cloudflare geolocation, then search
+    // Auto-detect location on load: GPS first, then IP fallback, then Sauk City
     async function initLocation() {
-      try {
-        const resp = await fetch(`${WORKER_BASE}/api/v1/geolocate`);
-        const geo = await resp.json();
-        if (geo.city && geo.state && !locationInput.value) {
-          locationInput.value = `${geo.city}, ${geo.state}`;
-          doSearch();
+      // Try GPS first (auto-request on page load)
+      if (navigator.geolocation) {
+        // Check permission state -- skip GPS entirely if already denied
+        let permState = 'prompt';
+        try {
+          if (navigator.permissions) {
+            const perm = await navigator.permissions.query({ name: 'geolocation' });
+            permState = perm.state;
+          }
+        } catch (e) { /* permissions API not supported, try GPS anyway */ }
+
+        if (permState === 'denied') {
+          // Skip GPS, go straight to IP fallback
+          await ipGeolocateFallback();
+          return;
         }
-      } catch (err) {
-        console.debug('Auto-geolocation unavailable:', err);
+
+        // For 'granted' or 'prompt': attempt GPS with a timeout
+        try {
+          await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                // Center map on GPS position
+                skipMoveHandler = true;
+                map.setView([lat, lon], 11);
+                // Show position dot
+                updatePositionDot(lat, lon);
+                // Reverse geocode to populate location input
+                const placeName = await reverseGeocode(lat, lon);
+                locationInput.value = placeName;
+                // Start live tracking
+                startWatchPosition();
+                // Trigger search with the geocoded location
+                doSearch();
+                resolve();
+              },
+              (err) => {
+                reject(err);
+              },
+              { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+            );
+          });
+          return; // GPS succeeded, done
+        } catch (e) {
+          // GPS denied or timed out, fall through to IP fallback
+        }
       }
+      // IP geolocation fallback (existing behavior)
+      await ipGeolocateFallback();
     }
 
     // Init

@@ -88,7 +88,7 @@ test("GPS granted: map centers on GPS coordinates, not default Wisconsin center"
 
   // Check that map center is near GPS coords, not the default (43.0, -89.5)
   const center = await page.evaluate(() => {
-    const c = window.map.getCenter();
+    const c = map.getCenter();
     return { lat: c.lat, lng: c.lng };
   });
 
