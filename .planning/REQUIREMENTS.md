@@ -10,7 +10,7 @@ Requirements for bug fix release. Each maps to roadmap phases.
 ### Store Selection
 
 - [x] **STOR-01**: Today page hides onboarding banner when a store is already selected
-- [ ] **STOR-02**: Compare page initializes with only the single geolocated store, not multiple nearby stores
+- [x] **STOR-02**: Compare page initializes with only the single geolocated store, not multiple nearby stores
 
 ### Map / Geolocation
 
@@ -35,7 +35,7 @@ None -- bug fix milestone only.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | STOR-01 | Phase 18 | Complete |
-| STOR-02 | Phase 18 | Pending |
+| STOR-02 | Phase 18 | Complete |
 | MAP-01 | Phase 19 | Pending |
 | MAP-02 | Phase 19 | Pending |
 | MAP-03 | Phase 19 | Pending |

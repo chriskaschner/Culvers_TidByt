@@ -53,7 +53,7 @@
 
 ### v1.4 Bug Fixes (In Progress)
 
-- [ ] **Phase 18: Store Selection Fixes** - Today and Compare pages respect geolocated store correctly
+- [x] **Phase 18: Store Selection Fixes** - Today and Compare pages respect geolocated store correctly (completed 2026-03-13)
 - [ ] **Phase 19: Map Geolocation Fixes** - Map centers on user, shows nearest store, displays position dot
 
 ## Phase Details
@@ -67,7 +67,7 @@
   2. User visiting Today page for the first time (no store selected) still sees the onboarding banner
   3. User arriving on Compare page with a geolocated store sees only that single store's schedule -- not 4 nearby stores
   4. User can still add additional stores on Compare page after the single-store initial load
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 18-01-PLAN.md -- Fix Today page onboarding banner flash for returning users
 - [ ] 18-02-PLAN.md -- Enable single-store Compare page with add-more hint
@@ -93,7 +93,7 @@ Plans:
 | 6-8 | v1.1 | 4/4 | Complete | 2026-03-09 |
 | 9-12 | v1.2 | 9/9 | Complete | 2026-03-09 |
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
-| 18. Store Selection Fixes | 1/2 | In Progress|  | - |
+| 18. Store Selection Fixes | 2/2 | Complete   | 2026-03-13 | - |
 | 19. Map Geolocation Fixes | v1.4 | 0/TBD | Not started | - |
 
 **Total: 19 phases, 41+ plans across 5 milestones**
