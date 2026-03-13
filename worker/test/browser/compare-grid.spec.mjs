@@ -299,9 +299,9 @@ test("COMP-08: only existing endpoints are used (no new API endpoints)", async (
 });
 
 // ---------------------------------------------------------------------------
-// Single-store: shows prompt instead of grid
+// Single-store: shows grid with add-more hint (not empty state)
 // ---------------------------------------------------------------------------
-test("single-store user sees prompt, not grid", async ({ page }) => {
+test("single-store user sees grid with add-more hint, not empty state", async ({ page }) => {
   // Set up with only 1 store
   var context = page.context();
 
@@ -312,6 +312,9 @@ test("single-store user sees prompt, not grid", async ({ page }) => {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_GEO) });
   });
   await context.route("**/api/v1/flavor-colors*", function (route) {
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+  await context.route("**/api/v1/flavor-config*", function (route) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await context.route("**/api/v1/flavors*", function (route) {
@@ -330,14 +333,23 @@ test("single-store user sees prompt, not grid", async ({ page }) => {
 
   await page.reload();
 
-  // Wait for empty state to appear
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  // Wait for grid to render
+  await page.waitForSelector(".compare-day-card", { timeout: 10000 });
 
-  // Empty state should be visible
-  var emptyState = page.locator("#compare-empty");
-  await expect(emptyState).toBeVisible();
-
-  // Grid should not have day cards
+  // Should have 3 day cards with 1 store row each
   var dayCards = page.locator(".compare-day-card");
-  await expect(dayCards).toHaveCount(0);
+  await expect(dayCards).toHaveCount(3);
+
+  for (var i = 0; i < 3; i++) {
+    var rows = dayCards.nth(i).locator(".compare-store-row");
+    await expect(rows).toHaveCount(1);
+  }
+
+  // Empty state should be hidden
+  var emptyState = page.locator("#compare-empty");
+  await expect(emptyState).toBeHidden();
+
+  // Should have add-more hint
+  var hints = page.locator(".compare-add-hint");
+  await expect(hints).toHaveCount(3);
 });

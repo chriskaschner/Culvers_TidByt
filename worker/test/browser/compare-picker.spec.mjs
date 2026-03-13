@@ -236,19 +236,29 @@ test("removing a store from bar updates grid to show fewer stores", async ({ pag
 });
 
 // ---------------------------------------------------------------------------
-// Removing stores down to 1 shows empty state
+// Removing stores down to 1 shows grid with add-more hint (not empty state)
 // ---------------------------------------------------------------------------
-test("removing stores down to 1 shows empty state", async ({ page }) => {
+test("removing stores down to 1 shows grid with add-more hint", async ({ page }) => {
   await setupComparePage(page, { storeSlugs: ["mt-horeb", "verona"] });
 
   // Remove one store
   var firstRemoveBtn = page.locator(".compare-store-chip-remove").first();
   await firstRemoveBtn.click();
 
-  // Should show empty state
-  await page.waitForSelector("#compare-empty:not([hidden])", { timeout: 10000 });
-  var emptyState = page.locator("#compare-empty");
-  await expect(emptyState).toBeVisible();
+  // Should show the grid with 1 store and add-more hint
+  await page.waitForSelector(".compare-day-card", { timeout: 10000 });
+  var dayCards = page.locator(".compare-day-card");
+  await expect(dayCards).toHaveCount(3);
+
+  // Each day card should have 1 store row
+  for (var i = 0; i < 3; i++) {
+    var rows = dayCards.nth(i).locator(".compare-store-row");
+    await expect(rows).toHaveCount(1);
+  }
+
+  // Add-more hint should be present
+  var hints = page.locator(".compare-add-hint");
+  await expect(hints).toHaveCount(3);
 });
 
 // ---------------------------------------------------------------------------

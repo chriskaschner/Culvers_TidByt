@@ -242,15 +242,14 @@ test("CMPR-01: primary store fallback seeds first-time compare visitors", async 
   });
   await page.reload();
 
-  // The compare page should show empty state (1 store < MIN_COMPARE_STORES)
-  // but the primary store fallback should have seeded one store.
-  // Since the compare page requires >= 2 stores to show the grid,
-  // empty state is expected. But we can verify the primary was picked up
-  // by checking the page tried to load data for mt-horeb.
-  // The empty state is the correct behavior for 1 store.
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  // The compare page should show the grid with 1 store (inherited from primary).
+  // MIN_COMPARE_STORES is 1, so the grid renders with the primary store's data
+  // and an add-more hint encouraging comparison.
+  await page.waitForSelector(".compare-day-card", { timeout: 10000 });
+  var dayCards = page.locator(".compare-day-card");
+  await expect(dayCards).toHaveCount(3);
   var emptyState = page.locator("#compare-empty");
-  await expect(emptyState).toBeVisible();
+  await expect(emptyState).toBeHidden();
 });
 
 // ---------------------------------------------------------------------------
