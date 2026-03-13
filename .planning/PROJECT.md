@@ -42,19 +42,15 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - 94 FLAVOR_PROFILES with base/ribbon/toppings/density covering full catalog -- v1.3
 - 37 FLAVOR_ALIASES resolving variant/duplicate/historical names -- v1.3
 - Service worker cache v19 ensuring fresh PNG delivery -- v1.3
+- Today page hides onboarding banner when store is already selected -- v1.4
+- Compare page initializes with single geolocated store, not multiple nearby stores -- v1.4
+- Map centers on user's actual GPS position with three-tier fallback -- v1.4
+- Map shows nearest store with highlighted marker and "Nearest to you" badge -- v1.4
+- Map displays "you are here" dot at user's precise GPS coordinates -- v1.4
 
 ### Active
 
-## Current Milestone: v1.4 Bug Fixes
-
-**Goal:** Fix geolocation, store selection, and map issues found in production.
-
-**Target fixes:**
-- Today page shows onboarding banner even when store is already selected
-- Compare page defaults to 4 stores instead of single geolocated store
-- Map centers on St. Louis instead of user's actual location
-- Map doesn't show nearby store when physically present
-- No "you are here" dot on map for precise GPS position
+(None -- planning next milestone)
 
 ### Out of Scope
 
@@ -74,9 +70,9 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 
 ## Context
 
-Shipped v1.3 with ~368,889 lines across HTML/CSS/JS files. Static HTML/CSS/JS on GitHub Pages.
+Shipped v1.4 with ~371,275 lines across HTML/CSS/JS files. Static HTML/CSS/JS on GitHub Pages.
 Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwright (browser tests), GitHub Pages (hosting).
-1,351 Worker tests, 32+ Playwright tests, 179 Python tests.
+1,351 Worker tests, 49+ Playwright tests (17 new in v1.4), 179 Python tests.
 
 **Current state:**
 - 15 HTML pages with shared navigation and store indicator
@@ -131,6 +127,12 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | FLAVOR_ALIASES with cascading resolution | exact -> normalize -> alias -> keyword -> default | Good -- zero unprofiled flavors |
 | Clean-slate PNG regeneration | Delete all 40 old PNGs, regenerate 94 from updated profiles | Good -- consistent quality baseline |
 | FALLBACK_FLAVOR_ALIASES in cone-renderer.js | Client-side alias copy avoids API dependency for alias resolution | Good -- works offline, 37/37 in sync |
+| Synchronous localStorage guard before async load | Prevents onboarding banner flash for returning users | Good -- zero flash, 4 tests |
+| MIN_COMPARE_STORES lowered to 1 | Single geolocated store renders grid immediately with add-more hint | Good -- matches user intent |
+| Permissions API gating for GPS | Skip GPS entirely when denied (instant fallback) | Good -- fast path for denied users |
+| Position dot interactive:false + zIndexOffset:1000 | Stays above store markers without intercepting clicks | Good -- clean UX |
+| Nearest store by slug cross-reference | Links marker highlighting to results badge without marker refs | Good -- clean separation |
+| SW mock (no-op sw.js) for Playwright tests | SW intercepts page-level route handlers; mock prevents registration | Good -- reliable test mocking |
 
 ---
-*Last updated: 2026-03-12 after v1.4 milestone started*
+*Last updated: 2026-03-13 after v1.4 milestone*

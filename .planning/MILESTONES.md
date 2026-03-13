@@ -1,5 +1,30 @@
 # Milestones
 
+## v1.4 Bug Fixes (Shipped: 2026-03-13)
+
+**Phases completed:** 2 phases, 4 plans, 8 tasks
+
+**Key accomplishments:**
+- Today page onboarding banner no longer flashes for returning users with a stored location
+- Compare page renders single-store grid with add-more hint instead of empty state
+- Map auto-centers on user's actual GPS coordinates with three-tier fallback (GPS -> IP -> Sauk City)
+- Pulsing "you are here" position dot at user's GPS location with live tracking via watchPosition
+- Nearest store detection with enlarged marker glow and "Nearest to you" badge on results
+
+**Stats:**
+- Files modified: 65 | Lines added: 2,386 | Lines removed: 21
+- Timeline: 1 day (2026-03-12 to 2026-03-13)
+- Execution time: ~34 min across 4 plans (~8.5 min/plan)
+- Requirements: 5/5 satisfied
+- Test coverage: 17 new browser tests across 4 test files
+
+**Known tech debt:**
+- Pre-existing map-pan-stability.spec.mjs test failure (not caused by v1.4)
+- Inconsistent route patterns in map tests (regex vs glob) -- both functional
+- Nyquist validation missing for phases 18 and 19
+
+---
+
 ## v1.3 Asset Parity (Shipped: 2026-03-12)
 
 **Phases completed:** 5 phases, 11 plans

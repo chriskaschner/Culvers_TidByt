@@ -184,6 +184,49 @@
 
 ---
 
+## Milestone: v1.4 -- Bug Fixes
+
+**Shipped:** 2026-03-13
+**Phases:** 2 | **Plans:** 4 | **Sessions:** ~2
+
+### What Was Built
+- Today page onboarding banner fix: synchronous localStorage check prevents flash for returning users
+- Compare page single-store support: renders 1-store grid with add-more hint instead of empty state
+- Map GPS auto-centering with three-tier fallback (GPS -> IP -> Sauk City)
+- Pulsing "you are here" position dot at user's GPS coordinates with live watchPosition tracking
+- Nearest store detection with enlarged marker glow ring and "Nearest to you" results badge
+
+### What Worked
+- TDD approach on all 4 plans: tests written before implementation, caught issues immediately
+- Permissions API gating for GPS: instant fallback when denied, no 8-second timeout in tests or denied users
+- Small milestone scope (5 requirements, 2 phases) kept focus tight and execution fast
+- Phase 18 -> 19 dependency was clean: Phase 18 established custard-primary localStorage key, Phase 19 consumed it independently
+- Audit confirmed all 5 requirements satisfied with 3-source cross-reference before archiving
+
+### What Was Inefficient
+- Service worker intercepting Playwright route handlers required discovering the no-op sw.js mock pattern -- not documented anywhere, cost debugging time in 19-02
+- Inconsistent route patterns in map tests (regex in 19-01, glob in 19-02) -- both work but creates maintenance burden
+- Nyquist validation still missing on both phases -- same gap as v1.0-v1.3
+
+### Patterns Established
+- Synchronous localStorage guard before async data loads: check localStorage first, show loading state, then fetch
+- Permissions API gating: query navigator.permissions before attempting GPS to avoid blocking on 'prompt'
+- SW mock pattern for Playwright: route **/sw.js to no-op script when tests need page-level route control
+- Position dot with interactive:false + zIndexOffset:1000: stays above markers without intercepting clicks
+
+### Key Lessons
+1. Service workers and Playwright route handlers don't mix -- mock sw.js as no-op when tests need API control
+2. Permissions API check before GPS prevents blocking timeouts -- should be standard pattern for any geolocation feature
+3. Bug fix milestones benefit from tight scope (5 requirements max) -- fast to plan, execute, and verify
+4. localStorage synchronous reads are fast enough to prevent DOM flash -- no need for async patterns when checking local state
+
+### Cost Observations
+- Model mix: 100% opus (quality profile)
+- Sessions: ~2 across 1 day
+- Notable: 34 min total execution time for 4 plans, ~8.5 min average per plan
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -194,6 +237,7 @@
 | v1.1 | ~4 | 3 | Audit-driven gap closure, CSS static analysis tests, production deploy with human verification |
 | v1.2 | ~6 | 4 | Monolith split (3-file IIFE), page-scoped localStorage, redirect stubs, API surface smoke tests |
 | v1.3 | ~4 | 5 | Validation-first pipeline, family-based bulk authoring, golden baselines, alias resolution chain |
+| v1.4 | ~2 | 2 | Permissions API gating, SW mock for Playwright, synchronous localStorage guard, GPS fallback chain |
 
 ### Cumulative Quality
 
@@ -203,6 +247,7 @@
 | v1.1 | 32+ | 810+ | 179+ | 7/7 requirements satisfied, 5 static analysis tests added |
 | v1.2 | 50+ | 810+ | 179+ | 13/13 requirements satisfied, map/quiz/compare browser tests added |
 | v1.3 | 50+ | 1,351 | 179+ | 13/13 requirements, +541 worker tests (palette sync, contrast, golden baselines, PNG count) |
+| v1.4 | 67+ | 1,351 | 179+ | 5/5 requirements, +17 browser tests (onboarding, single-store, GPS, nearest store) |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -213,3 +258,5 @@
 5. Page-scoped localStorage keys prevent cross-page state leaks -- established in v1.2, apply from day one
 6. Build validation tooling before bulk work -- v1.3 contrast checker caught 10 issues before they multiplied across 54 profiles
 7. Clean-slate regeneration beats incremental when upstream data has changed fundamentally -- v1.3 PNG regen
+8. Service workers and Playwright route handlers conflict -- mock sw.js as no-op for test reliability (v1.4)
+9. Bug fix milestones with tight scope (5 requirements max) execute fast and verify cleanly (v1.4)
