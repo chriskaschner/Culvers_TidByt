@@ -626,15 +626,38 @@ var CustardToday = (function () {
     cacheDomRefs();
     bindEvents();
 
+    // Synchronous localStorage check -- determine initial DOM state
+    // BEFORE any async work to prevent onboarding banner flash
+    var savedSlug = null;
+    try { savedSlug = localStorage.getItem('custard-primary'); } catch (e) {}
+
+    if (savedSlug) {
+      // Returning user: show loading skeleton, keep empty-state hidden
+      if (emptyState) emptyState.hidden = true;
+      if (todayLoading) todayLoading.hidden = false;
+      if (todaySection) todaySection.hidden = true;
+      if (weekSection) weekSection.hidden = true;
+      if (updatesCta) updatesCta.hidden = true;
+    }
+    // If no savedSlug, leave DOM as-is (empty-state starts visible in HTML,
+    // will be confirmed below after manifest loads)
+
     Promise.all([loadStores(), loadFlavorColors()]).then(function () {
       renderQuickStartStores();
 
-      // Check localStorage for a saved store
-      var savedSlug = null;
-      try { savedSlug = localStorage.getItem('custard-primary'); } catch (e) {}
-
-      if (savedSlug && _allStores.find(function (s) { return s.slug === savedSlug; }) && _currentSlug !== savedSlug) {
-        selectStore(savedSlug);
+      if (savedSlug) {
+        var storeExists = _allStores.find(function (s) { return s.slug === savedSlug; });
+        if (storeExists && _currentSlug !== savedSlug) {
+          selectStore(savedSlug);
+        } else if (!storeExists) {
+          // Invalid slug -- clear it and show onboarding
+          try { localStorage.removeItem('custard-primary'); } catch (e) {}
+          if (todayLoading) todayLoading.hidden = true;
+          if (emptyState) emptyState.hidden = false;
+          if (todaySection) todaySection.hidden = true;
+          if (weekSection) weekSection.hidden = true;
+          if (updatesCta) updatesCta.hidden = true;
+        }
       } else if (!_currentSlug) {
         if (emptyState) emptyState.hidden = false;
         todaySection.hidden = true;

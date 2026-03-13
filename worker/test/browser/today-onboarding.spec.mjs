@@ -172,22 +172,27 @@ test("returning user with valid store never sees onboarding banner", async ({ pa
     localStorage.setItem("custard-primary", "mt-horeb");
   });
 
-  // Track if empty-state ever becomes visible during the page lifecycle
+  // Track if empty-state is ever un-hidden AFTER init() sets it hidden.
+  // The HTML starts with empty-state visible (no hidden attr). init() should
+  // immediately set hidden=true for returning users. The old bug was that the
+  // async callback would briefly show it. We track re-shows after the first hide.
   await page.addInitScript(function () {
-    window.__emptyStateEverVisible = false;
+    window.__emptyStateReShown = false;
+    window.__emptyStateWasHidden = false;
     var observer = new MutationObserver(function () {
       var el = document.getElementById("empty-state");
-      if (el && !el.hidden) {
-        window.__emptyStateEverVisible = true;
+      if (!el) return;
+      if (el.hidden) {
+        window.__emptyStateWasHidden = true;
+      } else if (window.__emptyStateWasHidden) {
+        // Was hidden (by init), then became visible again -- this is the flash bug
+        window.__emptyStateReShown = true;
       }
     });
-    // Observe once DOM is ready
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", function () {
         var target = document.getElementById("empty-state");
         if (target) {
-          // Check initial state
-          if (!target.hidden) window.__emptyStateEverVisible = true;
           observer.observe(target, { attributes: true, attributeFilter: ["hidden"] });
         }
       });
@@ -207,11 +212,17 @@ test("returning user with valid store never sees onboarding banner", async ({ pa
   var todaySection = page.locator("#today-section");
   await expect(todaySection).toBeVisible();
 
-  // Verify that empty-state was NEVER visible during page load
-  var everVisible = await page.evaluate(function () {
-    return window.__emptyStateEverVisible;
+  // init() should have hidden empty-state synchronously
+  var wasHidden = await page.evaluate(function () {
+    return window.__emptyStateWasHidden;
   });
-  expect(everVisible).toBe(false);
+  expect(wasHidden).toBe(true);
+
+  // Verify that empty-state was never re-shown after init() hid it
+  var reShown = await page.evaluate(function () {
+    return window.__emptyStateReShown;
+  });
+  expect(reShown).toBe(false);
 });
 
 // ---------------------------------------------------------------------------
