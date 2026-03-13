@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Bug Fixes
-status: complete
+status: completed
 stopped_at: Completed 19-02 nearest store highlighting
-last_updated: "2026-03-13T02:54:44Z"
+last_updated: "2026-03-13T03:00:38.922Z"
 last_activity: 2026-03-13 -- Completed 19-02 nearest store highlighting
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
   completed_plans: 4
   percent: 100
