@@ -1244,7 +1244,7 @@ details ol {
 }
 
 .cta-link:hover {
-  background: #f0f7ff;
+  background: var(--hover-bg);
 }
 
 /* Flavor signals */
@@ -2633,7 +2633,7 @@ details#week-section { margin-top: 1rem; }
 }
 
 .share-btn:hover {
-  background: #f0f7ff;
+  background: var(--hover-bg);
 }
 
 .page-share-mount {
@@ -2644,7 +2644,7 @@ details#week-section { margin-top: 1rem; }
 
 /* Error state */
 .error-card {
-  background: #fce4ec;
+  background: var(--state-danger-bg);
   border: 1px solid #ef9a9a;
   border-radius: 8px;
   padding: var(--space-5);
@@ -2653,13 +2653,13 @@ details#week-section { margin-top: 1rem; }
 }
 
 .error-card p {
-  color: #c62828;
+  color: var(--state-danger);
   margin-bottom: var(--space-3);
 }
 
 .btn-retry {
   padding: var(--space-2) var(--space-5);
-  background: #c62828;
+  background: var(--state-danger);
   color: white;
   border: none;
   border-radius: 4px;
@@ -3158,13 +3158,13 @@ textarea:focus-visible {
 }
 
 .drive-bucket-great,
-.drive-dot.drive-bucket-great { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.drive-dot.drive-bucket-great { background: var(--state-success); color: #fff; border-color: var(--state-success); }
 .drive-bucket-ok,
-.drive-dot.drive-bucket-ok { background: #f9a825; color: #2b2200; border-color: #d18a00; }
+.drive-dot.drive-bucket-ok { background: var(--state-watch); color: #2b2200; border-color: var(--state-watch-border); }
 .drive-bucket-pass,
 .drive-dot.drive-bucket-pass { background: #757575; color: #fff; border-color: #666; }
 .drive-bucket-hard_pass,
-.drive-dot.drive-bucket-hard_pass { background: #c62828; color: #fff; border-color: #b71c1c; }
+.drive-dot.drive-bucket-hard_pass { background: var(--state-danger); color: #fff; border-color: var(--state-danger-text); }
 
 .drive-secondary {
   margin-top: 0.8rem;
@@ -3638,8 +3638,8 @@ textarea:focus-visible {
 }
 
 .compare-filter-chip:focus-visible {
-  outline: 2px solid #005696;
-  outline-offset: 2px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* Map exclusion chips -- reuse compare filter chip pattern */
