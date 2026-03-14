@@ -111,6 +111,8 @@ ALLOWED_SELECTOR_PATTERNS = [
     r"\.updates-cta-card\b",
     # Nudge semantic
     r"\.compare-nudge\b",
+    # Madlibs card (unique teal accent, active state)
+    r"\.madlibs-card",
 ]
 
 # Line-level patterns: if the CSS property line itself matches, allow it.

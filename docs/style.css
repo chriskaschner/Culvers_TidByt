@@ -145,6 +145,98 @@
   color: #e5ebf6;
 }
 
+/* Migrated page-scoped card styles (from group.html, fun.html) */
+.vote-card {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.vote-card h3 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+.vote-card .flavor-name {
+  font-size: 0.95rem;
+  color: var(--brand);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.winner-card {
+  /* border-color/background inherited from .card--success */
+  border-width: 2px; /* override .card base */
+  padding: 1.25rem; /* override .card base */
+  margin-bottom: var(--space-4);
+  position: relative;
+}
+.winner-badge {
+  display: inline-block;
+  background: var(--state-success);
+  color: var(--bg-surface);
+  border-radius: 4px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: 0.15rem var(--space-2);
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.share-panel {
+  text-align: center;
+  padding: 1.25rem; /* override .card base */
+  background: var(--bg-muted); /* override .card base */
+  margin-bottom: 1.25rem;
+}
+.share-panel p { margin: 0.3rem 0; font-size: 0.88rem; color: var(--text-secondary); }
+
+.madlibs-card {
+  display: block;
+  padding: 1.125rem; /* override .card base */
+  border-color: var(--brand); /* override .card base */
+  border-width: 1.5px; /* override .card base */
+  background: var(--state-confirmed-bg); /* override .card base */
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s;
+  border-left: 4px solid #0d7377;
+}
+.madlibs-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.madlibs-card:active {
+  background: #dde9f5;
+}
+.madlibs-card strong {
+  display: block;
+  color: var(--brand);
+  font-size: var(--text-md);
+  margin-bottom: var(--space-1);
+}
+.madlibs-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: 1.4;
+}
+
+.linkout-card {
+  padding: var(--space-4);
+  border-width: 1.5px; /* override .card base */
+  background: var(--bg-muted); /* override .card base */
+}
+.linkout-card h3 {
+  color: var(--brand);
+  font-size: var(--text-md);
+  margin: 0 0 0.375rem;
+}
+.linkout-card p {
+  margin: 0 0 var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: 1.4;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   max-width: 800px;
@@ -900,10 +992,7 @@ details ol {
 .store-card {
   display: flex;
   flex-direction: column;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4); /* override .card base */
   margin-bottom: var(--space-2);
 }
 
@@ -1053,12 +1142,9 @@ details ol {
 }
 
 .day-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: var(--space-3) var(--space-4);
-  border-left: 4px solid var(--brand);
+  padding: var(--space-3) var(--space-4); /* override .card base */
   overflow: hidden;
+  /* border-left via .card--accent */
 }
 
 .day-card-confirmed {
@@ -1291,11 +1377,10 @@ details ol {
 
 
 .signal-card {
-  border: 1px solid #d5e6f4;
-  border-radius: 8px;
   overflow: hidden;
-  background: #fcfdff;
-  border-left: 3px solid var(--brand);
+  background: #fcfdff; /* override .card base */
+  border-color: #d5e6f4; /* override .card base */
+  /* border-left via .card--accent-sm */
 }
 
 .signal-card[data-signal-type="overdue"] { border-left-color: #e65100; }
@@ -1322,10 +1407,9 @@ details ol {
 }
 
 .historical-context-card {
-  border: 1px solid #d5e6f4;
-  border-radius: 8px;
-  background: #fafdff;
-  padding: var(--space-3) 0.875rem;
+  background: #fafdff; /* override .card base */
+  border-color: #d5e6f4; /* override .card base */
+  padding: var(--space-3) 0.875rem; /* override .card base */
   margin-top: var(--space-2);
 }
 
@@ -1717,10 +1801,7 @@ footer a {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: var(--space-3) var(--space-4); /* override .card base */
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -1895,10 +1976,7 @@ footer a {
 
 /* Skeleton loading */
 .today-card-skeleton {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.25rem var(--space-5);
+  padding: 1.25rem var(--space-5); /* override .card base */
   margin-bottom: var(--space-5);
 }
 
@@ -1939,11 +2017,8 @@ footer a {
 .week-day-card {
   flex: 0 0 auto;
   width: 140px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: var(--space-3);
-  border-left: 3px solid var(--brand);
+  padding: var(--space-3); /* override .card base */
+  /* border-left via .card--accent-sm */
 }
 
 .week-day-card-predicted,
@@ -2058,10 +2133,7 @@ footer a {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: #f8f9fa;
+  background: var(--bg-muted); /* override .card base */
   margin: var(--space-4) 0;
 }
 
@@ -2097,11 +2169,10 @@ details#week-section { margin-top: 1rem; }
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-tint);
-  border: 1px solid #bfd3e8;
-  border-radius: 8px;
-  border-left: 3px solid var(--brand);
+  padding: var(--space-3) var(--space-4); /* override .card base */
+  background: var(--bg-tint); /* override .card base */
+  border-color: #bfd3e8; /* override .card base */
+  /* border-left via .card--accent-sm */
 }
 
 .calendar-cta-icon {
@@ -2381,14 +2452,7 @@ details#week-section { margin-top: 1rem; }
 }
 
 .fronts-overlay-card {
-  position: absolute;
-  z-index: 520;
-  border: 1px solid rgba(137, 155, 185, 0.34);
-  border-radius: 14px;
-  background: linear-gradient(160deg, rgba(26, 33, 48, 0.88), rgba(22, 28, 44, 0.78));
-  backdrop-filter: blur(7px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-  color: #e5ebf6;
+  /* All visual properties inherited from .card--overlay */
 }
 
 .fronts-legend-card {
@@ -2692,10 +2756,8 @@ details#week-section { margin-top: 1rem; }
 
 /* Error state */
 .error-card {
-  background: var(--state-danger-bg);
-  border: 1px solid #ef9a9a;
-  border-radius: 8px;
-  padding: var(--space-5);
+  /* background/border-color inherited from .card--danger */
+  padding: var(--space-5); /* override .card base */
   text-align: center;
   margin-bottom: var(--space-5);
 }
@@ -2967,12 +3029,9 @@ textarea:focus-visible {
 }
 
 .drive-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-surface);
-  padding: 0.6rem 0.7rem;
+  padding: 0.6rem 0.7rem; /* override .card base */
   transition: box-shadow 0.12s ease;
-  border-left: 3px solid var(--brand);
+  /* border-left via .card--accent-sm; padding via .card--compact */
 }
 
 .drive-card.is-active {
@@ -3371,9 +3430,8 @@ textarea:focus-visible {
 
 /* First-visit prompt: light card with confirmation buttons */
 .first-visit-prompt {
-  background: var(--bg-muted);
-  border-radius: var(--radius);
-  padding: var(--space-3) var(--space-4);
+  background: var(--bg-muted); /* override .card base */
+  padding: var(--space-3) var(--space-4); /* override .card base */
   margin-bottom: var(--space-2);
   font-size: 0.9rem;
   color: var(--text);
@@ -3554,9 +3612,8 @@ textarea:focus-visible {
  * --------------------------------------------------------------------------- */
 
 .compare-day-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  /* background/border-radius/box-shadow inherited from .card */
+  padding: 0; /* override .card base */
   margin-bottom: var(--space-4);
   overflow: hidden;
 }
@@ -3625,9 +3682,7 @@ textarea:focus-visible {
 }
 
 .compare-add-hint {
-  border: 2px dashed var(--border-input);
-  border-radius: 8px;
-  padding: var(--space-4);
+  border: 2px dashed var(--border-input); /* override .card base */
   text-align: center;
   margin-top: var(--space-2);
   color: var(--text-dim);
@@ -3643,11 +3698,10 @@ textarea:focus-visible {
 }
 
 .compare-nudge {
-  background: var(--state-watch-bg);
-  border-left: 4px solid var(--state-watch);
-  padding: var(--space-3) var(--space-4);
+  background: var(--state-watch-bg); /* override .card base */
+  border-left: 4px solid var(--state-watch); /* override .card base */
+  padding: var(--space-3) var(--space-4); /* override .card base */
   margin-bottom: var(--space-4);
-  border-radius: 8px;
   font-size: 0.9rem;
 }
 
