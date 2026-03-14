@@ -246,7 +246,7 @@ var SharedNav = (function () {
   function buildFirstVisitPromptHTML(store) {
     if (!store) return '';
     var nameText = escapeHtml(store.name);
-    return '<div class="first-visit-prompt">'
+    return '<div class="card first-visit-prompt">'
       + '<p>Showing flavors for <strong>' + nameText + '</strong></p>'
       + '<div class="first-visit-actions">'
       + '<button type="button" class="first-visit-confirm">Looks good</button>'
@@ -338,7 +338,7 @@ var SharedNav = (function () {
     var existingIndicator = _container.querySelector('.store-indicator');
     if (existingIndicator) existingIndicator.remove();
 
-    var html = '<div class="first-visit-prompt">'
+    var html = '<div class="card first-visit-prompt">'
       + '<p>Select a store to see today\'s flavor</p>'
       + '<div class="first-visit-actions">'
       + '<button type="button" class="store-change-btn">Find your store</button>'

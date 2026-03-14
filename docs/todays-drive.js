@@ -561,7 +561,7 @@ var CustardDrive = (function () {
         var coneHtml = (typeof renderMiniConeSVG === 'function')
           ? '<div class="drive-card-cone cone-sm">' + renderMiniConeSVG(card.flavor || '') + '</div>'
           : '';
-        html += '<article class="drive-card drive-bucket-' + escapeHtml(card.mapBucket) + '" data-store-slug="' + escapeHtml(card.slug) + '" tabindex="0">'
+        html += '<article class="card card--accent-sm drive-card drive-bucket-' + escapeHtml(card.mapBucket) + '" data-store-slug="' + escapeHtml(card.slug) + '" tabindex="0">'
           + '<header class="drive-card-head">'
           +   coneHtml
           +   '<div class="drive-card-info">'

@@ -207,7 +207,7 @@
     <!-- Phase: Vote (shown to both host and joiners) -->
     <div id="phase-vote" class="group-phase">
       <!-- Share panel (host only, shown after creating) -->
-      <div id="share-panel" class="share-panel" hidden>
+      <div id="share-panel" class="card share-panel" hidden>
         <p>Share this code with everyone in the car:</p>
         <div class="join-code-display" id="join-code-big"></div>
         <p>Or share the link:</p>
@@ -496,7 +496,7 @@
       }
       cards.forEach(function(card) {
         var div = document.createElement('div');
-        div.className = 'vote-card';
+        div.className = 'card vote-card';
         div.innerHTML =
           '<h3>' + escapeHtml(card.name || card.slug) + '</h3>' +
           '<div class="flavor-name">' + escapeHtml(card.flavor || 'No flavor confirmed') + '</div>' +
@@ -638,7 +638,7 @@
       var winnerFlavor = (winnerCard && winnerCard.flavor) ? winnerCard.flavor : '';
       var winnerTally = tally[winner] || { yes: 0, meh: 0, no: 0 };
 
-      html += '<div class="winner-card">' +
+      html += '<div class="card card--success winner-card">' +
         '<span class="winner-badge">Winner</span>' +
         '<h3 style="margin:0 0 0.25rem;">' + escapeHtml(winnerName) + '</h3>';
       if (winnerFlavor) {
@@ -674,7 +674,7 @@
           var name = (card && card.name) ? card.name : slug;
           var flavor = (card && card.flavor) ? card.flavor : '';
           var t = tally[slug] || { yes: 0, meh: 0, no: 0 };
-          html += '<div class="vote-card">' +
+          html += '<div class="card vote-card">' +
             '<h3>' + escapeHtml(name) + '</h3>';
           if (flavor) html += '<div class="flavor-name">' + escapeHtml(flavor) + '</div>';
           html += '<div class="tally-row">' +

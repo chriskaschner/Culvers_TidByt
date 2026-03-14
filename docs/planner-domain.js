@@ -536,10 +536,10 @@
 
   /** Return the day-card CSS class for a certainty tier. */
   function certaintyCardClass(tier) {
-    if (tier === CERTAINTY.CONFIRMED) return 'day-card day-card-confirmed';
-    if (tier === CERTAINTY.WATCH) return 'day-card day-card-watch';
-    if (tier === CERTAINTY.ESTIMATED) return 'day-card day-card-estimated';
-    return 'day-card day-card-none';
+    if (tier === CERTAINTY.CONFIRMED) return 'card card--accent day-card day-card-confirmed';
+    if (tier === CERTAINTY.WATCH) return 'card card--accent day-card day-card-watch';
+    if (tier === CERTAINTY.ESTIMATED) return 'card card--accent day-card day-card-estimated';
+    return 'card card--accent day-card day-card-none';
   }
 
   // ---------------------------------------------------------------------------
@@ -765,7 +765,7 @@
       listHtml += '<li>' + CP.escapeHtml(lines[i]) + '</li>';
     }
 
-    return '<div class="historical-context-card">'
+    return '<div class="card historical-context-card">'
       + '<div class="historical-context-head">' + CP.escapeHtml(heading) + '</div>'
       + '<ul class="historical-context-list">' + listHtml + '</ul>'
       + (sourceLabel ? '<div class="historical-context-source">' + CP.escapeHtml(sourceLabel) + '</div>' : '')

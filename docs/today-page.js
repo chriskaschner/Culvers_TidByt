@@ -220,7 +220,7 @@ var CustardToday = (function () {
         for (var i = 0; i < stores.length; i++) {
           var store = stores[i];
           var card = document.createElement('div');
-          card.className = 'near-me-card';
+          card.className = 'card near-me-card';
           card.dataset.slug = store.slug;
           card.dataset.name = store.name;
 
@@ -426,7 +426,7 @@ var CustardToday = (function () {
 
       if (day.type === 'confirmed') {
         hasAnyData = true;
-        card.className = 'week-day-card';
+        card.className = 'card card--accent-sm week-day-card';
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
@@ -436,7 +436,7 @@ var CustardToday = (function () {
           + '<div class="week-day-confidence text-success">Confirmed</div>';
       } else if (day.type === 'predicted') {
         hasAnyData = true;
-        card.className = 'week-day-card week-day-card-estimated';
+        card.className = 'card card--accent-sm week-day-card week-day-card-estimated';
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
@@ -445,7 +445,7 @@ var CustardToday = (function () {
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
           + '<div class="week-day-confidence">Estimated</div>';
       } else {
-        card.className = 'week-day-card week-day-card-none';
+        card.className = 'card card--accent-sm week-day-card week-day-card-none';
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'

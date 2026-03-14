@@ -293,7 +293,7 @@
     var flavor = sig.flavor || '';
     var certainty = sig.certainty_tier || 'none';
     var actionName = sig.action === 'calendar' ? 'subscribe' : sig.action;
-    return '<div class="signal-card"'
+    return '<div class="card card--accent-sm signal-card"'
       + ' data-signal-type="' + CP.escapeHtml(sig.type || 'signal') + '"'
       + ' data-store-slug="' + CP.escapeHtml(slug || '') + '"'
       + ' data-flavor="' + CP.escapeHtml(flavor) + '"'
