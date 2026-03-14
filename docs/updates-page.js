@@ -79,16 +79,25 @@ var CustardUpdates = (function () {
     }).then(function (resp) {
       if (resp.ok) {
         if (statusEl) statusEl.textContent = 'You are signed up! Check your email to confirm.';
-        if (statusEl) statusEl.style.color = '#2e7d32';
+        if (statusEl) {
+          statusEl.classList.remove('text-success', 'text-danger');
+          statusEl.classList.add('text-success');
+        }
       } else {
         return resp.json().then(function (data) {
           if (statusEl) statusEl.textContent = data.error || 'Something went wrong. Try again.';
-          if (statusEl) statusEl.style.color = '#c62828';
+          if (statusEl) {
+            statusEl.classList.remove('text-success', 'text-danger');
+            statusEl.classList.add('text-danger');
+          }
         });
       }
     }).catch(function () {
       if (statusEl) statusEl.textContent = 'Network error. Check your connection and try again.';
-      if (statusEl) statusEl.style.color = '#c62828';
+      if (statusEl) {
+        statusEl.classList.remove('text-success', 'text-danger');
+        statusEl.classList.add('text-danger');
+      }
     });
   }
 

@@ -404,7 +404,7 @@ var SharedNav = (function () {
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
       if (!lower) {
-        item.style.display = '';
+        item.classList.remove('hidden');
         continue;
       }
       var name = (item.getAttribute('data-name') || '').toLowerCase();
@@ -415,7 +415,7 @@ var SharedNav = (function () {
         || city.indexOf(lower) !== -1
         || state.indexOf(lower) !== -1
         || address.indexOf(lower) !== -1;
-      item.style.display = match ? '' : 'none';
+      item.classList.toggle('hidden', !match);
     }
   }
 

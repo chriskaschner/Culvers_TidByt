@@ -258,8 +258,7 @@
       ticks.forEach(function(tick, i) {
         // Only today (i === 0) has confirmed data from nearby-flavors
         var hasConfirmed = (i === 0);
-        tick.style.fontWeight = hasConfirmed ? '700' : '400';
-        tick.style.color = hasConfirmed ? '#005696' : '#9fb1d1';
+        tick.classList.toggle('fronts-tick--confirmed', hasConfirmed);
       });
     }
 
@@ -877,8 +876,8 @@
       // Hide forecast-only controls in confirmed mode
       var timelineCard = document.querySelector('.fronts-timeline-card');
       var flavorBlock = frontsFlavorSelect.closest('.fronts-control-block');
-      if (timelineCard) timelineCard.style.display = 'none';
-      if (flavorBlock) flavorBlock.style.display = 'none';
+      if (timelineCard) timelineCard.classList.add('hidden');
+      if (flavorBlock) flavorBlock.classList.add('hidden');
       stopAutoPlay();
       renderMapSignals();
     });
@@ -890,8 +889,8 @@
       // Show forecast controls
       var timelineCard = document.querySelector('.fronts-timeline-card');
       var flavorBlock = frontsFlavorSelect.closest('.fronts-control-block');
-      if (timelineCard) timelineCard.style.display = '';
-      if (flavorBlock) flavorBlock.style.display = '';
+      if (timelineCard) timelineCard.classList.remove('hidden');
+      if (flavorBlock) flavorBlock.classList.remove('hidden');
       populateFlavorSelect();
       renderMapSignals();
     });
@@ -911,11 +910,11 @@
       var timelineCard = document.querySelector('.fronts-timeline-card');
       var flavorBlock = frontsFlavorSelect.closest('.fronts-control-block');
       if (viewMode === 'confirmed') {
-        if (timelineCard) timelineCard.style.display = 'none';
-        if (flavorBlock) flavorBlock.style.display = 'none';
+        if (timelineCard) timelineCard.classList.add('hidden');
+        if (flavorBlock) flavorBlock.classList.add('hidden');
       } else {
-        if (timelineCard) timelineCard.style.display = '';
-        if (flavorBlock) flavorBlock.style.display = '';
+        if (timelineCard) timelineCard.classList.remove('hidden');
+        if (flavorBlock) flavorBlock.classList.remove('hidden');
       }
     }
 

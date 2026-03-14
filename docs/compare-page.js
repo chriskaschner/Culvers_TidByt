@@ -657,7 +657,7 @@ var CustardCompare = (function () {
       for (var si = 0; si < items.length; si++) {
         var item = items[si];
         if (!query) {
-          item.style.display = '';
+          item.classList.remove('hidden');
           continue;
         }
         var name = (item.getAttribute('data-name') || '').toLowerCase();
@@ -668,7 +668,7 @@ var CustardCompare = (function () {
           || city.indexOf(query) !== -1
           || state.indexOf(query) !== -1
           || address.indexOf(query) !== -1;
-        item.style.display = match ? '' : 'none';
+        item.classList.toggle('hidden', !match);
       }
     });
 
