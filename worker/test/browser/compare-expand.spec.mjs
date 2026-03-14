@@ -103,11 +103,12 @@ async function setupComparePage(page) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.goto("/compare.html");
-  await page.evaluate(function () {
+  // Set localStorage BEFORE page loads to avoid geo-auto-populate race
+  await page.addInitScript(function () {
     localStorage.setItem("custard:compare:stores", JSON.stringify(["mt-horeb", "verona", "madison-east"]));
   });
-  await page.reload();
+
+  await page.goto("/compare.html");
   await page.waitForSelector(".compare-day-card", { timeout: 10000 });
 }
 

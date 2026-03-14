@@ -148,16 +148,13 @@ async function setupComparePage(page, opts) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  // Navigate to compare.html
-  await page.goto("/compare.html");
-
-  // Set localStorage with saved stores (isolated compare key)
-  await page.evaluate(function (slugs) {
+  // Set localStorage BEFORE page loads to avoid geo-auto-populate race
+  await page.addInitScript(function (slugs) {
     localStorage.setItem("custard:compare:stores", JSON.stringify(slugs));
   }, storeSlugs);
 
-  // Reload so the page picks up saved stores
-  await page.reload();
+  // Navigate to compare.html
+  await page.goto("/compare.html");
 
   // Wait for day cards to render (not just the empty container)
   await page.waitForSelector(".compare-day-card", { timeout: 10000 });

@@ -65,6 +65,8 @@ var MOCK_GEO = { lat: 43.0, lon: -89.4, city: "Madison", regionName: "Wisconsin"
 /**
  * Set up compare page with API mocks. Uses the NEW localStorage key
  * 'custard:compare:stores' for store slugs (a plain JSON array).
+ * Pass geoFail: true to mock geo failure (needed to reach empty state
+ * now that geo auto-populate is active).
  */
 async function setupComparePage(page, opts) {
   opts = opts || {};
@@ -94,7 +96,11 @@ async function setupComparePage(page, opts) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await context.route("**/api/v1/geolocate", function (route) {
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_GEO) });
+    if (opts.geoFail) {
+      route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "geo unavailable" }) });
+    } else {
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_GEO) });
+    }
   });
   await context.route("**/api/v1/flavor-colors*", function (route) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
@@ -103,16 +109,17 @@ async function setupComparePage(page, opts) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.goto("/compare.html");
-
+  // Set localStorage BEFORE page loads to avoid geo-auto-populate race
   if (opts.storeSlugs) {
-    await page.evaluate(function (slugs) {
+    await page.addInitScript(function (slugs) {
       localStorage.setItem("custard:compare:stores", JSON.stringify(slugs));
     }, opts.storeSlugs);
-    await page.reload();
-    if (opts.storeSlugs.length >= 2) {
-      await page.waitForSelector(".compare-day-card", { timeout: 10000 });
-    }
+  }
+
+  await page.goto("/compare.html");
+
+  if (opts.storeSlugs && opts.storeSlugs.length >= 1) {
+    await page.waitForSelector(".compare-day-card", { timeout: 10000 });
   }
 }
 
@@ -144,10 +151,10 @@ test("CMPR-01: compare page reads store slugs from custard:compare:stores", asyn
 // CMPR-01 Test 2: Writes store selections to new key
 // ---------------------------------------------------------------------------
 test("CMPR-01: compare page writes store selections to custard:compare:stores", async ({ page }) => {
-  await setupComparePage(page);
+  await setupComparePage(page, { geoFail: true });
 
-  // Start from empty state
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  // Start from empty state (geo fails, falls back to empty)
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   // Open picker, select 2 stores, click done
   await page.click("#compare-add-stores");
@@ -176,7 +183,10 @@ test("CMPR-01: compare page writes store selections to custard:compare:stores", 
 // CMPR-01 Test 3: Does NOT read from old key
 // ---------------------------------------------------------------------------
 test("CMPR-01: compare page does NOT read from custard:v1:preferences for store slugs", async ({ page }) => {
-  await setupComparePage(page);
+  await setupComparePage(page, { geoFail: true });
+
+  // Wait for empty state (geo fails)
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   // Set the OLD key with store slugs (legacy format)
   await page.evaluate(function () {
@@ -185,12 +195,14 @@ test("CMPR-01: compare page does NOT read from custard:v1:preferences for store 
     }));
     // Ensure the new key is NOT set
     localStorage.removeItem("custard:compare:stores");
+    // Also clear custard-primary so geo is the only path
+    localStorage.removeItem("custard-primary");
   });
   await page.reload();
 
   // Should show empty state (not the grid) because compare page
-  // should NOT read from the old key anymore
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  // should NOT read from the old key anymore (geo still fails)
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
   var emptyState = page.locator("#compare-empty");
   await expect(emptyState).toBeVisible();
 });
@@ -199,10 +211,10 @@ test("CMPR-01: compare page does NOT read from custard:v1:preferences for store 
 // CMPR-01 Test 4: Does NOT write to old key
 // ---------------------------------------------------------------------------
 test("CMPR-01: compare page does NOT write to custard:v1:preferences", async ({ page }) => {
-  await setupComparePage(page);
+  await setupComparePage(page, { geoFail: true });
 
-  // Start from empty state
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  // Start from empty state (geo fails, falls back to empty)
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   // Capture the old key's value before interaction
   var prefsBefore = await page.evaluate(function () {

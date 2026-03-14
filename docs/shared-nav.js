@@ -553,8 +553,12 @@ var SharedNav = (function () {
         }
       });
     } else {
-      // No saved store -- first-time visitor flow (STOR-01, STOR-02)
-      doIPGeolocation();
+      // Compare page owns its own onboarding -- suppress SharedNav's first-visit flow
+      var navPage = container.getAttribute('data-page');
+      if (navPage !== 'compare') {
+        // No saved store -- first-time visitor flow (STOR-01, STOR-02)
+        doIPGeolocation();
+      }
     }
 
     // Inject shared footer links into existing <footer> or create one
@@ -591,7 +595,9 @@ var SharedNav = (function () {
   return {
     renderNav: renderNav,
     showStorePicker: showStorePicker,
-    updateStoreIndicator: updateStoreIndicator
+    updateStoreIndicator: updateStoreIndicator,
+    findNearestStore: findNearestStore,
+    manifestPromise: _manifestPromise
   };
 
 })();

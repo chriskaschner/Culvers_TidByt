@@ -41,6 +41,7 @@ var CustardCompare = (function () {
   var _allStoresArr = [];    // full stores array from stores.json
   var _expandedRow = null;   // currently expanded DOM element
   var _manifestLoaded = false; // whether store manifest has been fetched
+  var _geoAttempted = false;   // prevents infinite geo-populate loop
 
   // ---------------------------------------------------------------------------
   // Exclusion filter constants and state
@@ -92,6 +93,7 @@ var CustardCompare = (function () {
   var compareGrid = null;
   var addStoresBtn = null;
   var compareStoreBar = null;
+  var compareLoadingLabel = null;
 
   function cacheDomRefs() {
     compareEmpty = document.getElementById('compare-empty');
@@ -104,6 +106,10 @@ var CustardCompare = (function () {
     compareGrid = document.getElementById('compare-grid');
     addStoresBtn = document.getElementById('compare-add-stores');
     compareStoreBar = document.getElementById('compare-store-bar');
+    var loadingSection = document.getElementById('compare-loading');
+    compareLoadingLabel = loadingSection
+      ? loadingSection.querySelector('.compare-loading-label')
+      : null;
   }
 
   // ---------------------------------------------------------------------------
@@ -822,6 +828,91 @@ var CustardCompare = (function () {
     if (compareGrid && stateName !== 'grid') compareGrid.innerHTML = '';
     // Show store bar only in grid state (hide when empty/loading/error)
     if (compareStoreBar) compareStoreBar.hidden = (stateName !== 'grid');
+    // Hide geo loading label when leaving loading state
+    if (compareLoadingLabel && stateName !== 'loading') compareLoadingLabel.hidden = true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Geo-aware auto-populate (COMP-01, COMP-03)
+  // ---------------------------------------------------------------------------
+
+  var COMPARE_GEO_TIMEOUT = 3000;
+
+  function doCompareGeolocation() {
+    // Show loading skeleton with geo label
+    showState('loading');
+    if (compareLoadingLabel) compareLoadingLabel.hidden = false;
+
+    var geoURL = (typeof CustardPlanner !== 'undefined' && CustardPlanner.WORKER_BASE)
+      ? CustardPlanner.WORKER_BASE + '/api/v1/geolocate'
+      : 'https://custard.chriskaschner.com/api/v1/geolocate';
+
+    // Race geo against timeout
+    var geoPromise = fetch(geoURL)
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('Geo failed');
+        return resp.json();
+      });
+
+    var timeoutPromise = new Promise(function (_, reject) {
+      setTimeout(function () { reject(new Error('Geo timeout')); }, COMPARE_GEO_TIMEOUT);
+    });
+
+    Promise.race([geoPromise, timeoutPromise])
+      .then(function (geo) {
+        if (!geo || geo.lat == null || geo.lon == null) throw new Error('No coordinates');
+
+        // Wait for store manifest then find nearest
+        var manifestP = (typeof SharedNav !== 'undefined' && SharedNav.manifestPromise)
+          ? SharedNav.manifestPromise
+          : loadStores().then(function () { return _allStoresArr; });
+
+        return manifestP.then(function (stores) {
+          var nearest = null;
+          if (typeof SharedNav !== 'undefined' && SharedNav.findNearestStore) {
+            nearest = SharedNav.findNearestStore(geo.lat, geo.lon, stores);
+          } else {
+            // Fallback: simple haversine search
+            var haversine = (typeof CustardPlanner !== 'undefined' && CustardPlanner.haversineMiles)
+              ? CustardPlanner.haversineMiles : null;
+            if (haversine && stores) {
+              var bestDist = Infinity;
+              for (var i = 0; i < stores.length; i++) {
+                var s = stores[i];
+                if (s.lat == null || s.lng == null) continue;
+                var dist = haversine(geo.lat, geo.lon, s.lat, s.lng);
+                if (dist < bestDist) { bestDist = dist; nearest = s; }
+              }
+            }
+          }
+          return nearest;
+        });
+      })
+      .then(function (nearest) {
+        if (!nearest || !nearest.slug) {
+          showState('empty');
+          return;
+        }
+
+        // Seed 1 store
+        saveStoreSlugs([nearest.slug]);
+
+        // Set custard-primary for cross-page benefit
+        if (typeof CustardPlanner !== 'undefined' && CustardPlanner.setPrimaryStoreSlug) {
+          CustardPlanner.setPrimaryStoreSlug(nearest.slug);
+        }
+
+        // Hide loading label
+        if (compareLoadingLabel) compareLoadingLabel.hidden = true;
+
+        // Now load and render with the seeded store
+        loadAndRender();
+      })
+      .catch(function () {
+        // Geo failed or timed out -- show empty state with add-store CTA
+        if (compareLoadingLabel) compareLoadingLabel.hidden = true;
+        showState('empty');
+      });
   }
 
   // ---------------------------------------------------------------------------
@@ -832,6 +923,13 @@ var CustardCompare = (function () {
     _stores = getSavedStoreSlugs();
 
     if (_stores.length === 0) {
+      // First-time visitor: attempt geo-aware auto-populate
+      // _geoAttempted flag prevents infinite loops
+      if (!_geoAttempted) {
+        _geoAttempted = true;
+        doCompareGeolocation();
+        return;
+      }
       showState('empty');
       // Remove stale store bar and filter bar
       if (compareStoreBar) compareStoreBar.innerHTML = '';
@@ -911,6 +1009,33 @@ var CustardCompare = (function () {
         saveStoreSlugs(updated);
       }
       loadAndRender();
+    });
+
+    // Override SharedNav's header "change" button to open Compare picker (COMP-02)
+    function overrideChangeButton() {
+      var changeBtn = document.querySelector('.store-indicator .btn-text');
+      if (changeBtn) {
+        // Clone and replace to remove SharedNav's click handler
+        var newBtn = changeBtn.cloneNode(true);
+        changeBtn.parentNode.replaceChild(newBtn, changeBtn);
+        newBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!_manifestLoaded) {
+            loadStores().then(function () { showCompareStorePicker(); });
+          } else {
+            showCompareStorePicker();
+          }
+        });
+      }
+    }
+
+    // Run override after SharedNav renders (it renders on DOMContentLoaded too)
+    // Use a short delay to ensure SharedNav has finished binding
+    setTimeout(overrideChangeButton, 100);
+    // Also re-override when store indicator updates
+    document.addEventListener('sharednav:storechange', function () {
+      setTimeout(overrideChangeButton, 50);
     });
   }
 

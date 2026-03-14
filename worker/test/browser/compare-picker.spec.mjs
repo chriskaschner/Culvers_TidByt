@@ -64,7 +64,8 @@ var MOCK_GEO = { lat: 43.0, lon: -89.4, city: "Madison", regionName: "Wisconsin"
 
 /**
  * Set up compare page with API mocks. Does NOT set localStorage preferences
- * unless storeSlugs is provided.
+ * unless storeSlugs is provided. Pass geoFail: true to mock geo failure
+ * (needed to reach empty state now that geo auto-populate is active).
  */
 async function setupComparePage(page, opts) {
   opts = opts || {};
@@ -94,7 +95,11 @@ async function setupComparePage(page, opts) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await context.route("**/api/v1/geolocate", function (route) {
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_GEO) });
+    if (opts.geoFail) {
+      route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "geo unavailable" }) });
+    } else {
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_GEO) });
+    }
   });
   await context.route("**/api/v1/flavor-colors*", function (route) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
@@ -103,16 +108,17 @@ async function setupComparePage(page, opts) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.goto("/compare.html");
-
+  // Set localStorage BEFORE page loads to avoid geo-auto-populate race
   if (opts.storeSlugs) {
-    await page.evaluate(function (slugs) {
+    await page.addInitScript(function (slugs) {
       localStorage.setItem("custard:compare:stores", JSON.stringify(slugs));
     }, opts.storeSlugs);
-    await page.reload();
-    if (opts.storeSlugs.length >= 2) {
-      await page.waitForSelector(".compare-day-card", { timeout: 10000 });
-    }
+  }
+
+  await page.goto("/compare.html");
+
+  if (opts.storeSlugs && opts.storeSlugs.length >= 1) {
+    await page.waitForSelector(".compare-day-card", { timeout: 10000 });
   }
 }
 
@@ -120,7 +126,7 @@ async function setupComparePage(page, opts) {
 // Empty state shows "Add stores" button that opens compare picker
 // ---------------------------------------------------------------------------
 test("empty state Add stores button opens multi-store picker", async ({ page }) => {
-  await setupComparePage(page);
+  await setupComparePage(page, { geoFail: true });
 
   // Should show empty state
   await page.waitForSelector("#compare-empty", { timeout: 10000 });
@@ -151,8 +157,8 @@ test("empty state Add stores button opens multi-store picker", async ({ page }) 
 // Selecting 2 stores in picker and clicking done shows comparison grid
 // ---------------------------------------------------------------------------
 test("selecting 2 stores in picker shows comparison grid", async ({ page }) => {
-  await setupComparePage(page);
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  await setupComparePage(page, { geoFail: true });
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   // Open picker
   await page.click("#compare-add-stores");
@@ -310,8 +316,8 @@ test("picker disables unchecked checkboxes when 4 stores selected", async ({ pag
 // Picker search filters store list
 // ---------------------------------------------------------------------------
 test("picker search filters store list", async ({ page }) => {
-  await setupComparePage(page);
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  await setupComparePage(page, { geoFail: true });
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   await page.click("#compare-add-stores");
   await page.waitForSelector(".compare-picker", { timeout: 5000 });
@@ -354,8 +360,8 @@ test("picker close button closes without saving changes", async ({ page }) => {
 // Preferences are persisted to localStorage
 // ---------------------------------------------------------------------------
 test("selected stores are saved to custard:compare:stores", async ({ page }) => {
-  await setupComparePage(page);
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  await setupComparePage(page, { geoFail: true });
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   // Open picker, select 2 stores, confirm
   await page.click("#compare-add-stores");

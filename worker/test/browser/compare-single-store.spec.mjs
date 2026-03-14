@@ -192,11 +192,16 @@ test("auto-inherits from custard-primary when compare:stores is empty", async ({
 });
 
 // ---------------------------------------------------------------------------
-// Test 4: Zero stores shows empty state
+// Test 4: Zero stores with geo failure shows empty state
 // ---------------------------------------------------------------------------
-test("zero stores shows empty state with no day-cards", async ({ page }) => {
+test("zero stores with geo failure shows empty state with no day-cards", async ({ page }) => {
   var context = page.context();
   await setupMocks(context);
+
+  // Override geolocate to fail -- triggers empty state fallback after geo attempt
+  await context.route("**/api/v1/geolocate", function (route) {
+    route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "geo unavailable" }) });
+  });
 
   // Clear both storage keys
   await page.addInitScript(function () {
@@ -206,8 +211,8 @@ test("zero stores shows empty state with no day-cards", async ({ page }) => {
 
   await page.goto("/compare.html");
 
-  // Wait for empty state to appear
-  await page.waitForSelector("#compare-empty", { timeout: 10000 });
+  // Wait for empty state to appear (geo fails, falls back to empty)
+  await page.waitForSelector("#compare-empty", { state: "visible", timeout: 10000 });
 
   // Empty state should be visible
   var emptyState = page.locator("#compare-empty");
