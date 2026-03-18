@@ -1,5 +1,29 @@
 # Milestones
 
+## v1.5 Visual Polish (Shipped: 2026-03-18)
+
+**Phases completed:** 5 of 6 phases (Phase 25 test cleanup skipped), 10 plans
+
+**Key accomplishments:**
+- Semantic state tokens (--state-confirmed, --state-success, --state-danger) wired across rarity, map, quiz, drive
+- Card and button system unified (.card base, .btn-primary/.btn-secondary consolidated)
+- All inline HTML style attributes and JS .style assignments migrated to CSS classes
+- Compare page UX fix: SharedNav suppression, own geo call, single-store init
+- Canonical 5-shape topping vocabulary (dot/chunk/sliver/flake/scatter) with Mulberry32 PRNG scatter placement
+- HD and Hero cone renderers upgraded from fixed-slot to scatter with collision detection
+- 94 Hero cone PNGs regenerated with SW cache v20
+
+**Stats:**
+- Timeline: 5 days (2026-03-13 to 2026-03-18)
+- Execution time: ~69 min across 10 plans (~6.9 min/plan)
+- Total project: 53 plans across 6 milestones
+
+**Known tech debt:**
+- Phase 25 (test cleanup) skipped: 11 dead skipped browser tests, map-pan-stability.spec.mjs, test_design_tokens.py failures
+- Premium cone renderer dead code still in worker/src/flavor-colors.js
+
+---
+
 ## v1.4 Bug Fixes (Shipped: 2026-03-13)
 
 **Phases completed:** 2 phases, 4 plans, 8 tasks

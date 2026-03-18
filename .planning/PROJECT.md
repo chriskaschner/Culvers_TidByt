@@ -48,18 +48,24 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - Map shows nearest store with highlighted marker and "Nearest to you" badge -- v1.4
 - Map displays "you are here" dot at user's precise GPS coordinates -- v1.4
 
+- State tokens, card/button unification, inline style elimination across all pages -- v1.5
+- Compare page first-load UX fix with SharedNav suppression and single-store init -- v1.5
+- Canonical 5-shape topping vocabulary with scatter placement across all cone tiers -- v1.5
+- HD and Hero cone renderers upgraded to Mulberry32 PRNG + collision detection -- v1.5
+- 94 Hero cone PNGs regenerated with SW cache v20 -- v1.5
+
 ### Active
 
-## Current Milestone: v1.5 Visual Polish
+## Current Milestone: v2.0 Art Quality
 
-**Goal:** Tighten visual quality, design system consistency, and asset fidelity across the entire site.
+**Goal:** Replace the multi-tier algorithmic cone renderers with a two-tier art pipeline: L0 micro SVG for small displays, L5 AI-generated PNGs for everything else.
 
 **Target features:**
-- Compare page first-load flow fix (dual store picker UX)
-- Design token consolidation (eliminate hardcoded colors, unify rarity scales, semantic state tokens)
-- Card and button system unification (consistent .card base, one .btn-primary, no inline overrides)
-- Cone rendering quality upgrade (higher-detail hero tier, fix topping distribution/coherence, maintain pixel art aesthetic)
-- Test cleanup (fix/remove dead skipped tests, address map-pan-stability timeout)
+- Generate L5-quality pixel art PNGs for all 94 profiled flavors via AI image generation
+- Wire L5 PNGs as the single art source for hero, radar, quiz, social cards, and Scriptable widget
+- Unify Scriptable widget cone rendering into the shared art pipeline (L0 or L5)
+- Remove dead intermediate renderers (HD SVG, Hero SVG, Premium SVG)
+- Update flavor-audit.html to reflect the two-tier pipeline
 
 ### Out of Scope
 
@@ -75,7 +81,8 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - ES modules for refactoring -- too disruptive; IIFE namespace extension preserves existing patterns
 - Shared exclusion state between Map and Compare -- different user intents on different pages
 - Server-side redirects via Cloudflare Worker -- worker is out of scope; client-side redirects sufficient
-- Premium tier cone rendering -- exists but renders poorly; not used in production yet
+- Premium tier cone rendering -- being removed in v2.0, not upgraded
+- Test cleanup (dead skipped tests) -- carried from v1.5 Phase 25, low priority
 
 ## Context
 
@@ -144,4 +151,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | SW mock (no-op sw.js) for Playwright tests | SW intercepts page-level route handlers; mock prevents registration | Good -- reliable test mocking |
 
 ---
-*Last updated: 2026-03-13 after v1.5 milestone started*
+*Last updated: 2026-03-18 after v2.0 milestone started*

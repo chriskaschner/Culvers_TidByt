@@ -1,36 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Visual Polish
-status: completed
-stopped_at: Phase 25 discuss in progress -- user reviewing phase 24 cone renders
-last_updated: "2026-03-18T03:37:32.045Z"
-last_activity: 2026-03-17 -- 24-02 HD scatter upgrade + hero PNGs + SW cache v20 (6 min)
+milestone: v2.0
+milestone_name: Art Quality
+status: defining_requirements
+stopped_at: Milestone v2.0 started -- defining requirements
+last_updated: "2026-03-18"
+last_activity: 2026-03-18 -- Milestone v2.0 started
 progress:
-  total_phases: 6
-  completed_phases: 5
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-13)
+See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 24 - Cone Rendering Quality
+**Current focus:** v2.0 Art Quality -- two-tier cone art pipeline
 
 ## Current Position
 
-Phase: 24 (5 of 6 in v1.5) - Cone Rendering Quality
-Plan: 2 of 2 complete
-Status: Phase complete
-Last activity: 2026-03-17 -- 24-02 HD scatter upgrade + hero PNGs + SW cache v20 (6 min)
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements
+Last activity: 2026-03-18 -- Milestone v2.0 started
 
-Progress: [==========] 100%
+Progress: [..........] 0%
 
 ## Performance Metrics
 
