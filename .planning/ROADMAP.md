@@ -93,7 +93,7 @@
   2. A generation manifest JSON file is committed alongside images recording model, prompt, parameters, and timestamp per flavor
   3. A QA gallery HTML page renders all 94 cones in a grid for side-by-side visual comparison, and a human has reviewed and approved all 94
   4. Post-processing pipeline (trim, resize, nearest-neighbor, optimize) runs via a single script invocation with no manual steps
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 26-01-PLAN.md -- Prompt data foundation: author 93 premium overrides, 54 descriptions, verification script
@@ -156,7 +156,7 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
-| 26. AI Cone Generation | v2.0 | 0/3 | Not started | - |
+| 26. AI Cone Generation | 1/3 | In Progress|  | - |
 | 27. Client-Side Art Migration | v2.0 | 0/TBD | Not started | - |
 | 28. Worker Social Card Migration | v2.0 | 0/TBD | Not started | - |
 | 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
