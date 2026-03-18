@@ -1,94 +1,75 @@
-# Requirements: Custard Calendar v1.5 Visual Polish
+# Requirements: Custard Calendar v2.0 Art Quality
 
-**Defined:** 2026-03-13
-**Core Value:** A family can instantly see what flavors are at their nearby stores and decide where to go -- no friction, no hunting through pages.
+**Defined:** 2026-03-18
+**Core Value:** A family can instantly see what flavors are at their nearby stores and decide where to go
 
-## v1.5 Requirements
+## v2.0 Requirements
 
-### Design Tokens
+Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated PNGs.
 
-- [x] **DTKN-01**: All semantic state colors (confirmed, watch, warning, success) use CSS custom properties instead of hardcoded hex values
-- [x] **DTKN-02**: Rarity color scale unified to one palette across all contexts (map popups, today badges, compare badges)
-- [x] **DTKN-03**: All 77 inline styles across compare.html, index.html, and forecast-map.html headers replaced with CSS classes using design tokens
-- [x] **DTKN-04**: Focus/hover states use consistent rgba values derived from brand color via color-mix()
+### Generation
 
-### Card & Button
+- [ ] **GEN-01**: All 94 profiled flavors have L5-quality AI-generated pixel art PNGs with transparent backgrounds
+- [ ] **GEN-02**: Generation prompts are version-controlled in a prompt manifest file per flavor
+- [ ] **GEN-03**: QA gallery HTML page displays all 94 generated PNGs side-by-side for visual review before deploy
+- [ ] **GEN-04**: Generated PNGs are post-processed (trimmed, resized, optimized) via sharp pipeline
 
-- [x] **CARD-01**: All card-like elements across all pages inherit from .card base class with consistent border, shadow, and border-radius
-- [x] **CARD-02**: Button system consolidated from 14 definitions to 3 base types (.btn-primary, .btn-secondary, .btn-text) with consistent padding
-- [x] **CARD-03**: No inline style overrides of button properties anywhere in the codebase
-- [x] **CARD-04**: JS innerHTML-generated card/button HTML uses CSS classes instead of hardcoded styles
+### Integration
 
-### Compare UX
+- [ ] **INT-01**: Today page hero cone displays L5 PNG for all 94 flavors (no HD SVG fallback)
+- [ ] **INT-02**: Quiz result cone displays L5 PNG instead of HD SVG
+- [ ] **INT-03**: Scriptable widget uses shared art pipeline (L0 or L5 PNG) instead of its own drawConeIcon renderer
+- [ ] **INT-04**: Worker social-card.js embeds L5 PNGs instead of inline SVG rects for OG images
+- [ ] **INT-05**: Service worker cache version bumped to serve fresh L5 PNGs
 
-- [x] **COMP-01**: User arriving at Compare page with no stores sees a single coherent onboarding flow, not competing store pickers
-- [x] **COMP-02**: Header "change" button on Compare page behaves consistently with Compare's multi-store context
-- [x] **COMP-03**: Compare page initializes from geolocated store within 3 seconds without requiring double interaction
+### Cleanup
 
-### Cone Rendering
-
-- [x] **CONE-01**: Hero cone tier (36x42) has higher topping density filling empty center columns of the scoop
-- [x] **CONE-02**: Toppings use per-type shapes (not uniform 2x2 squares) for visual distinction at hero and HD sizes
-- [x] **CONE-03**: Topping distribution is visually coherent and consistent across all 94 flavor profiles
-- [x] **CONE-04**: All 94 Hero cone PNGs regenerated with updated renderer and golden baselines refreshed
-
-### Test Health
-
-- [ ] **TEST-01**: Dead skipped browser tests from Drive removal (5 tests across 3 files) removed or replaced
-- [ ] **TEST-02**: map-pan-stability.spec.mjs test passes reliably (timeout addressed)
-- [ ] **TEST-03**: All remaining skipped tests documented with rationale or fixed
+- [ ] **CLN-01**: Dead SVG renderers removed from cone-renderer.js (renderMiniConeHDSVG, HD scatter utilities)
+- [ ] **CLN-02**: Dead SVG renderers removed from worker/src/flavor-colors.js (renderConeHeroSVG, renderConePremiumSVG, renderConeHDSVG)
+- [ ] **CLN-03**: flavor-audit.html updated to show L0 + L5 tiers only, intermediate columns removed
+- [ ] **CLN-04**: Pixelmatch golden baselines regenerated for new L5 PNGs
 
 ## Future Requirements
 
-### Design System (v2+)
+### Enhancements
 
-- **DTKN-F1**: Fronts page dark-mode palette (~60 values) tokenized under scoped namespace
-- **DTKN-F2**: Page-scoped style blocks consolidated into style.css
-
-### Cone Rendering (v2+)
-
-- **CONE-F1**: Texture variation (hash-based per-profile visual noise)
-- **CONE-F2**: Premium tier rehabilitation for production use
+- **ENH-01**: WebP format with format negotiation for 25-35% size reduction
+- **ENH-02**: Retina-resolution PNGs (2x or 3x) for high-DPI displays
+- **ENH-03**: L0 topping-edge-clipping fix (toppings intersecting scoop boundary at small sizes)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| New CSS framework or preprocessor | No-build-step constraint; vanilla CSS sufficient |
-| Fronts dark-mode tokenization | ~60 values scoped to one page; lower priority than cross-site tokens |
-| Page-scoped style block consolidation | Adds style.css size without cross-page benefit |
-| SharedNav global behavior changes | Too broad; only Compare-specific interaction changes |
-| Worker/API changes | Presentation-layer only milestone |
-| New features or pages | Polish milestone, not feature milestone |
+| New flavor profile authoring | Existing 94 profiles are complete; new flavors added as discovered |
+| Animated cone assets | Complexity far exceeds value; static PNGs sufficient |
+| Per-store custom cone art | One cone per flavor, not per store |
+| Dark mode cone variants | Same art works on both backgrounds |
+| 3D/WebGL cone rendering | Over-engineered for a flavor tracker |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DTKN-01 | Phase 20 | Complete |
-| DTKN-02 | Phase 20 | Complete |
-| DTKN-03 | Phase 22 | Complete |
-| DTKN-04 | Phase 20 | Complete |
-| CARD-01 | Phase 21 | Complete |
-| CARD-02 | Phase 21 | Complete |
-| CARD-03 | Phase 21 | Complete |
-| CARD-04 | Phase 21 | Complete |
-| COMP-01 | Phase 23 | Complete |
-| COMP-02 | Phase 23 | Complete |
-| COMP-03 | Phase 23 | Complete |
-| CONE-01 | Phase 24 | Complete |
-| CONE-02 | Phase 24 | Complete |
-| CONE-03 | Phase 24 | Complete |
-| CONE-04 | Phase 24 | Complete |
-| TEST-01 | Phase 25 | Pending |
-| TEST-02 | Phase 25 | Pending |
-| TEST-03 | Phase 25 | Pending |
+| GEN-01 | TBD | Pending |
+| GEN-02 | TBD | Pending |
+| GEN-03 | TBD | Pending |
+| GEN-04 | TBD | Pending |
+| INT-01 | TBD | Pending |
+| INT-02 | TBD | Pending |
+| INT-03 | TBD | Pending |
+| INT-04 | TBD | Pending |
+| INT-05 | TBD | Pending |
+| CLN-01 | TBD | Pending |
+| CLN-02 | TBD | Pending |
+| CLN-03 | TBD | Pending |
+| CLN-04 | TBD | Pending |
 
 **Coverage:**
-- v1.5 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0
+- v2.0 requirements: 13 total
+- Mapped to phases: 0
+- Unmapped: 13 (pending roadmap)
 
 ---
-*Requirements defined: 2026-03-13*
-*Last updated: 2026-03-13 after roadmap creation*
+*Requirements defined: 2026-03-18*
+*Last updated: 2026-03-18 after initial definition*
