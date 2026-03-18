@@ -1,0 +1,14 @@
+{
+  "quality": "medium",
+  "decided_at": "2026-03-18T22:00:00Z",
+  "trial_selections": {
+    "vanilla": "vanilla-medium-3",
+    "mint-explosion": "mint-explosion-medium-3",
+    "caramel-turtle": "caramel-turtle-medium-2"
+  },
+  "prompt_feedback": {
+    "mint-explosion": "Toppings are funky - oreos read as generic black chunks (should have visible cream filling), andes mints have too much white (should be more green striping). Fine detail loss expected at small resolution but worth noting for prompt tuning.",
+    "caramel-turtle": "Medium-3 was too lumpy. Medium-2 had better scoop shape.",
+    "vanilla": "Medium-3 had the best cone rendering vs other mediums."
+  }
+}
