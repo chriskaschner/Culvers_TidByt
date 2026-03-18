@@ -17,7 +17,7 @@ Generate L5-quality AI pixel art PNGs for all 94 profiled flavors. Version-contr
 - Pixel art style matching the blackberry cobbler L5 proof-of-concept -- crisp pixel edges, 32-64px density, clearly pixel-based
 - Premium treatment overrides for ALL 94 flavors (not just canonical auto-generated treatments) -- marbling, realistic chunks, sauce ribbons, per-flavor texture notes
 - Author 93 premium treatment overrides (blackberry cobbler already has one)
-- Transparent backgrounds via gpt-image-1 native `background: 'transparent'` -- no post-processing background removal
+- Transparent backgrounds via Azure gpt-image-1.5 native `background: 'transparent'` -- confirmed working, no post-processing background removal
 - Cone tip same tone as rest of waffle cone (no darkened tip)
 - Soft studio lighting from upper left, gentle highlight across scoop, subtle shadow under scoop lip
 
@@ -39,10 +39,14 @@ Generate L5-quality AI pixel art PNGs for all 94 profiled flavors. Version-contr
 - Quality bar: "reads as the right flavor" -- correct base color, visible toppings match the profile, recognizable as ice cream cone
 - 94/94 approval required before integration phases begin
 
-### Generation model
-- gpt-image-1 (DALL-E 3 deprecated May 2026)
+### Generation model + endpoint
+- Azure OpenAI endpoint: gpt-image-1.5 deployment (not direct OpenAI API)
+- Endpoint: https://etc-ai-foundry-sbx-east-us-2.cognitiveservices.azure.com/openai/deployments/gpt-image-1.5/images/generations?api-version=2024-02-01
+- Auth: macOS keychain (`security find-generic-password -a "$USER" -s "azure-openai-api-key" -w`) with `api-key` header
+- Transparent background confirmed working: pass `background: "transparent"` in request body
+- Response returns b64_json by default
 - Quality setting (medium vs high) determined by trial run comparison
-- Estimated cost: ~$12 at medium quality, ~$48 at high quality (for 282 candidates)
+- Cost: unknown (Azure sandbox -- "sbx" in URL). Rate limits unknown -- discover during trial run
 
 ### Claude's Discretion
 - Generation resolution (1024x1024 vs 1024x1536)
@@ -60,9 +64,10 @@ Generate L5-quality AI pixel art PNGs for all 94 profiled flavors. Version-contr
 **Downstream agents MUST read these before planning or implementing.**
 
 ### Generation pipeline
-- `tools/generate_ai_sprites.mjs` -- Existing AI generation script (OpenAI API calls, prompt templating, retry logic, rate limiting)
+- `tools/test_azure_image_api.mjs` -- Validated Azure OpenAI connectivity test (reference for API call pattern, auth, response handling)
 - `tools/generate_masterlock_prompts.mjs` -- Generates prompt pack + flavor fills from FLAVOR_PROFILES
 - `docs/assets/masterlock-flavor-fills.json` -- Canonical prompt data for all 94 flavors (50.6KB, has base/swirls/chunks/texture per flavor)
+- NOTE: `tools/generate_ai_sprites.mjs` is for Tidbyt sprites (different purpose) -- do NOT modify it for cone generation. Create a new script.
 
 ### Proof-of-concept
 - `docs/assets/blackberry-cobbler/blackberry-l5-premium.png` -- Reference L5 quality target
@@ -81,10 +86,11 @@ Generate L5-quality AI pixel art PNGs for all 94 profiled flavors. Version-contr
 ## Existing Code Insights
 
 ### Reusable Assets
-- `generate_ai_sprites.mjs`: Already calls OpenAI API with prompt templating, retry logic (3 attempts), rate limiting (configurable --delay), and per-flavor targeting (--flavor flag). Supports gpt-image-1 via --model flag.
+- `tools/test_azure_image_api.mjs`: Working Azure OpenAI API call pattern -- use this as reference for the new cone generation script (endpoint URL, api-key header, keychain auth, b64_json response handling)
 - `masterlock-flavor-fills.json`: All 94 flavor fill cards with base color, swirls, chunks, texture notes. Generated from FLAVOR_PROFILES.
 - `generate-hero-cones.mjs`: Sharp pipeline for SVG-to-PNG at 300 DPI with nearest-neighbor kernel. Can be adapted for AI PNG post-processing.
 - `masterlock-audit.html`: Browser-based audit UI showing all tiers per flavor. Could be adapted for QA gallery.
+- NOTE: `generate_ai_sprites.mjs` is the TIDBYT sprite generator -- do NOT reuse or modify it for cone generation.
 
 ### Established Patterns
 - Flavor slug generation: lowercase, hyphens (e.g., `really-reese-s.png`)
