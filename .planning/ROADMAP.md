@@ -139,11 +139,11 @@ Plans:
   2. Different topping types (sprinkles, chips, nuts, etc.) render with distinct multi-pixel shapes, not uniform 2x2 squares
   3. Topping distribution looks visually consistent across all 94 flavor profiles -- no outlier flavors with sparse or clumped toppings
   4. All 94 Hero cone PNGs regenerated from updated renderer, all 376 golden baselines refreshed at zero tolerance, and SW cache version bumped
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 24-01: TBD
-- [ ] 24-02: TBD
+- [ ] 24-01-PLAN.md -- Canonical shape map + hero/premium scatter renderer upgrade (CONE-01, CONE-02, CONE-03)
+- [ ] 24-02-PLAN.md -- HD scatter upgrade + client-side sync + PNG regeneration + SW cache bump (CONE-01, CONE-02, CONE-03, CONE-04)
 
 ### Phase 25: Test Cleanup
 **Goal**: The test suite reflects the actual state of the codebase -- no dead tests, no unexplained skips, no flaky timeouts
@@ -174,7 +174,7 @@ Phases execute sequentially: 20 -> 21 -> 22 -> 23 -> 24 -> 25
 | 21. Card & Button Unification | 3/3 | Complete    | 2026-03-14 | - |
 | 22. Inline Style Elimination | 2/2 | Complete    | 2026-03-14 | - |
 | 23. Compare UX Fix | 1/1 | Complete    | 2026-03-14 | - |
-| 24. Cone Rendering Quality | v1.5 | 0/TBD | Not started | - |
+| 24. Cone Rendering Quality | v1.5 | 0/2 | Not started | - |
 | 25. Test Cleanup | v1.5 | 0/TBD | Not started | - |
 
 **Total: 25 phases, 50+ plans across 6 milestones**
