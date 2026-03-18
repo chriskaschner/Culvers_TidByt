@@ -51,25 +51,25 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GEN-01 | TBD | Pending |
-| GEN-02 | TBD | Pending |
-| GEN-03 | TBD | Pending |
-| GEN-04 | TBD | Pending |
-| INT-01 | TBD | Pending |
-| INT-02 | TBD | Pending |
-| INT-03 | TBD | Pending |
-| INT-04 | TBD | Pending |
-| INT-05 | TBD | Pending |
-| CLN-01 | TBD | Pending |
-| CLN-02 | TBD | Pending |
-| CLN-03 | TBD | Pending |
-| CLN-04 | TBD | Pending |
+| GEN-01 | Phase 26 | Pending |
+| GEN-02 | Phase 26 | Pending |
+| GEN-03 | Phase 26 | Pending |
+| GEN-04 | Phase 26 | Pending |
+| INT-01 | Phase 27 | Pending |
+| INT-02 | Phase 27 | Pending |
+| INT-03 | Phase 29 | Pending |
+| INT-04 | Phase 28 | Pending |
+| INT-05 | Phase 27 | Pending |
+| CLN-01 | Phase 27 | Pending |
+| CLN-02 | Phase 28 | Pending |
+| CLN-03 | Phase 27 | Pending |
+| CLN-04 | Phase 27 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 (pending roadmap)
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Last updated: 2026-03-18 after roadmap creation*

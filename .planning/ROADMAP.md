@@ -7,7 +7,8 @@
 - Shipped **v1.2 Feature Completion & Cleanup** -- Phases 9-12 (shipped 2026-03-09)
 - Shipped **v1.3 Asset Parity** -- Phases 13-17 (shipped 2026-03-12)
 - Shipped **v1.4 Bug Fixes** -- Phases 18-19 (shipped 2026-03-13)
-- Active **v1.5 Visual Polish** -- Phases 20-25 (in progress)
+- Shipped **v1.5 Visual Polish** -- Phases 20-25 (shipped 2026-03-18)
+- Active **v2.0 Art Quality** -- Phases 26-29 (in progress)
 
 ## Phases
 
@@ -60,108 +61,91 @@
 
 </details>
 
-### v1.5 Visual Polish (In Progress)
+<details>
+<summary>Shipped v1.5 Visual Polish (Phases 20-25) -- SHIPPED 2026-03-18</summary>
 
-- [x] **Phase 20: Design Token Expansion** - Add semantic state, rarity, and interactive tokens to the design system (completed 2026-03-13)
-- [x] **Phase 21: Card & Button Unification** - Consolidate all card and button styles to shared base classes (completed 2026-03-14)
-- [x] **Phase 22: Inline Style Elimination** - Replace remaining inline styles with CSS classes consuming design tokens (completed 2026-03-14)
-- [x] **Phase 23: Compare UX Fix** - Deliver a coherent first-load experience on the Compare page (completed 2026-03-14)
-- [x] **Phase 24: Cone Rendering Quality** - Upgrade hero cone topping density, shapes, and visual coherence (completed 2026-03-18)
-- [ ] **Phase 25: Test Cleanup** - Remove dead tests, fix flaky tests, document permanent skips
+- [x] Phase 20: Design Token Expansion (2/2 plans) -- semantic state, rarity, interactive tokens
+- [x] Phase 21: Card & Button Unification (3/3 plans) -- .card base, .btn consolidation
+- [x] Phase 22: Inline Style Elimination (2/2 plans) -- CSS classes consuming design tokens
+- [x] Phase 23: Compare UX Fix (1/1 plan) -- geo-aware auto-populate, SharedNav suppression
+- [x] Phase 24: Cone Rendering Quality (2/2 plans) -- 5-shape topping vocabulary, scatter placement
+- [x] Phase 25: Test Cleanup (0/0 plans) -- skipped (deferred to out-of-scope)
+
+</details>
+
+### v2.0 Art Quality (In Progress)
+
+**Milestone Goal:** Replace multi-tier algorithmic cone renderers with a two-tier art pipeline: L0 micro SVG for small displays, L5 AI-generated PNGs for everything else.
+
+- [ ] **Phase 26: AI Cone Generation** - Generate, curate, and commit L5 pixel art PNGs for all 94 profiled flavors
+- [ ] **Phase 27: Client-Side Art Migration** - Swap all client-side rendering to L5 PNGs, remove dead renderers, update baselines
+- [ ] **Phase 28: Worker Social Card Migration** - Embed L5 PNGs in OG social cards and remove dead Worker-side SVG renderers
+- [ ] **Phase 29: Scriptable Widget Unification** - Unify Scriptable widget cone rendering into the shared L0/L5 art pipeline
 
 ## Phase Details
 
-### Phase 20: Design Token Expansion
-**Goal**: Every color in the design system -- state indicators, rarity badges, and interactive feedback -- uses a CSS custom property, not a hardcoded hex value
-**Depends on**: Phase 19 (v1.4 complete)
-**Requirements**: DTKN-01, DTKN-02, DTKN-04
+### Phase 26: AI Cone Generation
+**Goal**: All 94 profiled flavors have AI-generated pixel art cone PNGs that pass human visual review, with generation prompts version-controlled and post-processing automated
+**Depends on**: Nothing (first phase of v2.0)
+**Requirements**: GEN-01, GEN-02, GEN-03, GEN-04
 **Success Criteria** (what must be TRUE):
-  1. Confirmed/watch/warning/success states render correctly on Today and Compare pages using CSS custom properties (no hardcoded hex for these states anywhere in style.css)
-  2. Rarity badges on map popups, Today page, and Compare page all use the same color scale from a single set of --rarity-* tokens
-  3. Focus rings and hover states across all interactive elements derive from brand color via color-mix() tokens
-  4. The existing 37 design tokens still work unchanged (additive-only -- zero renames, zero removals)
-**Plans**: 2 plans
-
-Plans:
-- [ ] 20-01-PLAN.md -- Tests + token definitions + state-color hex replacement (DTKN-01)
-- [ ] 20-02-PLAN.md -- Rarity unification + interactive tokens + quiz migration (DTKN-02, DTKN-04)
-
-### Phase 21: Card & Button Unification
-**Goal**: Every card-like element and every button across the site inherits from a small set of base classes with no one-off definitions or inline overrides
-**Depends on**: Phase 20
-**Requirements**: CARD-01, CARD-02, CARD-03, CARD-04
-**Success Criteria** (what must be TRUE):
-  1. All card-like elements (today flavor card, compare day card, quiz card, fun mode card) share .card base class with consistent border, shadow, and border-radius
-  2. Only three button base types exist in style.css (.btn-primary, .btn-secondary, .btn-text) plus size modifiers -- all other button definitions removed or aliased
-  3. Zero inline style="..." attributes set button properties (padding, color, background, border) anywhere in HTML or JS innerHTML strings
-  4. JS-generated card and button markup in compare-page.js, shared-nav.js, and quiz JS uses CSS class names, not hardcoded style strings
-**Plans**: 3 plans
-
-Plans:
-- [ ] 21-01-PLAN.md -- Tests + CSS foundation (.btn-text, button/card modifiers) (CARD-01, CARD-02, CARD-03)
-- [ ] 21-02-PLAN.md -- Card unification sweep (17 standalone cards to .card base) (CARD-01, CARD-04)
-- [ ] 21-03-PLAN.md -- Button consolidation + inline style elimination (CARD-02, CARD-03, CARD-04)
-
-### Phase 22: Inline Style Elimination
-**Goal**: The 77 inline style attributes across compare.html, index.html, and forecast-map.html headers are replaced with CSS classes that consume design tokens
-**Depends on**: Phase 21
-**Requirements**: DTKN-03
-**Success Criteria** (what must be TRUE):
-  1. compare.html has zero style="" attributes (currently 8)
-  2. index.html and forecast-map.html header inline styles replaced with CSS classes
-  3. compare-page.js and shared-nav.js set no inline styles via style.cssText or element.style assignments -- all visual properties come from CSS classes
-**Plans**: 2 plans
-
-Plans:
-- [ ] 22-01-PLAN.md -- Tests + CSS classes + HTML inline style removal (DTKN-03)
-- [ ] 22-02-PLAN.md -- JS .style.* elimination across all JS files (DTKN-03)
-
-### Phase 23: Compare UX Fix
-**Goal**: A user arriving at the Compare page for the first time sees their nearest store's schedule within 3 seconds, without needing to interact with competing store pickers
-**Depends on**: Phase 22
-**Requirements**: COMP-01, COMP-02, COMP-03
-**Success Criteria** (what must be TRUE):
-  1. User arriving at Compare with no stored location sees a single onboarding flow (loading state then auto-populated grid), not two competing store pickers
-  2. The header "change" button on Compare opens Compare's multi-store picker, not the single-store SharedNav picker
-  3. Compare page auto-populates from geolocated store within 3 seconds of page load with no user interaction required
-  4. If geolocation fails or times out, Compare falls back to an empty state with a clear add-store CTA within 3 seconds (no indefinite spinner)
-**Plans**: 1 plan
-
-Plans:
-- [ ] 23-01-PLAN.md -- Geo-aware auto-populate, SharedNav suppression, change button override (COMP-01, COMP-02, COMP-03)
-
-### Phase 24: Cone Rendering Quality
-**Goal**: Every hero cone PNG displays visually rich toppings with per-type shapes distributed across the full scoop width, and all 94 flavors render consistently
-**Depends on**: Phase 23
-**Requirements**: CONE-01, CONE-02, CONE-03, CONE-04
-**Success Criteria** (what must be TRUE):
-  1. Hero cone tier (36x42) toppings fill the center columns of the scoop that were previously empty -- no visible topping-free gaps in the center
-  2. Different topping types (sprinkles, chips, nuts, etc.) render with distinct multi-pixel shapes, not uniform 2x2 squares
-  3. Topping distribution looks visually consistent across all 94 flavor profiles -- no outlier flavors with sparse or clumped toppings
-  4. All 94 Hero cone PNGs regenerated from updated renderer, all 376 golden baselines refreshed at zero tolerance, and SW cache version bumped
-**Plans**: 2 plans
-
-Plans:
-- [ ] 24-01-PLAN.md -- Canonical shape map + hero/premium scatter renderer upgrade (CONE-01, CONE-02, CONE-03)
-- [ ] 24-02-PLAN.md -- HD scatter upgrade + client-side sync + PNG regeneration + SW cache bump (CONE-01, CONE-02, CONE-03, CONE-04)
-
-### Phase 25: Test Cleanup
-**Goal**: The test suite reflects the actual state of the codebase -- no dead tests, no unexplained skips, no flaky timeouts
-**Depends on**: Phase 24
-**Requirements**: TEST-01, TEST-02, TEST-03
-**Success Criteria** (what must be TRUE):
-  1. The 5 dead skipped browser tests from Drive removal are either replaced with equivalent tests or cleanly removed
-  2. map-pan-stability.spec.mjs passes reliably without timeout failures
-  3. Every remaining test.skip in the codebase has a documented rationale comment explaining why it is permanently skipped
+  1. 94 AI-generated cone PNGs exist at docs/assets/cones/{slug}.png with transparent backgrounds and 144x168 dimensions
+  2. A generation manifest JSON file is committed alongside images recording model, prompt, parameters, and timestamp per flavor
+  3. A QA gallery HTML page renders all 94 cones in a grid for side-by-side visual comparison, and a human has reviewed and approved all 94
+  4. Post-processing pipeline (trim, resize to 144x168 nearest-neighbor, optimize) runs via a single script invocation with no manual steps
 **Plans**: TBD
 
 Plans:
-- [ ] 25-01: TBD
+- [ ] 26-01: TBD
+- [ ] 26-02: TBD
+
+### Phase 27: Client-Side Art Migration
+**Goal**: Every client-side rendering site displays L5 AI PNGs as the primary art, with L0 micro SVG as the only fallback, and all dead intermediate renderers are removed
+**Depends on**: Phase 26 (all 94 PNGs must exist before integration begins)
+**Requirements**: INT-01, INT-02, INT-05, CLN-01, CLN-03, CLN-04
+**Success Criteria** (what must be TRUE):
+  1. Today page hero cone and quiz result cone both display the AI-generated L5 PNG for any of the 94 profiled flavors -- no HD SVG rendering path exists
+  2. renderHeroCone() falls back to L0 mini SVG (not HD SVG) when a flavor has no PNG
+  3. renderMiniConeHDSVG() and all HD scatter utilities are deleted from cone-renderer.js with zero references remaining
+  4. flavor-audit.html shows exactly two tiers (L0 micro SVG and L5 AI PNG) with no intermediate columns
+  5. Service worker cache version is bumped and pixelmatch golden baselines are regenerated -- all visual regression tests pass at zero tolerance
+**Plans**: TBD
+
+Plans:
+- [ ] 27-01: TBD
+- [ ] 27-02: TBD
+
+### Phase 28: Worker Social Card Migration
+**Goal**: OG social card images embed L5 AI PNGs instead of inline SVG cones, and all dead SVG renderers are removed from the Worker codebase
+**Depends on**: Phase 26 (L5 PNGs must exist), can run in parallel with Phase 27
+**Requirements**: INT-04, CLN-02
+**Success Criteria** (what must be TRUE):
+  1. social-card.js generates OG images using L5 PNG data (base64 in KV or equivalent) instead of calling renderConeHDSVG()
+  2. renderConeHDSVG, renderConeHeroSVG, and renderConePremiumSVG are deleted from worker/src/flavor-colors.js with no remaining callers
+  3. All Worker tests pass (cd worker && npm test) after renderer removal
+**Plans**: TBD
+
+Plans:
+- [ ] 28-01: TBD
+- [ ] 28-02: TBD
+
+### Phase 29: Scriptable Widget Unification
+**Goal**: The Scriptable widget uses the shared art pipeline (L5 PNG online, L0 SVG-aligned fallback offline) instead of its own independent drawConeIcon renderer
+**Depends on**: Phase 26 (L5 PNGs must exist), independent of Phases 27-28
+**Requirements**: INT-03
+**Success Criteria** (what must be TRUE):
+  1. Scriptable widget displays L5 AI PNG cones when the device is online, loaded via Image.fromURL() from the GitHub Pages asset path
+  2. Offline fallback renders a color-aligned cone using the canonical 23-entry BASE_COLORS palette (not the drifted 15-color FLAVOR_SCOOP_COLORS)
+  3. Both docs/assets/custard-today.js and widgets/custard-today.js are updated and kept in sync
+**Plans**: TBD
+
+Plans:
+- [ ] 29-01: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 20 -> 21 -> 22 -> 23 -> 24 -> 25
+Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after Phase 26 completes. Recommended order: 26 -> 27 -> 28 -> 29.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -170,11 +154,10 @@ Phases execute sequentially: 20 -> 21 -> 22 -> 23 -> 24 -> 25
 | 9-12 | v1.2 | 9/9 | Complete | 2026-03-09 |
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
-| 20. Design Token Expansion | 2/2 | Complete    | 2026-03-13 | - |
-| 21. Card & Button Unification | 3/3 | Complete    | 2026-03-14 | - |
-| 22. Inline Style Elimination | 2/2 | Complete    | 2026-03-14 | - |
-| 23. Compare UX Fix | 1/1 | Complete    | 2026-03-14 | - |
-| 24. Cone Rendering Quality | 2/2 | Complete    | 2026-03-18 | - |
-| 25. Test Cleanup | v1.5 | 0/TBD | Not started | - |
+| 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
+| 26. AI Cone Generation | v2.0 | 0/TBD | Not started | - |
+| 27. Client-Side Art Migration | v2.0 | 0/TBD | Not started | - |
+| 28. Worker Social Card Migration | v2.0 | 0/TBD | Not started | - |
+| 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
 
-**Total: 25 phases, 50+ plans across 6 milestones**
+**Total: 29 phases, 53+ plans across 7 milestones**
