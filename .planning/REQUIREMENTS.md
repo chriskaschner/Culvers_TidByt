@@ -12,7 +12,7 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 - [ ] **GEN-01**: All 94 profiled flavors have L5-quality AI-generated pixel art PNGs with transparent backgrounds
 - [x] **GEN-02**: Generation prompts are version-controlled in a prompt manifest file per flavor
 - [ ] **GEN-03**: QA gallery HTML page displays all 94 generated PNGs side-by-side for visual review before deploy
-- [ ] **GEN-04**: Generated PNGs are post-processed (trimmed, resized, optimized) via sharp pipeline
+- [x] **GEN-04**: Generated PNGs are post-processed (trimmed, resized, optimized) via sharp pipeline
 
 ### Integration
 
@@ -54,7 +54,7 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 | GEN-01 | Phase 26 | Pending |
 | GEN-02 | Phase 26 | Complete |
 | GEN-03 | Phase 26 | Pending |
-| GEN-04 | Phase 26 | Pending |
+| GEN-04 | Phase 26 | Complete |
 | INT-01 | Phase 27 | Pending |
 | INT-02 | Phase 27 | Pending |
 | INT-03 | Phase 29 | Pending |
